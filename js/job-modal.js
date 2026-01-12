@@ -35,8 +35,9 @@ export async function openJobModal(job) {
     document.getElementById('modalTitle').textContent = 'Chargement...';
     
     try {
-        // Fetch complete job details
-        const fullJob = await fetchJobDetails(job._id);
+        // Fetch complete job details using numerooffreforem as the record ID
+        const recordId = job.numerooffreforem || job._id;
+        const fullJob = await fetchJobDetails(recordId);
         populateModal(fullJob);
     } catch (error) {
         console.error('Error fetching job details:', error);
@@ -274,19 +275,20 @@ function updateBookmarkButton(isBookmarked) {
     const btn = document.getElementById('btnBookmark');
     if (!btn) return; // Safety check
     
-    const icon = btn.querySelector('i');
-    const text = btn.querySelector('.bookmark-text');
-    
     if (isBookmarked) {
         btn.classList.remove('border-amber-300', 'text-amber-700', 'hover:bg-amber-50', 'bg-white');
         btn.classList.add('bg-amber-500', 'text-white', 'hover:bg-amber-600', 'border-amber-500');
-        icon.setAttribute('data-lucide', 'bookmark-check');
-        text.textContent = 'À consulter ✓';
+        btn.innerHTML = `
+            <i data-lucide="bookmark-check" class="h-4 w-4"></i>
+            <span class="bookmark-text">À consulter ✓</span>
+        `;
     } else {
         btn.classList.remove('bg-amber-500', 'text-white', 'hover:bg-amber-600', 'border-amber-500');
         btn.classList.add('border-amber-300', 'text-amber-700', 'hover:bg-amber-50', 'bg-white');
-        icon.setAttribute('data-lucide', 'bookmark');
-        text.textContent = 'À consulter';
+        btn.innerHTML = `
+            <i data-lucide="bookmark" class="h-4 w-4"></i>
+            <span class="bookmark-text">À consulter</span>
+        `;
     }
     
     setTimeout(() => initIcons(), 10);
@@ -300,19 +302,20 @@ function updateAppliedButton(isApplied) {
     const btn = document.getElementById('btnApplied');
     if (!btn) return; // Safety check
     
-    const icon = btn.querySelector('i');
-    const text = btn.querySelector('.applied-text');
-    
     if (isApplied) {
         btn.classList.remove('border-green-300', 'text-green-700', 'hover:bg-green-50', 'bg-white');
         btn.classList.add('bg-green-500', 'text-white', 'hover:bg-green-600', 'border-green-500');
-        icon.setAttribute('data-lucide', 'check-circle-2');
-        text.textContent = 'Postulé ✓';
+        btn.innerHTML = `
+            <i data-lucide="check-circle-2" class="h-4 w-4"></i>
+            <span class="applied-text">Postulé ✓</span>
+        `;
     } else {
         btn.classList.remove('bg-green-500', 'text-white', 'hover:bg-green-600', 'border-green-500');
         btn.classList.add('border-green-300', 'text-green-700', 'hover:bg-green-50', 'bg-white');
-        icon.setAttribute('data-lucide', 'check-circle');
-        text.textContent = 'Marquer comme postulé';
+        btn.innerHTML = `
+            <i data-lucide="check-circle" class="h-4 w-4"></i>
+            <span class="applied-text">Marquer comme postulé</span>
+        `;
     }
     
     setTimeout(() => initIcons(), 10);

@@ -251,6 +251,7 @@ function updateCardBadges(card, jobId) {
 window.addEventListener('jobStateChanged', (event) => {
     const { jobId, type, value } = event.detail;
     const card = document.querySelector(`[data-job-id="${jobId}"]`);
+    
     if (!card) return;
     
     // Update the icon buttons
@@ -262,37 +263,6 @@ window.addEventListener('jobStateChanged', (event) => {
         if (btn) updateCardButton(btn, value, 'applied');
     }
     
-    // Update badges in badge container
-    const badgeContainer = card.querySelector('.flex-wrap');
-    if (!badgeContainer) return;
-    
-    // Remove existing badges of this type
-    const existingBookmark = badgeContainer.querySelector('[data-lucide="bookmark-check"]')?.closest('span');
-    const existingApplied = badgeContainer.querySelector('[data-lucide="check-circle-2"]')?.closest('span');
-    
-    if (type === 'bookmark') {
-        if (existingBookmark) existingBookmark.remove();
-        if (value) {
-            const badge = document.createElement('span');
-            badge.className = 'px-2 py-0.5 bg-amber-100 text-amber-700 rounded border border-amber-200 text-xs font-semibold flex items-center gap-1';
-            badge.innerHTML = '<i data-lucide="bookmark-check" class="h-3 w-3"></i> À consulter';
-            badgeContainer.insertBefore(badge, badgeContainer.firstChild);
-        }
-    } else if (type === 'applied') {
-        if (existingApplied) existingApplied.remove();
-        if (value) {
-            const badge = document.createElement('span');
-            badge.className = 'px-2 py-0.5 bg-green-100 text-green-700 rounded border border-green-200 text-xs font-semibold flex items-center gap-1';
-            badge.innerHTML = '<i data-lucide="check-circle-2" class="h-3 w-3"></i> Postulé';
-            // Insert after bookmark if it exists
-            const bookmark = badgeContainer.querySelector('[data-lucide="bookmark-check"]')?.closest('span');
-            if (bookmark) {
-                bookmark.after(badge);
-            } else {
-                badgeContainer.insertBefore(badge, badgeContainer.firstChild);
-            }
-        }
-    }
-    
-    initIcons();
+    // Update all badges in the card
+    updateCardBadges(card, jobId);
 });
