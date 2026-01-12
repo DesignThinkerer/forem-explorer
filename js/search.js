@@ -114,19 +114,30 @@ export function exportDebugJson() {
     const rawData = getRawData();
     if (!rawData) return;
     
-    // Get bookmark data from localStorage
-    const bookmarkData = localStorage.getItem('forem_job_states');
-    const bookmarks = bookmarkData ? JSON.parse(bookmarkData) : {};
+    // Get all user data from localStorage
+    const jobStates = localStorage.getItem('forem_job_states');
+    const jobNotes = localStorage.getItem('forem_job_notes');
+    const customTags = localStorage.getItem('forem_custom_tags');
+    const jobTags = localStorage.getItem('forem_job_tags');
+    const savedSearches = localStorage.getItem('forem_saved_searches');
+    const alertsDismissed = localStorage.getItem('forem_alerts_dismissed');
     
     // Get current search parameters from URL
     const searchParams = window.location.search;
     
-    // Create export object with search results, personal data, and search parameters
+    // Create export object with all user data
     const exportData = {
         exportDate: new Date().toISOString(),
+        version: 2, // Version for future compatibility
         searchParams: searchParams,
         searchResults: rawData,
-        bookmarks: bookmarks
+        // User data
+        bookmarks: jobStates ? JSON.parse(jobStates) : {},
+        notes: jobNotes ? JSON.parse(jobNotes) : {},
+        customTags: customTags ? JSON.parse(customTags) : [],
+        jobTags: jobTags ? JSON.parse(jobTags) : {},
+        savedSearches: savedSearches ? JSON.parse(savedSearches) : [],
+        alertsDismissed: alertsDismissed ? JSON.parse(alertsDismissed) : []
     };
     
     const a = document.createElement('a');
@@ -163,12 +174,62 @@ export function importBookmarksFromFile() {
             const { importBookmarks } = await import('./bookmarks.js');
             const stats = importBookmarks(data.bookmarks);
             
+            // Import notes if present (v2+)
+            if (data.notes && Object.keys(data.notes).length > 0) {
+                const existingNotes = localStorage.getItem('forem_job_notes');
+                const existing = existingNotes ? JSON.parse(existingNotes) : {};
+                const merged = { ...existing, ...data.notes };
+                localStorage.setItem('forem_job_notes', JSON.stringify(merged));
+            }
+            
+            // Import custom tags if present (v2+)
+            if (data.customTags && data.customTags.length > 0) {
+                const existingTags = localStorage.getItem('forem_custom_tags');
+                const existing = existingTags ? JSON.parse(existingTags) : [];
+                // Merge by ID, prefer imported versions
+                const existingIds = new Set(existing.map(t => t.id));
+                const newTags = data.customTags.filter(t => !existingIds.has(t.id));
+                const merged = [...existing, ...newTags];
+                localStorage.setItem('forem_custom_tags', JSON.stringify(merged));
+            }
+            
+            // Import job tags if present (v2+)
+            if (data.jobTags && Object.keys(data.jobTags).length > 0) {
+                const existingJobTags = localStorage.getItem('forem_job_tags');
+                const existing = existingJobTags ? JSON.parse(existingJobTags) : {};
+                // Merge arrays per job
+                for (const [jobId, tags] of Object.entries(data.jobTags)) {
+                    if (!existing[jobId]) {
+                        existing[jobId] = tags;
+                    } else {
+                        const existingSet = new Set(existing[jobId]);
+                        tags.forEach(t => existingSet.add(t));
+                        existing[jobId] = [...existingSet];
+                    }
+                }
+                localStorage.setItem('forem_job_tags', JSON.stringify(existing));
+            }
+            
+            // Import saved searches if present (v2+)
+            if (data.savedSearches && data.savedSearches.length > 0) {
+                const existingSearches = localStorage.getItem('forem_saved_searches');
+                const existing = existingSearches ? JSON.parse(existingSearches) : [];
+                const existingIds = new Set(existing.map(s => s.id));
+                const newSearches = data.savedSearches.filter(s => !existingIds.has(s.id));
+                const merged = [...existing, ...newSearches];
+                localStorage.setItem('forem_saved_searches', JSON.stringify(merged));
+            }
+            
+            // Build import summary
+            const importedItems = [];
+            importedItems.push(`Suivis: ${stats.newCount} nouveaux, ${stats.updatedCount} mis à jour`);
+            if (data.notes) importedItems.push(`Notes: ${Object.keys(data.notes).length}`);
+            if (data.customTags) importedItems.push(`Tags personnalisés: ${data.customTags.length}`);
+            if (data.jobTags) importedItems.push(`Tags assignés: ${Object.keys(data.jobTags).length} offres`);
+            if (data.savedSearches) importedItems.push(`Recherches: ${data.savedSearches.length}`);
+            
             // Show success message
-            alert(`Import réussi!\n\n` +
-                  `Nouveaux suivis: ${stats.newCount}\n` +
-                  `Suivis mis à jour: ${stats.updatedCount}\n` +
-                  `Total importé: ${stats.total}\n\n` +
-                  `Les paramètres de recherche vont être restaurés...`);
+            alert(`Import réussi!\n\n${importedItems.join('\n')}\n\nLes paramètres de recherche vont être restaurés...`);
             
             // Restore search parameters if they exist
             if (data.searchParams) {
