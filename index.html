@@ -235,6 +235,65 @@
         <div><p class="font-bold text-sm">Notification</p><p id="toastMsg" class="text-sm opacity-90">Message</p></div>
     </div>
 
+    <!-- Job Detail Modal -->
+    <div id="jobModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex items-start justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-blue-50 to-slate-50">
+                <div class="flex-1 min-w-0">
+                    <h2 id="modalTitle" class="text-2xl font-bold text-slate-800 mb-2">Job Title</h2>
+                    <div class="flex flex-wrap gap-2 text-sm text-slate-600">
+                        <span id="modalCompany" class="flex items-center gap-1">
+                            <i data-lucide="building-2" class="h-4 w-4"></i> Company
+                        </span>
+                        <span class="text-slate-300">|</span>
+                        <span id="modalLocation" class="flex items-center gap-1">
+                            <i data-lucide="map-pin" class="h-4 w-4"></i> Location
+                        </span>
+                        <span class="text-slate-300">|</span>
+                        <span id="modalDate" class="flex items-center gap-1">
+                            <i data-lucide="calendar" class="h-4 w-4"></i> Date
+                        </span>
+                    </div>
+                </div>
+                <button onclick="closeJobModal()" class="ml-4 text-slate-400 hover:text-slate-600 transition-colors">
+                    <i data-lucide="x" class="h-6 w-6"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <div class="space-y-6">
+                    <!-- Badges -->
+                    <div id="modalBadges" class="flex flex-wrap gap-2"></div>
+
+                    <!-- Description -->
+                    <div id="modalDescriptionSection" class="hidden">
+                        <h3 class="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+                            <i data-lucide="file-text" class="h-5 w-5 text-blue-600"></i>
+                            Description
+                        </h3>
+                        <div id="modalDescription" class="prose prose-sm max-w-none text-slate-700 whitespace-pre-wrap"></div>
+                    </div>
+
+                    <!-- Additional Info -->
+                    <div id="modalAdditionalInfo" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-6 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-center gap-3">
+                <button onclick="closeJobModal()" class="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium transition-colors order-2 sm:order-1">
+                    Fermer
+                </button>
+                <a id="modalExternalLink" href="#" target="_blank" class="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-colors flex items-center justify-center gap-2 shadow-lg hover:shadow-xl order-1 sm:order-2">
+                    <span>Voir la description complète sur Le Forem</span>
+                    <i data-lucide="external-link" class="h-5 w-5"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- Load main application module -->
     <script type="module" src="js/app.js"></script>
 </body>

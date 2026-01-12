@@ -4,11 +4,13 @@
  */
 import { initIcons, getDistance } from './utils.js';
 import { getUserLocation } from './state.js';
+import { openJobModal } from './job-modal.js';
 
 /**
  * Renders job search results as a grid of cards.
  * Creates HTML cards for each job with title, company, location, contract type, and optional badges.
  * Displays distance if user location is available.
+ * Cards are clickable to open a detailed modal view.
  * @param {Object} data - The search results data from the API
  * @param {Array} data.results - Array of job objects
  * @param {string} data.results[].titreoffre - Job title
@@ -47,12 +49,12 @@ export function renderResults(data) {
         }
 
         const el = document.createElement('div');
-        el.className = "bg-white border border-slate-200 p-4 rounded-lg hover:shadow-md transition-shadow flex flex-col md:flex-row gap-4 relative overflow-hidden";
+        el.className = "bg-white border border-slate-200 p-4 rounded-lg hover:shadow-md transition-shadow flex flex-col md:flex-row gap-4 relative overflow-hidden cursor-pointer";
         el.innerHTML = `
             <div class="absolute left-0 top-0 bottom-0 w-1 ${contract.includes('indéterminée') ? 'bg-green-500' : 'bg-slate-300'}"></div>
             <div class="flex-1 min-w-0">
                 <div class="flex gap-2 mb-1">${regime}${edu}</div>
-                <h3 class="font-bold text-slate-800 truncate"><a href="${job.url}" target="_blank" class="hover:text-blue-600">${title}</a></h3>
+                <h3 class="font-bold text-slate-800 truncate hover:text-blue-600">${title}</h3>
                 <div class="text-sm text-slate-600 flex items-center gap-2 mt-1">
                     <i data-lucide="building-2" class="h-3 w-3"></i> ${comp}
                     <span class="text-slate-300">|</span>
@@ -64,6 +66,10 @@ export function renderResults(data) {
                 <span class="text-xs text-slate-400 mt-2">${date}</span>
             </div>
         `;
+        
+        // Add click handler to open modal
+        el.addEventListener('click', () => openJobModal(job));
+        
         grid.appendChild(el);
     });
     initIcons();

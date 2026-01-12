@@ -8,6 +8,7 @@ import { loadFacets } from './facets.js';
 import { handleSearch, handleCustomSearch, copyUrl, exportDebugJson } from './search.js';
 import { triggerGeo, manualCitySearch } from './geolocation.js';
 import { restoreStateFromUrl } from './url-state.js';
+import { closeJobModal } from './job-modal.js';
 
 /**
  * Initializes the application.
@@ -58,6 +59,7 @@ window.handleDistanceChange = handleDistanceChange;
 window.manualCitySearch = handleManualCitySearch;
 window.copyUrl = copyUrl;
 window.exportDebugJson = exportDebugJson;
+window.closeJobModal = closeJobModal;
 
 // Initialize when DOM is ready
 init();
