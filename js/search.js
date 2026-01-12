@@ -220,6 +220,14 @@ export function importBookmarksFromFile() {
                 localStorage.setItem('forem_saved_searches', JSON.stringify(merged));
             }
             
+            // Import dismissed alerts if present (v2+)
+            if (data.alertsDismissed && data.alertsDismissed.length > 0) {
+                const existingDismissed = localStorage.getItem('forem_alerts_dismissed');
+                const existing = existingDismissed ? JSON.parse(existingDismissed) : [];
+                const merged = [...new Set([...existing, ...data.alertsDismissed])];
+                localStorage.setItem('forem_alerts_dismissed', JSON.stringify(merged));
+            }
+            
             // Build import summary
             const importedItems = [];
             importedItems.push(`Suivis: ${stats.newCount} nouveaux, ${stats.updatedCount} mis à jour`);
