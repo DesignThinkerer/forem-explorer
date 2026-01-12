@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Le Forem - Job Explorer (Pro Edition)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        .loader-sm {
+            width: 16px;
+            height: 16px;
+            border-width: 2px;
+        }
+        /* Custom scrollbar for filter lists */
+        .scroller::-webkit-scrollbar { width: 6px; }
+        .scroller::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 3px; }
+        .scroller::-webkit-scrollbar-track { background-color: #f1f5f9; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen pb-12">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2">
+                <div class="bg-blue-600 p-2 rounded-lg text-white">
+                    <i data-lucide="database" class="h-6 w-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800 leading-tight">
+                        Forem Explorer
+                    </h1>
+                    <p class="text-xs text-slate-500 font-medium">Open Data v2.1</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button id="btnExport" onclick="window.exportDebugJson()" class="hidden flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 shadow-sm transition-all">
+                    <i data-lucide="download" class="h-4 w-4"></i>
+                    JSON Brut
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        
+        <!-- Search Dashboard -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+            <div class="p-6">
+                <!-- Using direct function call for reliability -->
+                <form id="searchForm" class="flex flex-col gap-6" onsubmit="window.handleSearch(event)">
+                    
+                    <!-- Section 1: Filtres de Contenu (Where Clause) -->
+                    <div>
+                        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                            <i data-lucide="filter" class="h-3 w-3"></i> Filtres de Contenu (ODSQL)
+                        </h2>
+                        
+                        <!-- Row 1: Key info -->
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                            <!-- Keyword Input -->
+                            <div class="md:col-span-5">
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Mots-clés</label>
+                                <div class="relative group">
+                                    <i data-lucide="search" class="absolute left-3 top-2.5 h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors"></i>
+                                    <input type="text" id="keywords" value="-senior -lead -manager -head" placeholder='ex: Java -"business analyst"' 
+                                           class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm shadow-sm outline-none">
+                                </div>
+                                <p class="text-[10px] text-slate-400 mt-1 ml-1">Utilisez <code class="bg-slate-200 px-1 rounded">-mot</code> ou <code class="bg-slate-200 px-1 rounded">-"phrase exacte"</code> pour exclure.</p>
+                            </div>
+
+                            <!-- Category Filter -->
+                            <div class="md:col-span-4">
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Secteur</label>
+                                <select id="categoryFilter" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm shadow-sm outline-none">
+                                    <option value="M1805">💻 Dev & Programmation (M1805*)</option>
+                                    <option value="M18">🌐 Tout l'IT & Télécom (M18*)</option>
+                                    <option value="M">📊 Gestion & Management (M*)</option>
+                                    <option value="">🌍 Tous les secteurs</option>
+                                </select>
+                            </div>
+
+                            <!-- Date Filter -->
+                            <div class="md:col-span-3">
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Fraîcheur</label>
+                                <select id="dateFilter" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm shadow-sm outline-none">
+                                    <option value="">Toutes les dates</option>
+                                    <option value="7">📅 7 derniers jours</option>
+                                    <option value="14">📅 14 derniers jours</option>
+                                    <option value="30">📅 30 derniers jours</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Row 2: Location & Contract (Checkboxes) -->
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 mt-4">
+                            <!-- Location Filter -->
+                            <div class="md:col-span-6">
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Localisation (Multiple)</label>
+                                <div id="locContainer" class="scroller max-h-[140px] overflow-y-auto bg-white border border-slate-300 rounded-lg p-2 text-sm">
+                                    <div class="text-slate-400 text-xs text-center py-4">Chargement...</div>
+                                </div>
+                            </div>
+
+                            <!-- Contract Filter -->
+                            <div class="md:col-span-6">
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Type de Contrat (Multiple)</label>
+                                <div id="contractContainer" class="scroller max-h-[140px] overflow-y-auto bg-white border border-slate-300 rounded-lg p-2 text-sm">
+                                    <div class="text-slate-400 text-xs text-center py-4">Chargement...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Row 3: Advanced Details -->
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 mt-4 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                            <!-- Languages (Checkboxes) -->
+                            <div class="md:col-span-4">
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Langues requises (Multiple)</label>
+                                <div id="langContainer" class="scroller max-h-[100px] overflow-y-auto bg-white border border-slate-300 rounded-lg p-2 text-sm">
+                                    <div class="text-slate-400 text-xs text-center py-2">Chargement...</div>
+                                </div>
+                            </div>
+
+                            <!-- Work Regime (Dropdown) -->
+                            <div class="md:col-span-4">
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Régime de travail</label>
+                                <div class="relative">
+                                    <select id="regimeFilter" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm appearance-none">
+                                        <option value="">Indifférent</option>
+                                    </select>
+                                    <div class="absolute right-3 top-2.5 pointer-events-none"><i data-lucide="clock" class="h-4 w-4 text-slate-400"></i></div>
+                                </div>
+                            </div>
+
+                            <!-- Education (Dropdown) -->
+                            <div class="md:col-span-4">
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Niveau d'études</label>
+                                <div class="relative">
+                                    <select id="educationFilter" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm appearance-none">
+                                        <option value="">Indifférent</option>
+                                    </select>
+                                    <div class="absolute right-3 top-2.5 pointer-events-none"><i data-lucide="graduation-cap" class="h-4 w-4 text-slate-400"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-slate-100 my-2"></div>
+
+                    <!-- Section 2: Paramètres Globaux -->
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                        <div class="md:col-span-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <!-- Sort -->
+                            <div class="md:col-span-1">
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Tri</label>
+                                <select id="sortFilter" onchange="window.handleSortChange(this)" class="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-sm text-slate-600 focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="datedebutdiffusion desc">📅 Récent</option>
+                                    <option value="geo_distance">📍 Proximité</option>
+                                </select>
+                            </div>
+
+                            <!-- Distance (Hidden By Default) -->
+                            <div id="distanceContainer" class="md:col-span-1 hidden">
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Rayon Max</label>
+                                <select id="distanceFilter" onchange="window.handleDistanceChange(this)" class="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-sm text-slate-600 focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="">∞ km</option>
+                                    <option value="10">10 km</option>
+                                    <option value="25">25 km</option>
+                                    <option value="50">50 km</option>
+                                    <option value="75">75 km</option>
+                                </select>
+                            </div>
+
+                            <!-- Manual Location -->
+                            <div id="manualLocationContainer" class="md:col-span-1 hidden">
+                                <label class="block text-xs font-bold text-blue-600 uppercase tracking-wider mb-1.5">Ville</label>
+                                <div class="flex gap-1">
+                                    <input type="text" id="cityInput" placeholder="Namur..." 
+                                           onkeydown="if(event.key === 'Enter') { event.preventDefault(); window.manualCitySearch(); }"
+                                           class="w-full px-2 py-1.5 bg-blue-50 border border-blue-300 rounded text-sm text-blue-800 focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <button type="button" onclick="window.manualCitySearch()" id="btnCitySearch" class="bg-blue-600 text-white px-2 rounded hover:bg-blue-700">
+                                        <i data-lucide="search" class="h-4 w-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Limit -->
+                            <div class="md:col-span-1">
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Limite</label>
+                                <select id="limitFilter" class="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-sm text-slate-600 focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="20">20</option>
+                                    <option value="50" selected>50</option>
+                                    <option value="100">100</option>
+                                </select>
+                            </div>
+
+                            <!-- GPS Info -->
+                            <div id="gpsInfo" class="hidden col-span-1 flex items-center gap-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 truncate">
+                                <i data-lucide="map-pin" class="h-3 w-3 shrink-0"></i>
+                                <span id="gpsCoords" class="truncate">Loc: Inconnue</span>
+                            </div>
+                        </div>
+
+                        <!-- Submit -->
+                        <div class="md:col-span-4">
+                            <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-2.5 px-6 rounded-lg shadow-md hover:shadow-lg transform active:scale-[0.98] transition-all flex justify-center items-center gap-2">
+                                <i data-lucide="search" class="h-5 w-5"></i>
+                                <span id="btnText">Lancer la recherche</span>
+                                <div id="loadingSpinner" class="loader hidden"></div>
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <!-- Editor & Status -->
+        <div id="statusBar" class="flex flex-col gap-3 mb-6 text-sm text-slate-500 px-1 hidden">
+            <div class="flex justify-between items-end">
+                <span id="resultsCount" class="text-lg font-bold text-slate-800">...</span>
+            </div>
+            <div class="bg-slate-800 rounded-lg p-3 flex flex-col gap-2 shadow-inner">
+                <div class="flex justify-between items-center mb-1">
+                     <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Requête API</p>
+                     <div class="flex gap-2">
+                        <button onclick="window.copyUrl()" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 px-2 py-1 rounded border border-slate-600 flex items-center gap-1"><i data-lucide="copy" class="h-3 w-3"></i> Copier</button>
+                        <button onclick="window.handleCustomSearch()" class="text-xs bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded border border-green-500 flex items-center gap-1 font-bold"><i data-lucide="play" class="h-3 w-3"></i> Tester</button>
+                     </div>
+                </div>
+                <textarea id="queryInput" class="w-full bg-slate-900 text-green-400 font-mono text-xs p-2 rounded border border-slate-700 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none h-20 resize-y leading-relaxed" spellcheck="false"></textarea>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div id="resultsGrid" class="grid grid-cols-1 gap-4"></div>
+
+    </main>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-emerald-600 text-white px-6 py-4 rounded-xl shadow-2xl transform translate-y-24 transition-transform duration-300 z-50 flex items-center gap-4 max-w-sm">
+        <div class="bg-white/20 p-2 rounded-full shrink-0"><i data-lucide="check" class="h-5 w-5 text-white"></i></div>
+        <div><p class="font-bold text-sm">Notification</p><p id="toastMsg" class="text-sm opacity-90">Message</p></div>
+    </div>
+
+    <script>
+        const API_HOST = "https://leforem-digitalwallonia.opendatasoft.com/api/explore/v2.1";
+        const DATASET_ID = "offres-d-emploi-forem";
+        const BASE_URL = `${API_HOST}/catalog/datasets/${DATASET_ID}/records`;
+        const FACETS_URL = `${API_HOST}/catalog/datasets/${DATASET_ID}/facets`;
+        
+        let currentRawData = null;
+        let currentFullUrl = "";
+        let userLocation = null;
+
+        function initIcons() { if (typeof lucide !== 'undefined') lucide.createIcons(); }
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            if(!t) return;
+            document.getElementById('toastMsg').textContent = msg;
+            t.className = isError ? "fixed bottom-6 right-6 bg-red-600 text-white px-6 py-4 rounded-xl shadow-2xl transform transition-transform duration-300 z-50 flex items-center gap-4 max-w-sm" : "fixed bottom-6 right-6 bg-emerald-600 text-white px-6 py-4 rounded-xl shadow-2xl transform transition-transform duration-300 z-50 flex items-center gap-4 max-w-sm";
+            t.style.transform = "translateY(0)";
+            setTimeout(() => t.style.transform = "translateY(150%)", 4000);
+        }
+        function deg2rad(deg) { return deg * (Math.PI/180); }
+        function getDist(lat1, lon1, lat2, lon2) {
+            const R = 6371; 
+            const dLat = deg2rad(lat2-lat1); const dLon = deg2rad(lon2-lon1);
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            return (R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)))).toFixed(1);
+        }
+
+        // --- INIT & LOAD ---
+        async function init() {
+            initIcons();
+            await loadFacets();
+            restoreStateFromUrl();
+        }
+
+        async function loadFacets() {
+            const facets = ['lieuxtravailregion', 'typecontrat', 'regimetravail', 'niveauxetudes', 'langues'];
+            const config = {
+                'lieuxtravailregion': { type: 'checkbox', id: 'locContainer' },
+                'typecontrat': { type: 'checkbox', id: 'contractContainer' },
+                'langues': { type: 'checkbox', id: 'langContainer' },
+                'regimetravail': { type: 'select', id: 'regimeFilter' },
+                'niveauxetudes': { type: 'select', id: 'educationFilter' }
+            };
+
+            try {
+                const query = facets.map(f => `facet=${f}`).join('&');
+                const response = await fetch(`${FACETS_URL}?${query}&timezone=Europe/Brussels`);
+                if (!response.ok) throw new Error("Erreur listes");
+                const data = await response.json();
+
+                facets.forEach(facetName => {
+                    const cfg = config[facetName];
+                    const container = document.getElementById(cfg.id);
+                    if(!container) return;
+
+                    const facetData = data.facets.find(f => f.name === facetName);
+                    
+                    if (cfg.type === 'select') {
+                        container.innerHTML = `<option value="">Indifférent</option>`;
+                        if (facetData && facetData.facets) {
+                            facetData.facets.forEach(item => {
+                                const option = document.createElement('option');
+                                option.value = item.name;
+                                option.textContent = `${item.name} (${item.count})`;
+                                container.appendChild(option);
+                            });
+                        }
+                    } else if (cfg.type === 'checkbox') {
+                        container.innerHTML = "";
+                        if (facetData && facetData.facets) {
+                            facetData.facets.forEach(item => {
+                                const div = document.createElement('div');
+                                div.className = "flex items-center gap-2 mb-1";
+                                const inputName = facetName === 'lieuxtravailregion' ? 'loc' : (facetName === 'typecontrat' ? 'contract' : 'lang');
+                                div.innerHTML = `
+                                    <input type="checkbox" id="${inputName}_${item.name}" name="${inputName}" value="${item.name}" 
+                                           class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                    <label for="${inputName}_${item.name}" class="text-slate-700 cursor-pointer text-xs select-none hover:text-blue-600">${item.name} <span class="text-slate-400">(${item.count})</span></label>
+                                `;
+                                container.appendChild(div);
+                            });
+                        } else {
+                            container.innerHTML = `<div class="text-slate-400 text-xs text-center">Aucune donnée</div>`;
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error("Facet Error:", e);
+            }
+        }
+
+        function updateDistanceUI() {
+            const distContainer = document.getElementById('distanceContainer');
+            if (userLocation) {
+                distContainer.classList.remove('hidden');
+            } else {
+                distContainer.classList.add('hidden');
+            }
+        }
+
+        // --- LOGIC ---
+        function buildQuery() {
+            const k = document.getElementById('keywords').value.trim();
+            const cat = document.getElementById('categoryFilter').value;
+            const limit = document.getElementById('limitFilter').value;
+            const sort = document.getElementById('sortFilter').value;
+            const dist = document.getElementById('distanceFilter').value;
+            const regime = document.getElementById('regimeFilter').value;
+            const edu = document.getElementById('educationFilter').value;
+            const dateVal = document.getElementById('dateFilter').value;
+
+            const getChecked = (name) => Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value);
+            const locs = getChecked('loc');
+            const contracts = getChecked('contract');
+            const langs = getChecked('lang');
+
+            let conditions = [];
+
+            if (cat) conditions.push(`startswith(metiercodedimeco, "${cat}")`);
+
+            if (k) {
+                const regex = /-?"[^"]+"|[^\s]+/g;
+                const terms = k.match(regex) || [];
+                const pos = [], neg = [];
+                
+                terms.forEach(t => {
+                    let term = t;
+                    let isNeg = false;
+                    if (term.startsWith('-')) { isNeg = true; term = term.substring(1); }
+                    if (term.startsWith('"') && term.endsWith('"')) { term = term.slice(1, -1); }
+                    term = term.replace(/\\"/g, '"');
+                    if (term.trim()) isNeg ? neg.push(term) : pos.push(term);
+                });
+                
+                const fmt = t => `"${t.replace(/"/g, '\\"')}"`;
+                if (pos.length) conditions.push(`(${pos.map(t => { const qt = fmt(t); return `(search(titreoffre, ${qt}) OR search(metier, ${qt}))`; }).join(' OR ')})`);
+                if (neg.length) neg.forEach(t => conditions.push(`NOT (search(titreoffre, ${fmt(t)}) OR search(metier, ${fmt(t)}))`));
+            }
+
+            if (dateVal) {
+                const d = new Date(); d.setDate(d.getDate() - parseInt(dateVal));
+                conditions.push(`datedebutdiffusion >= date'${d.toISOString().split('T')[0]}'`);
+            }
+
+            if (regime) conditions.push(`regimetravail:"${regime.replace(/"/g, '\\"')}"`);
+            if (edu) conditions.push(`niveauxetudes:"${edu.replace(/"/g, '\\"')}"`);
+            
+            const addMultiCondition = (values, field) => {
+                if (values.length > 0) {
+                    const conds = values.map(v => `${field}:"${v.replace(/"/g, '\\"')}"`);
+                    conditions.push(`(${conds.join(' OR ')})`);
+                }
+            };
+
+            addMultiCondition(locs, 'lieuxtravailregion');
+            addMultiCondition(contracts, 'typecontrat');
+            addMultiCondition(langs, 'langues');
+
+            if (dist && userLocation) {
+                conditions.push(`distance(lieuxtravailgeo, geom'POINT(${userLocation.lon} ${userLocation.lat})', ${dist}km)`);
+            }
+
+            const where = conditions.length ? conditions.map(c => `(${c})`).join(' AND ') : '';
+            const params = new URLSearchParams({ limit: limit, timezone: 'Europe/Brussels' });
+            
+            if (sort === 'geo_distance' && userLocation) {
+                params.append('order_by', `distance(lieuxtravailgeo, geom'POINT(${userLocation.lon} ${userLocation.lat})')`);
+            } else {
+                params.append('order_by', sort === 'geo_distance' ? 'datedebutdiffusion desc' : sort);
+            }
+
+            if (where) params.append('where', where);
+            return params;
+        }
+
+        function parseAndSyncUI(urlString) {
+            try {
+                const dummyBase = "http://d";
+                const u = new URL(urlString.startsWith("http") ? urlString : dummyBase + "/" + urlString.replace(/^\/?/, ''));
+                const p = u.searchParams;
+
+                if(p.has('limit')) document.getElementById('limitFilter').value = p.get('limit');
+                
+                const w = p.get('where') || "";
+                
+                const simpleMap = [
+                    { id: 'categoryFilter', re: /startswith\(metiercodedimeco, "([^"]+)"\)/ },
+                    { id: 'regimeFilter', re: /regimetravail:"([^"]+)"/ },
+                    { id: 'educationFilter', re: /niveauxetudes:"([^"]+)"/ },
+                    { id: 'distanceFilter', re: /distance\(lieuxtravailgeo, geom'POINT\([^)]+\)', ([0-9]+)km\)/ }
+                ];
+
+                simpleMap.forEach(m => {
+                    const match = w.match(m.re);
+                    const el = document.getElementById(m.id);
+                    if(match && el) el.value = match[1].replace(/\\"/g, '"');
+                    else if(el) el.value = "";
+                });
+
+                const dateMatch = w.match(/datedebutdiffusion >= date'([^']+)'/);
+                const dateEl = document.getElementById('dateFilter');
+                if(dateMatch && dateEl) {
+                    const queryDate = new Date(dateMatch[1]);
+                    const diffDays = Math.ceil(Math.abs(new Date() - queryDate) / (1000 * 60 * 60 * 24));
+                    if(diffDays <= 8) dateEl.value = "7";
+                    else if(diffDays <= 15) dateEl.value = "14";
+                    else if(diffDays <= 32) dateEl.value = "30";
+                    else dateEl.value = "";
+                } else if(dateEl) dateEl.value = "";
+
+                const checkboxMap = [
+                    { field: 'langues', inputName: 'lang' },
+                    { field: 'lieuxtravailregion', inputName: 'loc' },
+                    { field: 'typecontrat', inputName: 'contract' }
+                ];
+
+                checkboxMap.forEach(map => {
+                    document.querySelectorAll(`input[name="${map.inputName}"]`).forEach(cb => cb.checked = false);
+                    const re = new RegExp(`${map.field}:"([^"]+)"`, 'g');
+                    const matches = w.matchAll(re);
+                    for (const m of matches) {
+                        const val = m[1].replace(/\\"/g, '"');
+                        const cb = document.querySelector(`input[name="${map.inputName}"][value="${CSS.escape(val)}"]`);
+                        if(cb) cb.checked = true;
+                    }
+                });
+
+                let kw = [];
+                const negs = w.match(/NOT \(search\(titreoffre, "([^"]+)"\)/g);
+                if(negs) negs.forEach(n => {
+                    let term = n.match(/"([^"]+)"/)[1].replace(/\\"/g, '"');
+                    if(term.includes(' ')) term = `"${term}"`;
+                    kw.push("-" + term);
+                });
+                
+                const poss = w.matchAll(/search\(titreoffre, "([^"]+)"\)/g);
+                for(const m of poss) {
+                    let t = m[1].replace(/\\"/g, '"');
+                    if(!w.includes(`NOT (search(titreoffre, "${t.replace(/"/g, '\\"')}")`)) {
+                        if(t.includes(' ')) t = `"${t}"`;
+                        kw.push(t);
+                    }
+                }
+                
+                if(kw.length) document.getElementById('keywords').value = [...new Set(kw)].join(' ');
+
+            } catch(e) {
+                console.warn("Sync UI Error", e);
+            }
+        }
+
+        async function handleSearch(e, isRestore) {
+            if(e) e.preventDefault();
+            
+            const loader = document.getElementById('loadingSpinner');
+            loader.classList.remove('hidden');
+            document.getElementById('resultsCount').textContent = "...";
+            document.getElementById('resultsGrid').innerHTML = "";
+            document.getElementById('btnExport').classList.add('hidden');
+
+            if(!isRestore) updateUrlParams();
+
+            const params = buildQuery();
+            currentFullUrl = `${BASE_URL}?${params.toString()}`;
+            document.getElementById('queryInput').value = decodeURIComponent(params.toString().replace(/&/g, '\n&'));
+
+            try {
+                const res = await fetch(currentFullUrl);
+                if(!res.ok) throw new Error(res.status);
+                const data = await res.json();
+                currentRawData = data;
+                
+                document.getElementById('resultsCount').textContent = `${data.total_count} résultats`;
+                document.getElementById('statusBar').classList.remove('hidden');
+                
+                if(data.total_count > 0) {
+                    renderResults(data);
+                    document.getElementById('btnExport').classList.remove('hidden');
+                    if(!isRestore) showToast(`${data.total_count} offres`, false);
+                } else {
+                    document.getElementById('resultsGrid').innerHTML = `<div class="text-center py-12 text-slate-400">Aucun résultat</div>`;
+                    if(!isRestore) showToast("Aucun résultat");
+                }
+            } catch(err) {
+                document.getElementById('resultsGrid').innerHTML = `<div class="p-4 text-red-500 text-center">Erreur ${err.message}</div>`;
+                showToast("Erreur", true);
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        async function handleCustomSearch() {
+            const val = document.getElementById('queryInput').value.trim().replace(/\n/g, '');
+            if(!val) return;
+            let url = val.startsWith('http') ? val : `${BASE_URL}?${val}`;
+            currentFullUrl = url;
+            parseAndSyncUI(url);
+            
+            const loader = document.getElementById('loadingSpinner');
+            loader.classList.remove('hidden');
+            try {
+                const res = await fetch(url);
+                if(!res.ok) throw new Error(res.status);
+                const data = await res.json();
+                currentRawData = data;
+                document.getElementById('resultsCount').textContent = `${data.total_count} résultats`;
+                renderResults(data);
+                document.getElementById('btnExport').classList.remove('hidden');
+            } catch(e) {
+                showToast("Erreur syntaxe", true);
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        function renderResults(data) {
+            const grid = document.getElementById('resultsGrid');
+            grid.innerHTML = "";
+            data.results.forEach(job => {
+                const title = job.titreoffre || "Sans titre";
+                const comp = job.nomemployeur || "Confidentiel";
+                const city = job.lieuxtravaillocalite ? job.lieuxtravaillocalite[0] : "Belgique";
+                const date = job.datedebutdiffusion ? new Date(job.datedebutdiffusion).toLocaleDateString('fr-BE') : "?";
+                const contract = job.typecontrat || "";
+                
+                const regime = job.regimetravail ? `<span class="px-2 py-0.5 bg-purple-50 text-purple-700 rounded border border-purple-100 text-xs">${job.regimetravail}</span>` : "";
+                const edu = job.niveauxetudes && job.niveauxetudes[0] ? `<span class="px-2 py-0.5 bg-orange-50 text-orange-700 rounded border border-orange-100 text-xs truncate max-w-[150px]">${job.niveauxetudes[0]}</span>` : "";
+
+                let distBadge = "";
+                if(userLocation && job.lieuxtravailgeo && job.lieuxtravailgeo[0]) {
+                    const km = getDist(userLocation.lat, userLocation.lon, job.lieuxtravailgeo[0].lat, job.lieuxtravailgeo[0].lon);
+                    distBadge = `<span class="ml-2 text-xs font-bold text-emerald-600 bg-emerald-50 px-1 rounded">${km} km</span>`;
+                }
+
+                const el = document.createElement('div');
+                el.className = "bg-white border border-slate-200 p-4 rounded-lg hover:shadow-md transition-shadow flex flex-col md:flex-row gap-4 relative overflow-hidden";
+                el.innerHTML = `
+                    <div class="absolute left-0 top-0 bottom-0 w-1 ${contract.includes('indéterminée') ? 'bg-green-500' : 'bg-slate-300'}"></div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex gap-2 mb-1">${regime}${edu}</div>
+                        <h3 class="font-bold text-slate-800 truncate"><a href="${job.url}" target="_blank" class="hover:text-blue-600">${title}</a></h3>
+                        <div class="text-sm text-slate-600 flex items-center gap-2 mt-1">
+                            <i data-lucide="building-2" class="h-3 w-3"></i> ${comp}
+                            <span class="text-slate-300">|</span>
+                            <i data-lucide="map-pin" class="h-3 w-3"></i> ${city} ${distBadge}
+                        </div>
+                    </div>
+                    <div class="text-right flex flex-col items-end justify-between">
+                        <span class="text-xs font-bold bg-slate-100 px-2 py-1 rounded text-slate-700">${contract}</span>
+                        <span class="text-xs text-slate-400 mt-2">${date}</span>
+                    </div>
+                `;
+                grid.appendChild(el);
+            });
+            initIcons();
+        }
+
+        // Geo & Manual
+        window.handleSortChange = function(s) {
+            if(s.value === 'geo_distance') {
+                triggerGeo();
+            } else {
+                document.getElementById('manualLocationContainer').classList.add('hidden');
+                // Keep GPS info if valid userLocation exists
+            }
+        }
+        window.handleDistanceChange = function(s) { if(s.value) triggerGeo(); }
+        
+        function triggerGeo() {
+            if(userLocation) {
+                updateDistanceUI();
+                return;
+            }
+            if(!navigator.geolocation) { fallbackManual(); return; }
+            showToast("GPS...", false);
+            navigator.geolocation.getCurrentPosition(
+                p => {
+                    userLocation = { lat: p.coords.latitude, lon: p.coords.longitude, name: "GPS" };
+                    document.getElementById('gpsInfo').classList.remove('hidden');
+                    document.getElementById('gpsCoords').textContent = "📍 GPS";
+                    updateDistanceUI();
+                    handleSearch();
+                },
+                e => { fallbackManual(); }
+            );
+        }
+        function fallbackManual() {
+            document.getElementById('manualLocationContainer').classList.remove('hidden');
+            document.getElementById('cityInput').focus();
+        }
+        async function manualCitySearch() {
+            const q = document.getElementById('cityInput').value;
+            if(!q) return;
+            try {
+                const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&countrycodes=be&limit=1`);
+                const d = await r.json();
+                if(d.length) {
+                    userLocation = { lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon), name: d[0].name };
+                    document.getElementById('gpsInfo').classList.remove('hidden');
+                    document.getElementById('gpsCoords').textContent = `📍 ${d[0].name}`;
+                    updateDistanceUI();
+                    handleSearch();
+                } else showToast("Ville introuvable", true);
+            } catch(e) { showToast("Erreur", true); }
+        }
+
+        // State
+        function updateUrlParams() {
+            try {
+                const p = new URLSearchParams();
+                const ids = ['keywords', 'categoryFilter', 'limitFilter', 'sortFilter', 'dateFilter', 'regimeFilter', 'educationFilter', 'distanceFilter'];
+                const keys = ['q', 'cat', 'limit', 'sort', 'days', 'regime', 'edu', 'dist'];
+                
+                ids.forEach((id, i) => {
+                    const v = document.getElementById(id).value;
+                    if(v && v !== '50' && v !== 'datedebutdiffusion desc') p.set(keys[i], v);
+                });
+
+                const getVals = (n) => Array.from(document.querySelectorAll(`input[name="${n}"]:checked`)).map(c=>c.value).join(',');
+                const locs = getVals('loc'); if(locs) p.set('loc', locs);
+                const contracts = getVals('contract'); if(contracts) p.set('contract', contracts);
+                const langs = getVals('lang'); if(langs) p.set('lang', langs);
+                
+                if(userLocation) {
+                    p.set('lat', userLocation.lat); p.set('lon', userLocation.lon); p.set('city', userLocation.name);
+                }
+                window.history.replaceState({}, '', `${window.location.pathname}?${p.toString()}`);
+            } catch(e) {}
+        }
+
+        function restoreStateFromUrl() {
+            const p = new URLSearchParams(window.location.search);
+            const map = {
+                'q': 'keywords', 'cat': 'categoryFilter', 'limit': 'limitFilter',
+                'sort': 'sortFilter', 'days': 'dateFilter', 'regime': 'regimeFilter', 'edu': 'educationFilter', 'dist': 'distanceFilter'
+            };
+            
+            for(const [k, id] of Object.entries(map)) {
+                if(p.has(k)) document.getElementById(id).value = p.get(k);
+            }
+
+            const restoreChecks = () => {
+                const keys = ['loc', 'contract', 'lang'];
+                keys.forEach(k => {
+                    if(p.has(k)) {
+                        p.get(k).split(',').forEach(v => {
+                            const cb = document.querySelector(`input[name="${k}"][value="${v}"]`);
+                            if(cb) cb.checked = true;
+                        });
+                    }
+                });
+            };
+            setTimeout(restoreChecks, 500);
+
+            if(p.has('lat')) {
+                userLocation = { lat: parseFloat(p.get('lat')), lon: parseFloat(p.get('lon')), name: p.get('city') };
+                document.getElementById('gpsInfo').classList.remove('hidden');
+                document.getElementById('gpsCoords').textContent = `📍 ${userLocation.name}`;
+                updateDistanceUI();
+            }
+            if([...p.keys()].length) handleSearch(null, true);
+        }
+
+        window.copyUrl = function() {
+            const el = document.createElement('textarea');
+            el.value = currentFullUrl;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            showToast("Copié !");
+        }
+        window.exportDebugJson = function() {
+            if(!currentRawData) return;
+            const a = document.createElement('a');
+            a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentRawData));
+            a.download = "export.json";
+            a.click();
+        }
+
+        init();
+    </script>
+</body>
+</html>
