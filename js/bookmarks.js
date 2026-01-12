@@ -138,6 +138,14 @@ export function getStats() {
 }
 
 /**
+ * Gets all job states.
+ * @returns {Object} All job states mapping
+ */
+export function getAllJobStates() {
+    return getJobStates();
+}
+
+/**
  * Clears all job states (for debugging/maintenance).
  */
 export function clearAllStates() {
