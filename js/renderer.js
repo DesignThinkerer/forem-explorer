@@ -39,11 +39,20 @@ export function renderResults(data) {
     // Check for tracked=true URL parameter (shows all bookmarked OR applied)
     const urlParams = new URLSearchParams(window.location.search);
     const showTrackedOnly = urlParams.get('tracked') === 'true';
+    const showNotedOnly = urlParams.get('noted') === 'true';
     
     // Filter results based on all status filters
     let filteredResults = data.results.filter(job => {
         const jobId = job.numerooffreforem;
         const state = getJobState(jobId);
+        
+        // If noted=true, only show jobs with notes
+        if (showNotedOnly) {
+            if (!hasNote(jobId)) return false;
+            // Still respect ignored filter
+            if (ignoredFilter === 'hide' && state.ignored) return false;
+            return true;
+        }
         
         // If tracked=true, only show bookmarked OR applied jobs
         if (showTrackedOnly) {
