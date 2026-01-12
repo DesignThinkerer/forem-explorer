@@ -171,7 +171,9 @@ export function renderResults(data) {
  * @param {string} type - 'bookmark' or 'applied'
  */
 function updateCardButton(btn, isActive, type) {
+    if (!btn) return; // Safety check
     const icon = btn.querySelector('i');
+    if (!icon) return; // Safety check
     
     if (type === 'bookmark') {
         if (isActive) {
