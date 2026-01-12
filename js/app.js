@@ -8,7 +8,7 @@ import { loadFacets } from './facets.js';
 import { handleSearch, handleCustomSearch, copyUrl, exportDebugJson, importBookmarksFromFile } from './search.js';
 import { triggerGeo, manualCitySearch } from './geolocation.js';
 import { restoreStateFromUrl } from './url-state.js';
-import { closeJobModal, handleBookmarkToggle, handleAppliedToggle } from './job-modal.js';
+import { closeJobModal, handleBookmarkToggle, handleAppliedToggle, handleIgnoredToggle } from './job-modal.js';
 import { renderResults } from './renderer.js';
 
 /**
@@ -77,6 +77,7 @@ window.importBookmarksFromFile = importBookmarksFromFile;
 window.closeJobModal = closeJobModal;
 window.handleBookmarkToggle = handleBookmarkToggle;
 window.handleAppliedToggle = handleAppliedToggle;
+window.handleIgnoredToggle = handleIgnoredToggle;
 
 // Initialize when DOM is ready
 init();

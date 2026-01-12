@@ -4,7 +4,7 @@
  */
 import { initIcons } from './utils.js';
 import { BASE_URL } from './config.js';
-import { getJobState, toggleBookmark, toggleApplied } from './bookmarks.js';
+import { getJobState, toggleBookmark, toggleApplied, toggleIgnored } from './bookmarks.js';
 
 // Store current job ID globally for bookmark/applied handlers
 let currentJobId = null;
@@ -252,6 +252,7 @@ function populateModal(job) {
     const state = getJobState(currentJobId);
     updateBookmarkButton(state.bookmarked);
     updateAppliedButton(state.applied);
+    updateIgnoredButton(state.ignored);
     
     // Reinitialize icons
     setTimeout(() => initIcons(), 50);
@@ -322,6 +323,33 @@ function updateAppliedButton(isApplied) {
 }
 
 /**
+ * Updates the ignored button appearance based on state.
+ * @param {boolean} isIgnored - Whether the job is ignored
+ */
+function updateIgnoredButton(isIgnored) {
+    const btn = document.getElementById('btnIgnored');
+    if (!btn) return; // Safety check
+    
+    if (isIgnored) {
+        btn.classList.remove('border-red-300', 'text-red-700', 'hover:bg-red-50', 'bg-white');
+        btn.classList.add('bg-red-500', 'text-white', 'hover:bg-red-600', 'border-red-500');
+        btn.innerHTML = `
+            <i data-lucide="x-circle" class="h-4 w-4"></i>
+            <span class="ignored-text">Ignoré ✓</span>
+        `;
+    } else {
+        btn.classList.remove('bg-red-500', 'text-white', 'hover:bg-red-600', 'border-red-500');
+        btn.classList.add('border-red-300', 'text-red-700', 'hover:bg-red-50', 'bg-white');
+        btn.innerHTML = `
+            <i data-lucide="eye-off" class="h-4 w-4"></i>
+            <span class="ignored-text">Ignorer</span>
+        `;
+    }
+    
+    setTimeout(() => initIcons(), 10);
+}
+
+/**
  * Handles bookmark toggle action.
  */
 export function handleBookmarkToggle() {
@@ -346,6 +374,20 @@ export function handleAppliedToggle() {
     // Update the result card if visible
     window.dispatchEvent(new CustomEvent('jobStateChanged', { 
         detail: { jobId: currentJobId, type: 'applied', value: newState }
+    }));
+}
+
+/**
+ * Handles ignored toggle action.
+ */
+export function handleIgnoredToggle() {
+    if (!currentJobId) return;
+    const newState = toggleIgnored(currentJobId);
+    updateIgnoredButton(newState);
+    
+    // Update the result card if visible
+    window.dispatchEvent(new CustomEvent('jobStateChanged', { 
+        detail: { jobId: currentJobId, type: 'ignored', value: newState }
     }));
 }
 

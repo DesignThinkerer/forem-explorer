@@ -5,7 +5,7 @@
 import { initIcons, getDistance } from './utils.js';
 import { getUserLocation } from './state.js';
 import { openJobModal } from './job-modal.js';
-import { getJobState, toggleBookmark, toggleApplied } from './bookmarks.js';
+import { getJobState, toggleBookmark, toggleApplied, toggleIgnored } from './bookmarks.js';
 
 /**
  * Renders job search results as a grid of cards.
@@ -149,6 +149,12 @@ export function renderResults(data) {
                             aria-label="Marquer comme postulé">
                         <i data-lucide="${state.applied ? 'check-circle-2' : 'check-circle'}" class="h-4 w-4"></i>
                     </button>
+                    <button class="ignored-btn p-2 rounded-lg transition-all ${state.ignored ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-600'}" 
+                            data-job-id="${jobId}" 
+                            title="Ignorer cette offre"
+                            aria-label="Ignorer cette offre">
+                        <i data-lucide="${state.ignored ? 'x-circle' : 'eye-off'}" class="h-4 w-4"></i>
+                    </button>
                 </div>
                 <span class="text-xs text-slate-400">${date}</span>
             </div>
@@ -157,7 +163,7 @@ export function renderResults(data) {
         // Add click handler to open modal
         el.addEventListener('click', (e) => {
             // Don't open modal if clicking on action buttons
-            if (e.target.closest('.bookmark-btn') || e.target.closest('.applied-btn')) {
+            if (e.target.closest('.bookmark-btn') || e.target.closest('.applied-btn') || e.target.closest('.ignored-btn')) {
                 return;
             }
             openJobModal(job);
@@ -187,6 +193,18 @@ export function renderResults(data) {
             });
         }
         
+        // Add ignored button handler
+        const ignoredBtn = el.querySelector('.ignored-btn');
+        if (ignoredBtn) {
+            ignoredBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation(); // Prevent card click
+                const newState = toggleIgnored(jobId);
+                updateCardButton(ignoredBtn, newState, 'ignored');
+                updateCardBadges(el, jobId); // Update badges too
+            });
+        }
+        
         grid.appendChild(el);
     });
     initIcons();
@@ -196,7 +214,7 @@ export function renderResults(data) {
  * Updates a single button's appearance based on state.
  * @param {HTMLElement} btn - The button element
  * @param {boolean} isActive - Whether the state is active
- * @param {string} type - 'bookmark' or 'applied'
+ * @param {string} type - 'bookmark', 'applied', or 'ignored'
  */
 function updateCardButton(btn, isActive, type) {
     if (!btn) return; // Safety check
@@ -220,6 +238,16 @@ function updateCardButton(btn, isActive, type) {
             btn.className = 'applied-btn p-2 rounded-lg transition-all bg-slate-100 text-slate-400 hover:bg-green-50 hover:text-green-600';
             btn.innerHTML = '<i data-lucide="check-circle" class="h-4 w-4"></i>';
             btn.title = 'Marquer comme postulé';
+        }
+    } else if (type === 'ignored') {
+        if (isActive) {
+            btn.className = 'ignored-btn p-2 rounded-lg transition-all bg-red-500 text-white hover:bg-red-600';
+            btn.innerHTML = '<i data-lucide="x-circle" class="h-4 w-4"></i>';
+            btn.title = 'Ignoré ✓';
+        } else {
+            btn.className = 'ignored-btn p-2 rounded-lg transition-all bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-600';
+            btn.innerHTML = '<i data-lucide="eye-off" class="h-4 w-4"></i>';
+            btn.title = 'Ignorer cette offre';
         }
     }
     
@@ -281,6 +309,9 @@ window.addEventListener('jobStateChanged', (event) => {
     } else if (type === 'applied') {
         const btn = card.querySelector('.applied-btn');
         if (btn) updateCardButton(btn, value, 'applied');
+    } else if (type === 'ignored') {
+        const btn = card.querySelector('.ignored-btn');
+        if (btn) updateCardButton(btn, value, 'ignored');
     }
     
     // Update all badges in the card

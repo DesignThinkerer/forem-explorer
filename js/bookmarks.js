@@ -34,11 +34,11 @@ function saveJobStates(states) {
 /**
  * Gets the state of a specific job.
  * @param {string} jobId - The job numerooffreforem
- * @returns {Object} Job state object { bookmarked, applied, date }
+ * @returns {Object} Job state object { bookmarked, applied, ignored, date }
  */
 export function getJobState(jobId) {
     const states = getJobStates();
-    return states[jobId] || { bookmarked: false, applied: false };
+    return states[jobId] || { bookmarked: false, applied: false, ignored: false };
 }
 
 /**
@@ -48,7 +48,7 @@ export function getJobState(jobId) {
  */
 export function toggleBookmark(jobId) {
     const states = getJobStates();
-    const currentState = states[jobId] || { bookmarked: false, applied: false };
+    const currentState = states[jobId] || { bookmarked: false, applied: false, ignored: false };
     
     currentState.bookmarked = !currentState.bookmarked;
     currentState.date = new Date().toISOString();
@@ -66,7 +66,7 @@ export function toggleBookmark(jobId) {
  */
 export function toggleApplied(jobId) {
     const states = getJobStates();
-    const currentState = states[jobId] || { bookmarked: false, applied: false };
+    const currentState = states[jobId] || { bookmarked: false, applied: false, ignored: false };
     
     currentState.applied = !currentState.applied;
     currentState.appliedDate = new Date().toISOString();
@@ -75,6 +75,24 @@ export function toggleApplied(jobId) {
     saveJobStates(states);
     
     return currentState.applied;
+}
+
+/**
+ * Toggles the ignored state of a job.
+ * @param {string} jobId - The job numerooffreforem
+ * @returns {boolean} New ignored state
+ */
+export function toggleIgnored(jobId) {
+    const states = getJobStates();
+    const currentState = states[jobId] || { bookmarked: false, applied: false, ignored: false };
+    
+    currentState.ignored = !currentState.ignored;
+    currentState.ignoredDate = new Date().toISOString();
+    
+    states[jobId] = currentState;
+    saveJobStates(states);
+    
+    return currentState.ignored;
 }
 
 /**
@@ -93,6 +111,15 @@ export function getBookmarkedJobs() {
 export function getAppliedJobs() {
     const states = getJobStates();
     return Object.keys(states).filter(id => states[id].applied);
+}
+
+/**
+ * Gets all ignored job IDs.
+ * @returns {string[]} Array of ignored job IDs
+ */
+export function getIgnoredJobs() {
+    const states = getJobStates();
+    return Object.keys(states).filter(id => states[id].ignored);
 }
 
 /**
