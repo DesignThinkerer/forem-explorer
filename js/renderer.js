@@ -151,6 +151,7 @@ export function renderResults(data) {
                 e.stopPropagation(); // Prevent card click
                 const newState = toggleBookmark(jobId);
                 updateCardButton(bookmarkBtn, newState, 'bookmark');
+                updateCardBadges(el, jobId); // Update badges too
             });
         }
         
@@ -162,6 +163,7 @@ export function renderResults(data) {
                 e.stopPropagation(); // Prevent card click
                 const newState = toggleApplied(jobId);
                 updateCardButton(appliedBtn, newState, 'applied');
+                updateCardBadges(el, jobId); // Update badges too
             });
         }
         
@@ -178,24 +180,67 @@ export function renderResults(data) {
  */
 function updateCardButton(btn, isActive, type) {
     if (!btn) return; // Safety check
-    const icon = btn.querySelector('i');
-    if (!icon) return; // Safety check
     
     if (type === 'bookmark') {
         if (isActive) {
             btn.className = 'bookmark-btn p-2 rounded-lg transition-all bg-amber-500 text-white hover:bg-amber-600';
-            icon.setAttribute('data-lucide', 'bookmark-check');
+            btn.innerHTML = '<i data-lucide="bookmark-check" class="h-4 w-4"></i>';
+            btn.title = 'À consulter ✓';
         } else {
             btn.className = 'bookmark-btn p-2 rounded-lg transition-all bg-slate-100 text-slate-400 hover:bg-amber-50 hover:text-amber-600';
-            icon.setAttribute('data-lucide', 'bookmark');
+            btn.innerHTML = '<i data-lucide="bookmark" class="h-4 w-4"></i>';
+            btn.title = 'À consulter';
         }
     } else if (type === 'applied') {
         if (isActive) {
             btn.className = 'applied-btn p-2 rounded-lg transition-all bg-green-500 text-white hover:bg-green-600';
-            icon.setAttribute('data-lucide', 'check-circle-2');
+            btn.innerHTML = '<i data-lucide="check-circle-2" class="h-4 w-4"></i>';
+            btn.title = 'Postulé ✓';
         } else {
             btn.className = 'applied-btn p-2 rounded-lg transition-all bg-slate-100 text-slate-400 hover:bg-green-50 hover:text-green-600';
-            icon.setAttribute('data-lucide', 'check-circle');
+            btn.innerHTML = '<i data-lucide="check-circle" class="h-4 w-4"></i>';
+            btn.title = 'Marquer comme postulé';
+        }
+    }
+    
+    // Reinitialize icons for this button
+    initIcons();
+}
+
+/**
+ * Updates the status badges in a card based on current state.
+ * @param {HTMLElement} card - The card element
+ * @param {string} jobId - The job ID
+ */
+function updateCardBadges(card, jobId) {
+    const state = getJobState(jobId);
+    const badgeContainer = card.querySelector('.flex-wrap');
+    if (!badgeContainer) return;
+    
+    // Remove existing status badges
+    const existingBookmark = badgeContainer.querySelector('[data-lucide="bookmark-check"]')?.closest('span');
+    const existingApplied = badgeContainer.querySelector('[data-lucide="check-circle-2"]')?.closest('span');
+    if (existingBookmark) existingBookmark.remove();
+    if (existingApplied) existingApplied.remove();
+    
+    // Add bookmark badge if active
+    if (state.bookmarked) {
+        const badge = document.createElement('span');
+        badge.className = 'px-2 py-0.5 bg-amber-100 text-amber-700 rounded border border-amber-200 text-xs font-semibold flex items-center gap-1';
+        badge.innerHTML = '<i data-lucide="bookmark-check" class="h-3 w-3"></i> À consulter';
+        badgeContainer.insertBefore(badge, badgeContainer.firstChild);
+    }
+    
+    // Add applied badge if active
+    if (state.applied) {
+        const badge = document.createElement('span');
+        badge.className = 'px-2 py-0.5 bg-green-100 text-green-700 rounded border border-green-200 text-xs font-semibold flex items-center gap-1';
+        badge.innerHTML = '<i data-lucide="check-circle-2" class="h-3 w-3"></i> Postulé';
+        const bookmark = badgeContainer.querySelector('[data-lucide="bookmark-check"]')?.closest('span');
+        if (bookmark) {
+            bookmark.after(badge);
+        } else {
+            badgeContainer.insertBefore(badge, badgeContainer.firstChild);
         }
     }
     
