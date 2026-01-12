@@ -62,6 +62,10 @@ function createActivityChart() {
     const states = getAllJobStates();
     const notedJobs = getAllJobsWithNotes();
     
+    // Debug: log what we're working with
+    console.log('Dashboard - Job states:', states);
+    console.log('Dashboard - Notes:', notedJobs);
+    
     // Generate data for last 30 days
     const days = [];
     const bookmarkData = [];
@@ -73,36 +77,50 @@ function createActivityChart() {
     const appliedByDay = {};
     const notesByDay = {};
     
-    Object.values(states).forEach(state => {
-        // Use bookmarkedDate if available, fallback to date
+    // Today's date as fallback for old data without dates
+    const today = new Date().toISOString().split('T')[0];
+    
+    Object.entries(states).forEach(([jobId, state]) => {
+        // Use bookmarkedDate if available, fallback to date, then to today
         if (state.bookmarked) {
             const dateStr = state.bookmarkedDate || state.date;
-            if (dateStr) {
-                const dayKey = new Date(dateStr).toISOString().split('T')[0];
-                bookmarksByDay[dayKey] = (bookmarksByDay[dayKey] || 0) + 1;
-            }
+            const dayKey = dateStr ? new Date(dateStr).toISOString().split('T')[0] : today;
+            bookmarksByDay[dayKey] = (bookmarksByDay[dayKey] || 0) + 1;
+            console.log(`Bookmark ${jobId}: date=${dateStr}, dayKey=${dayKey}`);
         }
-        if (state.applied && state.appliedDate) {
-            const dayKey = new Date(state.appliedDate).toISOString().split('T')[0];
+        if (state.applied) {
+            const dateStr = state.appliedDate;
+            const dayKey = dateStr ? new Date(dateStr).toISOString().split('T')[0] : today;
             appliedByDay[dayKey] = (appliedByDay[dayKey] || 0) + 1;
+            console.log(`Applied ${jobId}: appliedDate=${dateStr}, dayKey=${dayKey}`);
         }
     });
     
     notedJobs.forEach(note => {
-        if (note.createdAt) {
-            const dayKey = new Date(note.createdAt).toISOString().split('T')[0];
-            notesByDay[dayKey] = (notesByDay[dayKey] || 0) + 1;
-        }
+        const dateStr = note.createdAt || note.updatedAt;
+        const dayKey = dateStr ? new Date(dateStr).toISOString().split('T')[0] : today;
+        notesByDay[dayKey] = (notesByDay[dayKey] || 0) + 1;
     });
+    
+    console.log('Bookmarks by day:', bookmarksByDay);
+    console.log('Applied by day:', appliedByDay);
+    console.log('Notes by day:', notesByDay);
     
     for (let i = 29; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
         date.setHours(0, 0, 0, 0);
         
-        const dayKey = date.toISOString().split('T')[0];
+        // Use local date format to avoid timezone issues (not toISOString which converts to UTC)
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const dayKey = `${year}-${month}-${day}`;
+        
         const dayLabel = date.toLocaleDateString('fr-BE', { day: '2-digit', month: '2-digit' });
         days.push(dayLabel);
+        
+        console.log(`Day ${i}: dayKey=${dayKey}, bookmarks=${bookmarksByDay[dayKey] || 0}`);
         
         // Count actions on this day
         bookmarkData.push(bookmarksByDay[dayKey] || 0);

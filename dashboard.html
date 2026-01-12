@@ -44,52 +44,52 @@
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <!-- Total Jobs -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <a href="index.html?bookmarkFilter=only" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group">
                 <div class="flex items-center justify-between mb-3">
-                    <div class="p-3 bg-blue-100 rounded-lg">
+                    <div class="p-3 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
                         <i data-lucide="briefcase" class="h-6 w-6 text-blue-600"></i>
                     </div>
                     <span id="totalJobs" class="text-3xl font-bold text-slate-800">0</span>
                 </div>
                 <h3 class="text-sm font-medium text-slate-600">Total suivi</h3>
                 <p class="text-xs text-slate-400 mt-1">Offres tracées</p>
-            </div>
+            </a>
 
             <!-- Bookmarked -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <a href="index.html?bookmarkFilter=only" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md hover:border-amber-300 transition-all cursor-pointer group">
                 <div class="flex items-center justify-between mb-3">
-                    <div class="p-3 bg-amber-100 rounded-lg">
+                    <div class="p-3 bg-amber-100 rounded-lg group-hover:bg-amber-200 transition-colors">
                         <i data-lucide="bookmark" class="h-6 w-6 text-amber-600"></i>
                     </div>
                     <span id="bookmarkedJobs" class="text-3xl font-bold text-slate-800">0</span>
                 </div>
                 <h3 class="text-sm font-medium text-slate-600">À consulter</h3>
                 <p class="text-xs text-slate-400 mt-1">En attente de lecture</p>
-            </div>
+            </a>
 
             <!-- Applied -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <a href="index.html?appliedFilter=only" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md hover:border-green-300 transition-all cursor-pointer group">
                 <div class="flex items-center justify-between mb-3">
-                    <div class="p-3 bg-green-100 rounded-lg">
+                    <div class="p-3 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
                         <i data-lucide="send" class="h-6 w-6 text-green-600"></i>
                     </div>
                     <span id="appliedJobs" class="text-3xl font-bold text-slate-800">0</span>
                 </div>
                 <h3 class="text-sm font-medium text-slate-600">Postulées</h3>
                 <p class="text-xs text-slate-400 mt-1">Candidatures envoyées</p>
-            </div>
+            </a>
 
             <!-- With Notes -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <a href="index.html?bookmarkFilter=only" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md hover:border-purple-300 transition-all cursor-pointer group">
                 <div class="flex items-center justify-between mb-3">
-                    <div class="p-3 bg-purple-100 rounded-lg">
+                    <div class="p-3 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
                         <i data-lucide="file-edit" class="h-6 w-6 text-purple-600"></i>
                     </div>
                     <span id="notedJobs" class="text-3xl font-bold text-slate-800">0</span>
                 </div>
                 <h3 class="text-sm font-medium text-slate-600">Avec notes</h3>
                 <p class="text-xs text-slate-400 mt-1">Offres annotées</p>
-            </div>
+            </a>
         </div>
 
         <!-- Charts Row -->

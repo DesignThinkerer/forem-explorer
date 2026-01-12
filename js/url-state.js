@@ -28,6 +28,14 @@ export function updateUrlParams() {
         const contracts = getVals('contract'); if (contracts) p.set('contract', contracts);
         const langs = getVals('lang'); if (langs) p.set('lang', langs);
         
+        // Status filters
+        const bookmarkFilter = document.getElementById('bookmarkFilter')?.value;
+        const appliedFilter = document.getElementById('appliedFilter')?.value;
+        const ignoredFilter = document.getElementById('ignoredFilter')?.value;
+        if (bookmarkFilter && bookmarkFilter !== 'all') p.set('bookmarkFilter', bookmarkFilter);
+        if (appliedFilter && appliedFilter !== 'all') p.set('appliedFilter', appliedFilter);
+        if (ignoredFilter && ignoredFilter !== 'show') p.set('ignoredFilter', ignoredFilter);
+        
         const userLocation = getUserLocation();
         if (userLocation) {
             p.set('lat', userLocation.lat); 
@@ -81,6 +89,20 @@ export function restoreStateFromUrl(handleSearchCallback) {
         document.getElementById('gpsInfo').classList.remove('hidden');
         document.getElementById('gpsCoords').textContent = `📍 ${p.get('city')}`;
         updateDistanceUI();
+    }
+    
+    // Restore status filters
+    if (p.has('bookmarkFilter')) {
+        const el = document.getElementById('bookmarkFilter');
+        if (el) el.value = p.get('bookmarkFilter');
+    }
+    if (p.has('appliedFilter')) {
+        const el = document.getElementById('appliedFilter');
+        if (el) el.value = p.get('appliedFilter');
+    }
+    if (p.has('ignoredFilter')) {
+        const el = document.getElementById('ignoredFilter');
+        if (el) el.value = p.get('ignoredFilter');
     }
     
     if ([...p.keys()].length && handleSearchCallback) {
