@@ -7,6 +7,7 @@ import { getUserLocation } from './state.js';
 import { openJobModal } from './job-modal.js';
 import { getJobState, toggleBookmark, toggleApplied, toggleIgnored } from './bookmarks.js';
 import { hasNote } from './notes.js';
+import { getJobTags } from './tags.js';
 
 /**
  * Renders job search results as a grid of cards.
@@ -118,6 +119,21 @@ export function renderResults(data) {
                </span>`
             : "";
         
+        // Custom tags badges (first 2 only)
+        const jobTags = getJobTags(jobId).slice(0, 2);
+        const colorMap = {
+            red: 'bg-red-100 text-red-700 border-red-200',
+            blue: 'bg-blue-100 text-blue-700 border-blue-200',
+            green: 'bg-green-100 text-green-700 border-green-200',
+            purple: 'bg-purple-100 text-purple-700 border-purple-200',
+            orange: 'bg-orange-100 text-orange-700 border-orange-200',
+            pink: 'bg-pink-100 text-pink-700 border-pink-200',
+            yellow: 'bg-yellow-100 text-yellow-700 border-yellow-200'
+        };
+        const tagBadges = jobTags.map(tag => 
+            `<span class="px-2 py-0.5 ${colorMap[tag.color] || 'bg-slate-100 text-slate-700 border-slate-200'} rounded border text-xs font-medium">${tag.name}</span>`
+        ).join('');
+        
         const regime = job.regimetravail 
             ? `<span class="px-2 py-0.5 bg-purple-50 text-purple-700 rounded border border-purple-100 text-xs">${job.regimetravail}</span>` 
             : "";
@@ -140,7 +156,7 @@ export function renderResults(data) {
         el.innerHTML = `
             <div class="absolute left-0 top-0 bottom-0 w-1 ${contract.includes('indéterminée') ? 'bg-green-500' : 'bg-slate-300'}"></div>
             <div class="flex-1 min-w-0">
-                <div class="flex flex-wrap gap-2 mb-1">${bookmarkBadge}${appliedBadge}${noteBadge}${contractBadge}${regime}${edu}</div>
+                <div class="flex flex-wrap gap-2 mb-1">${bookmarkBadge}${appliedBadge}${noteBadge}${tagBadges}${contractBadge}${regime}${edu}</div>
                 <h3 class="font-bold text-slate-800 truncate hover:text-blue-600">${title}</h3>
                 <div class="text-sm text-slate-600 flex items-center gap-2 mt-1">
                     <i data-lucide="building-2" class="h-3 w-3"></i> ${comp}
@@ -282,6 +298,14 @@ function updateCardBadges(card, jobId) {
     const existingBookmark = badgeContainer.querySelector('[data-lucide="bookmark-check"]')?.closest('span');
     const existingApplied = badgeContainer.querySelector('[data-lucide="check-circle-2"]')?.closest('span');
     const existingNote = badgeContainer.querySelector('[data-lucide="file-edit"]')?.closest('span');
+    // Remove existing tag badges
+    const existingTags = badgeContainer.querySelectorAll('span:not([data-lucide])');
+    existingTags.forEach(tag => {
+        if (!tag.querySelector('[data-lucide]') && tag.className.includes('border-')) {
+            tag.remove();
+        }
+    });
+    
     if (existingBookmark) existingBookmark.remove();
     if (existingApplied) existingApplied.remove();
     if (existingNote) existingNote.remove();
@@ -323,6 +347,30 @@ function updateCardBadges(card, jobId) {
         }
     }
     
+    // Add custom tags (first 2 only)
+    const jobTags = getJobTags(jobId).slice(0, 2);
+    const colorMap = {
+        red: 'bg-red-100 text-red-700 border-red-200',
+        blue: 'bg-blue-100 text-blue-700 border-blue-200',
+        green: 'bg-green-100 text-green-700 border-green-200',
+        purple: 'bg-purple-100 text-purple-700 border-purple-200',
+        orange: 'bg-orange-100 text-orange-700 border-orange-200',
+        pink: 'bg-pink-100 text-pink-700 border-pink-200',
+        yellow: 'bg-yellow-100 text-yellow-700 border-yellow-200'
+    };
+    
+    const noteElement = badgeContainer.querySelector('[data-lucide="file-edit"]')?.closest('span');
+    jobTags.forEach(tag => {
+        const badge = document.createElement('span');
+        badge.className = `px-2 py-0.5 ${colorMap[tag.color] || 'bg-slate-100 text-slate-700 border-slate-200'} rounded border text-xs font-medium`;
+        badge.textContent = tag.name;
+        if (noteElement) {
+            noteElement.after(badge);
+        } else {
+            badgeContainer.appendChild(badge);
+        }
+    });
+    
     initIcons();
 }
 
@@ -357,5 +405,16 @@ window.addEventListener('jobNoteChanged', (event) => {
     if (!card) return;
     
     // Update badges to show/hide note indicator
+    updateCardBadges(card, jobId);
+});
+
+// Listen for tag changes and update cards
+window.addEventListener('jobTagsChanged', (event) => {
+    const { jobId } = event.detail;
+    const card = document.querySelector(`[data-job-id="${jobId}"]`);
+    
+    if (!card) return;
+    
+    // Update badges to show tags
     updateCardBadges(card, jobId);
 });

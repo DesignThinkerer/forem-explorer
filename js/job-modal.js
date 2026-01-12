@@ -6,6 +6,7 @@ import { initIcons } from './utils.js';
 import { BASE_URL } from './config.js';
 import { getJobState, toggleBookmark, toggleApplied, toggleIgnored } from './bookmarks.js';
 import { getJobNote, saveJobNote, deleteJobNote } from './notes.js';
+import { getJobTags, listTags, addTagToJob, removeTagFromJob, createTag, deleteTag, getJobsByTag } from './tags.js';
 
 // Store current job ID globally for bookmark/applied handlers
 let currentJobId = null;
@@ -406,25 +407,57 @@ function loadNoteIntoModal(jobId) {
     document.getElementById('noteStatus').value = note.detailedStatus || '';
     document.getElementById('noteDate').value = note.customDate || '';
     
-    // Display tags
-    displayNoteTags(note.tags || []);
+    // Display custom tags from tags system
+    const jobTags = getJobTags(jobId);
+    displayJobTags(jobTags);
 }
 
 /**
- * Displays tags in the modal.
- * @param {Array<string>} tags - Array of tag strings
+ * Displays job tags in the modal.
+ * @param {Array<Object>} tags - Array of tag objects
  */
-function displayNoteTags(tags) {
+function displayJobTags(tags) {
     const container = document.getElementById('noteTagsList');
+    const colorMap = {
+        red: 'bg-red-100 text-red-700 border-red-200',
+        blue: 'bg-blue-100 text-blue-700 border-blue-200',
+        green: 'bg-green-100 text-green-700 border-green-200',
+        purple: 'bg-purple-100 text-purple-700 border-purple-200',
+        orange: 'bg-orange-100 text-orange-700 border-orange-200',
+        pink: 'bg-pink-100 text-pink-700 border-pink-200',
+        yellow: 'bg-yellow-100 text-yellow-700 border-yellow-200'
+    };
+    
     container.innerHTML = tags.map(tag => `
-        <span class="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium">
-            ${tag}
-            <button onclick="window.removeNoteTag('${tag}')" class="hover:text-purple-900">
+        <span class="inline-flex items-center gap-1 px-2 py-1 ${colorMap[tag.color] || 'bg-slate-100 text-slate-700 border-slate-200'} rounded text-xs font-medium border">
+            ${tag.name}
+            <button onclick="window.removeJobTag('${tag.id}')" class="hover:opacity-70">
                 <i data-lucide="x" class="h-3 w-3"></i>
             </button>
         </span>
     `).join('');
+    
+    // Show available tags dropdown
+    populateTagsDropdown();
+    
     initIcons();
+}
+
+/**
+ * Populates the tags dropdown with available tags.
+ */
+function populateTagsDropdown() {
+    const allTags = listTags();
+    const jobTags = getJobTags(currentJobId);
+    const jobTagIds = jobTags.map(t => t.id);
+    
+    const availableTags = allTags.filter(t => !jobTagIds.includes(t.id));
+    
+    const dropdown = document.getElementById('tagSelector');
+    if (!dropdown) return;
+    
+    dropdown.innerHTML = '<option value="">Sélectionner un tag...</option>' +
+        availableTags.map(tag => `<option value="${tag.id}">${tag.name}</option>`).join('');
 }
 
 /**
@@ -436,16 +469,181 @@ export function saveNote() {
     const text = document.getElementById('noteText').value;
     const status = document.getElementById('noteStatus').value;
     const date = document.getElementById('noteDate').value;
-    const tagsContainer = document.getElementById('noteTagsList');
-    const tags = Array.from(tagsContainer.querySelectorAll('span')).map(span => 
-        span.textContent.trim()
-    );
     
     saveJobNote(currentJobId, {
         text,
         detailedStatus: status,
         customDate: date,
-        tags
+        tags: [] // Tags are now managed separately
+    });
+    
+    // Show confirmation
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i data-lucide="check" class="h-4 w-4"></i> Enregistré !';
+    btn.classList.add('bg-green-500', 'hover:bg-green-600');
+    btn.classList.remove('bg-purple-500', 'hover:bg-purple-600');
+    
+    setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.classList.remove('bg-green-500', 'hover:bg-green-600');
+        btn.classList.add('bg-purple-500', 'hover:bg-purple-600');
+        initIcons();
+    }, 2000);
+}
+
+/**
+ * Deletes the current note.
+ */
+export function deleteNote() {
+    if (!currentJobId) return;
+    
+    if (!confirm('Supprimer cette note ?')) return;
+    
+    deleteJobNote(currentJobId);
+    
+    // Clear form
+    document.getElementById('noteText').value = '';
+    document.getElementById('noteStatus').value = '';
+    document.getElementById('noteDate').value = '';
+}
+
+/**
+ * Adds a tag to the current job from dropdown.
+ */
+export function addJobTagFromDropdown() {
+    if (!currentJobId) return;
+    
+    const dropdown = document.getElementById('tagSelector');
+    const tagId = dropdown.value;
+    
+    if (!tagId) return;
+    
+    addTagToJob(currentJobId, tagId);
+    
+    // Reload tags display
+    const jobTags = getJobTags(currentJobId);
+    displayJobTags(jobTags);
+    
+    // Dispatch event for UI updates
+    window.dispatchEvent(new CustomEvent('jobTagsChanged', {
+        detail: { jobId: currentJobId }
+    }));
+}
+
+/**
+ * Removes a tag from the current job.
+ * @param {string} tagId - The tag ID to remove
+ */
+export function removeJobTag(tagId) {
+    if (!currentJobId) return;
+    
+    removeTagFromJob(currentJobId, tagId);
+    
+    // Reload tags display
+    const jobTags = getJobTags(currentJobId);
+    displayJobTags(jobTags);
+    
+    // Dispatch event for UI updates
+    window.dispatchEvent(new CustomEvent('jobTagsChanged', {
+        detail: { jobId: currentJobId }
+    }));
+}
+
+/**
+ * Opens tag management modal.
+ */
+export function openTagManagement() {
+    document.getElementById('tagManagementModal').classList.remove('hidden');
+    refreshTagManagementList();
+}
+
+/**
+ * Closes tag management modal.
+ */
+export function closeTagManagement() {
+    document.getElementById('tagManagementModal').classList.add('hidden');
+}
+
+/**
+ * Refreshes the tag management list.
+ */
+function refreshTagManagementList() {
+    const stats = listTags().map(tag => {
+        const count = getJobsByTag(tag.id).length;
+        return { ...tag, count };
+    });
+    
+    const container = document.getElementById('tagManagementList');
+    const colorMap = {
+        red: 'bg-red-100 text-red-700',
+        blue: 'bg-blue-100 text-blue-700',
+        green: 'bg-green-100 text-green-700',
+        purple: 'bg-purple-100 text-purple-700',
+        orange: 'bg-orange-100 text-orange-700',
+        pink: 'bg-pink-100 text-pink-700',
+        yellow: 'bg-yellow-100 text-yellow-700'
+    };
+    
+    container.innerHTML = stats.map(tag => `
+        <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <div class="px-3 py-1 ${colorMap[tag.color] || 'bg-slate-100 text-slate-700'} rounded font-medium text-sm">
+                ${tag.name}
+            </div>
+            <div class="text-xs text-slate-500">${tag.count} offre${tag.count > 1 ? 's' : ''}</div>
+            <div class="ml-auto flex gap-2">
+                ${!tag.id.startsWith('custom-') ? '<span class="text-xs text-slate-400">Prédéfini</span>' : `
+                    <button onclick="window.deleteCustomTag('${tag.id}')" class="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-xs">
+                        Supprimer
+                    </button>
+                `}
+            </div>
+        </div>
+    `).join('');
+    
+    initIcons();
+}
+
+/**
+ * Creates a new custom tag.
+ */
+export function createNewTag() {
+    const name = document.getElementById('newTagName').value.trim();
+    const color = document.getElementById('newTagColor').value;
+    
+    if (!name) {
+        alert('Veuillez entrer un nom de tag');
+        return;
+    }
+    
+    try {
+        createTag(name, color);
+        document.getElementById('newTagName').value = '';
+        refreshTagManagementList();
+        populateTagsDropdown();
+    } catch (e) {
+        alert(e.message);
+    }
+}
+
+/**
+ * Deletes a custom tag.
+ * @param {string} tagId - The tag ID
+ */
+export function deleteCustomTag(tagId) {
+    if (!confirm('Supprimer ce tag ? Il sera retiré de toutes les offres.')) return;
+    
+    deleteTag(tagId);
+    refreshTagManagementList();
+    
+    // Reload current job tags if modal is open
+    if (currentJobId) {
+        const jobTags = getJobTags(currentJobId);
+        displayJobTags(jobTags);
+    }
+}
+
+// Close modal on escape key
     });
     
     // Show confirmation
@@ -478,44 +676,6 @@ export function deleteNote() {
     document.getElementById('noteStatus').value = '';
     document.getElementById('noteDate').value = '';
     document.getElementById('noteTagsList').innerHTML = '';
-}
-
-/**
- * Adds a tag to the current note.
- */
-export function addNoteTag() {
-    const input = document.getElementById('noteTagInput');
-    const tag = input.value.trim();
-    
-    if (!tag) return;
-    
-    const tagsContainer = document.getElementById('noteTagsList');
-    const existingTags = Array.from(tagsContainer.querySelectorAll('span')).map(span => 
-        span.textContent.trim()
-    );
-    
-    if (existingTags.includes(tag)) {
-        alert('Ce tag existe déjà');
-        return;
-    }
-    
-    existingTags.push(tag);
-    displayNoteTags(existingTags);
-    input.value = '';
-}
-
-/**
- * Removes a tag from the current note.
- * @param {string} tag - The tag to remove
- */
-export function removeNoteTag(tag) {
-    const tagsContainer = document.getElementById('noteTagsList');
-    const existingTags = Array.from(tagsContainer.querySelectorAll('span')).map(span => 
-        span.textContent.trim()
-    );
-    
-    const filtered = existingTags.filter(t => t !== tag);
-    displayNoteTags(filtered);
 }
 
 // Close modal on escape key
