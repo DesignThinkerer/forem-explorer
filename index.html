@@ -50,6 +50,24 @@
                 <!-- Using direct function call for reliability -->
                 <form id="searchForm" class="flex flex-col gap-6" onsubmit="window.handleSearch(event)">
                     
+                    <!-- Saved Searches Bar -->
+                    <div class="flex items-center gap-2 pb-4 border-b border-slate-200">
+                        <div class="flex-1 flex items-center gap-2">
+                            <i data-lucide="star" class="h-4 w-4 text-amber-500"></i>
+                            <select id="savedSearchesDropdown" onchange="window.handleLoadSavedSearch(this)" class="flex-1 px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="">Recherches sauvegardées...</option>
+                            </select>
+                        </div>
+                        <button type="button" onclick="window.handleSaveCurrentSearch()" class="flex items-center gap-2 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-all shadow-sm">
+                            <i data-lucide="bookmark-plus" class="h-4 w-4"></i>
+                            Sauvegarder
+                        </button>
+                        <button type="button" onclick="window.handleManageSavedSearches()" class="flex items-center gap-2 px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-sm font-medium transition-all">
+                            <i data-lucide="settings" class="h-4 w-4"></i>
+                            Gérer
+                        </button>
+                    </div>
+                    
                     <!-- Section 1: Filtres de Contenu (Where Clause) -->
                     <div>
                         <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
@@ -189,6 +207,16 @@
                                     <option value="all">Toutes</option>
                                     <option value="only">Postulées uniquement</option>
                                     <option value="exclude">Cacher les postulées</option>
+                                </select>
+                            </div>
+
+                            <!-- Ignored Filter -->
+                            <div class="md:col-span-1">
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">🚫 Ignorées</label>
+                                <select id="ignoredFilter" onchange="window.handleStatusFilterChange()" class="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-sm text-slate-600 focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="show">Afficher</option>
+                                    <option value="hide">Masquer</option>
+                                    <option value="only">Uniquement</option>
                                 </select>
                             </div>
 
@@ -349,6 +377,29 @@
                         <span>Voir la description complète sur Le Forem</span>
                         <i data-lucide="external-link" class="h-5 w-5"></i>
                     </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Saved Searches Management Modal -->
+    <div id="savedSearchesModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <div class="flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-amber-50 to-slate-50">
+                <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="star" class="h-6 w-6 text-amber-500"></i>
+                    Recherches sauvegardées
+                </h2>
+                <button onclick="window.closeSavedSearchesModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <i data-lucide="x" class="h-6 w-6"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6">
+                <div id="savedSearchesList" class="space-y-3"></div>
+                <div id="noSavedSearches" class="hidden text-center py-12">
+                    <i data-lucide="inbox" class="h-12 w-12 text-slate-300 mx-auto mb-4"></i>
+                    <p class="text-slate-500">Aucune recherche sauvegardée</p>
+                    <p class="text-slate-400 text-sm mt-2">Utilisez le bouton Sauvegarder pour enregistrer vos recherches</p>
                 </div>
             </div>
         </div>

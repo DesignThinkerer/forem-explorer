@@ -32,11 +32,16 @@ export function renderResults(data) {
     // Get status filters
     const bookmarkFilter = document.getElementById('bookmarkFilter')?.value || 'all';
     const appliedFilter = document.getElementById('appliedFilter')?.value || 'all';
+    const ignoredFilter = document.getElementById('ignoredFilter')?.value || 'show';
     
-    // Filter results based on both status filters
+    // Filter results based on all status filters
     let filteredResults = data.results.filter(job => {
         const jobId = job.numerooffreforem;
         const state = getJobState(jobId);
+        
+        // Check ignored filter first (most restrictive)
+        if (ignoredFilter === 'hide' && state.ignored) return false;
+        if (ignoredFilter === 'only' && !state.ignored) return false;
         
         // Check bookmark filter
         let bookmarkPass = true;
@@ -66,7 +71,7 @@ export function renderResults(data) {
                 appliedPass = true;
         }
         
-        // Job must pass both filters
+        // Job must pass all filters
         return bookmarkPass && appliedPass;
     });
     
