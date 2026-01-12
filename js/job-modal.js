@@ -644,41 +644,6 @@ export function deleteCustomTag(tagId) {
 }
 
 // Close modal on escape key
-    });
-    
-    // Show confirmation
-    const btn = event.target;
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i data-lucide="check" class="h-4 w-4"></i> Enregistré !';
-    btn.classList.add('bg-green-500', 'hover:bg-green-600');
-    btn.classList.remove('bg-purple-500', 'hover:bg-purple-600');
-    
-    setTimeout(() => {
-        btn.innerHTML = originalText;
-        btn.classList.remove('bg-green-500', 'hover:bg-green-600');
-        btn.classList.add('bg-purple-500', 'hover:bg-purple-600');
-        initIcons();
-    }, 2000);
-}
-
-/**
- * Deletes the current note.
- */
-export function deleteNote() {
-    if (!currentJobId) return;
-    
-    if (!confirm('Supprimer cette note ?')) return;
-    
-    deleteJobNote(currentJobId);
-    
-    // Clear form
-    document.getElementById('noteText').value = '';
-    document.getElementById('noteStatus').value = '';
-    document.getElementById('noteDate').value = '';
-    document.getElementById('noteTagsList').innerHTML = '';
-}
-
-// Close modal on escape key
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         closeJobModal();
