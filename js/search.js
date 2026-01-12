@@ -61,7 +61,7 @@ export async function handleSearch(e, isRestore) {
 /**
  * Executes a custom search using a manually entered query string or full URL.
  * Allows advanced users to input raw API query parameters.
- * Syncs the UI filters to match the custom query.
+ * Syncs the UI filters to match the custom query and updates the browser URL.
  * @returns {Promise<void>}
  */
 export async function handleCustomSearch() {
@@ -70,6 +70,9 @@ export async function handleCustomSearch() {
     let url = val.startsWith('http') ? val : `${BASE_URL}?${val}`;
     setFullUrl(url);
     parseAndSyncUI(url);
+    
+    // Update URL parameters after syncing UI
+    updateUrlParams();
     
     const loader = document.getElementById('loadingSpinner');
     loader.classList.remove('hidden');
