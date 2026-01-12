@@ -29,27 +29,45 @@ export function renderResults(data) {
     const userLocation = getUserLocation();
     grid.innerHTML = "";
     
-    // Get status filter
-    const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+    // Get status filters
+    const bookmarkFilter = document.getElementById('bookmarkFilter')?.value || 'all';
+    const appliedFilter = document.getElementById('appliedFilter')?.value || 'all';
     
-    // Filter results based on status
+    // Filter results based on both status filters
     let filteredResults = data.results.filter(job => {
         const jobId = job.numerooffreforem;
         const state = getJobState(jobId);
         
-        switch (statusFilter) {
-            case 'bookmarked':
-                return state.bookmarked;
-            case 'applied':
-                return state.applied;
-            case 'not-applied':
-                return !state.applied;
-            case 'exclude-applied':
-                return !state.applied;
+        // Check bookmark filter
+        let bookmarkPass = true;
+        switch (bookmarkFilter) {
+            case 'only':
+                bookmarkPass = state.bookmarked;
+                break;
+            case 'exclude':
+                bookmarkPass = !state.bookmarked;
+                break;
             case 'all':
             default:
-                return true;
+                bookmarkPass = true;
         }
+        
+        // Check applied filter
+        let appliedPass = true;
+        switch (appliedFilter) {
+            case 'only':
+                appliedPass = state.applied;
+                break;
+            case 'exclude':
+                appliedPass = !state.applied;
+                break;
+            case 'all':
+            default:
+                appliedPass = true;
+        }
+        
+        // Job must pass both filters
+        return bookmarkPass && appliedPass;
     });
     
     // Show message if no results after filtering
@@ -57,8 +75,8 @@ export function renderResults(data) {
         grid.innerHTML = `
             <div class="col-span-full text-center py-12">
                 <i data-lucide="filter-x" class="h-12 w-12 text-slate-300 mx-auto mb-4"></i>
-                <p class="text-slate-500 font-medium">Aucune offre ne correspond au filtre de statut sélectionné.</p>
-                <p class="text-slate-400 text-sm mt-2">Essayez de changer le filtre ou d'effectuer une nouvelle recherche.</p>
+                <p class="text-slate-500 font-medium">Aucune offre ne correspond aux filtres sélectionnés.</p>
+                <p class="text-slate-400 text-sm mt-2">Essayez de changer les filtres ou d'effectuer une nouvelle recherche.</p>
             </div>
         `;
         initIcons();
