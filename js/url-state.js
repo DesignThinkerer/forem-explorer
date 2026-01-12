@@ -105,6 +105,14 @@ export function restoreStateFromUrl(handleSearchCallback) {
         if (el) el.value = p.get('ignoredFilter');
     }
     
+    // When tracked=true, set both filters to 'all' for visual consistency
+    if (p.get('tracked') === 'true') {
+        const bookmarkEl = document.getElementById('bookmarkFilter');
+        const appliedEl = document.getElementById('appliedFilter');
+        if (bookmarkEl) bookmarkEl.value = 'all';
+        if (appliedEl) appliedEl.value = 'all';
+    }
+    
     if ([...p.keys()].length && handleSearchCallback) {
         handleSearchCallback(null, true);
     }
