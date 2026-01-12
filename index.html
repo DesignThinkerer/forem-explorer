@@ -452,7 +452,7 @@
     </div>
 
     <!-- Saved Searches Management Modal -->
-    <div id="savedSearchesModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div id="savedSearchesModal" onclick="if(event.target === this) window.closeSavedSearchesModal()" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
             <div class="flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-amber-50 to-slate-50">
                 <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
@@ -475,7 +475,7 @@
     </div>
 
     <!-- Tag Management Modal -->
-    <div id="tagManagementModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div id="tagManagementModal" onclick="if(event.target === this) window.closeTagManagement()" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-hidden flex flex-col">
             <div class="flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-purple-50 to-slate-50">
                 <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
