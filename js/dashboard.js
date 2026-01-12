@@ -64,19 +64,42 @@ function createActivityChart() {
     const appliedData = [];
     const noteData = [];
     
+    // Pre-process: group activities by day
+    const bookmarksByDay = {};
+    const appliedByDay = {};
+    const notesByDay = {};
+    
+    Object.values(states).forEach(state => {
+        if (state.bookmarked && state.date) {
+            const dayKey = new Date(state.date).toISOString().split('T')[0];
+            bookmarksByDay[dayKey] = (bookmarksByDay[dayKey] || 0) + 1;
+        }
+        if (state.applied && state.appliedDate) {
+            const dayKey = new Date(state.appliedDate).toISOString().split('T')[0];
+            appliedByDay[dayKey] = (appliedByDay[dayKey] || 0) + 1;
+        }
+    });
+    
+    notedJobs.forEach(note => {
+        if (note.createdAt) {
+            const dayKey = new Date(note.createdAt).toISOString().split('T')[0];
+            notesByDay[dayKey] = (notesByDay[dayKey] || 0) + 1;
+        }
+    });
+    
     for (let i = 29; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
         date.setHours(0, 0, 0, 0);
         
+        const dayKey = date.toISOString().split('T')[0];
         const dayLabel = date.toLocaleDateString('fr-BE', { day: '2-digit', month: '2-digit' });
         days.push(dayLabel);
         
-        // Count actions on this day (simplified - we don't have exact timestamps)
-        // For demo purposes, we'll distribute evenly
-        bookmarkData.push(0);
-        appliedData.push(0);
-        noteData.push(0);
+        // Count actions on this day
+        bookmarkData.push(bookmarksByDay[dayKey] || 0);
+        appliedData.push(appliedByDay[dayKey] || 0);
+        noteData.push(notesByDay[dayKey] || 0);
     }
     
     new Chart(ctx, {
