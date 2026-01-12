@@ -111,6 +111,9 @@ export function renderResults(data) {
         const edu = job.niveauxetudes && job.niveauxetudes[0] 
             ? `<span class="px-2 py-0.5 bg-orange-50 text-orange-700 rounded border border-orange-100 text-xs truncate max-w-[150px]">${job.niveauxetudes[0]}</span>` 
             : "";
+        const contractBadge = contract 
+            ? `<span class="px-2 py-0.5 ${contract.includes('indéterminée') ? 'bg-green-50 text-green-700 border-green-100' : 'bg-slate-50 text-slate-700 border-slate-100'} rounded border text-xs">${contract}</span>` 
+            : "";
 
         let distBadge = "";
         if (userLocation && job.lieuxtravailgeo && job.lieuxtravailgeo[0]) {
@@ -124,7 +127,7 @@ export function renderResults(data) {
         el.innerHTML = `
             <div class="absolute left-0 top-0 bottom-0 w-1 ${contract.includes('indéterminée') ? 'bg-green-500' : 'bg-slate-300'}"></div>
             <div class="flex-1 min-w-0">
-                <div class="flex flex-wrap gap-2 mb-1">${bookmarkBadge}${appliedBadge}${regime}${edu}</div>
+                <div class="flex flex-wrap gap-2 mb-1">${bookmarkBadge}${appliedBadge}${contractBadge}${regime}${edu}</div>
                 <h3 class="font-bold text-slate-800 truncate hover:text-blue-600">${title}</h3>
                 <div class="text-sm text-slate-600 flex items-center gap-2 mt-1">
                     <i data-lucide="building-2" class="h-3 w-3"></i> ${comp}
@@ -147,7 +150,6 @@ export function renderResults(data) {
                         <i data-lucide="${state.applied ? 'check-circle-2' : 'check-circle'}" class="h-4 w-4"></i>
                     </button>
                 </div>
-                <span class="text-xs font-bold bg-slate-100 px-2 py-1 rounded text-slate-700">${contract}</span>
                 <span class="text-xs text-slate-400">${date}</span>
             </div>
         `;
