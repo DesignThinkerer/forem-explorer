@@ -11,6 +11,7 @@ import { restoreStateFromUrl } from './url-state.js';
 import { closeJobModal, handleBookmarkToggle, handleAppliedToggle, handleIgnoredToggle, saveNote, deleteNote, addJobTagFromDropdown, removeJobTag, openTagManagement, closeTagManagement, createNewTag, deleteCustomTag } from './job-modal.js';
 import { renderResults } from './renderer.js';
 import { saveCurrentSearch, loadSavedSearch, deleteSavedSearch, listSavedSearches } from './saved-searches.js';
+import { getActiveAlerts, dismissAlert, showToast } from './alerts.js';
 
 /**
  * Initializes the application.
@@ -21,6 +22,91 @@ async function init() {
     initIcons();
     await loadFacets();
     restoreStateFromUrl(handleSearch);
+    checkAndDisplayAlerts();
+}
+
+/**
+ * Checks for active alerts and displays them.
+ */
+function checkAndDisplayAlerts() {
+    const alerts = getActiveAlerts();
+    
+    if (alerts.length > 0) {
+        const alertsPanel = document.getElementById('alertsPanel');
+        if (alertsPanel) {
+            displayAlerts(alerts);
+        }
+        
+        // Show toast for critical/high urgency alerts
+        const urgentAlerts = alerts.filter(a => a.urgency === 'critical' || a.urgency === 'high');
+        if (urgentAlerts.length > 0) {
+            const alert = urgentAlerts[0];
+            setTimeout(() => {
+                showToast(alert.title, alert.urgency === 'critical' ? 'error' : 'warning', 5000);
+            }, 1000);
+        }
+    }
+}
+
+/**
+ * Displays alerts in the alerts panel.
+ * @param {Array<Object>} alerts - Array of alert objects
+ */
+function displayAlerts(alerts) {
+    const panel = document.getElementById('alertsPanel');
+    if (!panel) return;
+    
+    const colorMap = {
+        red: 'border-red-300 bg-red-50',
+        orange: 'border-orange-300 bg-orange-50',
+        yellow: 'border-yellow-300 bg-yellow-50',
+        blue: 'border-blue-300 bg-blue-50'
+    };
+    
+    const iconColorMap = {
+        red: 'text-red-600',
+        orange: 'text-orange-600',
+        yellow: 'text-yellow-600',
+        blue: 'text-blue-600'
+    };
+    
+    const html = alerts.map(alert => `
+        <div class="flex items-start gap-3 p-4 rounded-lg border-2 ${colorMap[alert.color] || 'border-slate-300 bg-slate-50'}">
+            <div class="flex-shrink-0 p-2 bg-white rounded-lg shadow-sm">
+                <i data-lucide="${alert.icon}" class="h-5 w-5 ${iconColorMap[alert.color] || 'text-slate-600'}"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h4 class="font-semibold text-slate-800 text-sm">${alert.title}</h4>
+                <p class="text-xs text-slate-600 mt-1">${alert.message}</p>
+            </div>
+            <div class="flex gap-2">
+                ${alert.actionUrl ? `<a href="${alert.actionUrl}" class="px-3 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded text-xs font-medium transition-all">${alert.actionLabel || 'Voir'}</a>` : ''}
+                <button onclick="window.dismissAlertById('${alert.id}')" class="px-2 py-1 text-slate-400 hover:text-slate-600 transition-colors">
+                    <i data-lucide="x" class="h-4 w-4"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+    
+    panel.innerHTML = html;
+    panel.classList.remove('hidden');
+    initIcons();
+}
+
+/**
+ * Dismisses an alert by ID.
+ * @param {string} alertId - The alert ID
+ */
+export function dismissAlertById(alertId) {
+    dismissAlert(alertId);
+    checkAndDisplayAlerts();
+    
+    // Recheck if panel should be hidden
+    const alerts = getActiveAlerts();
+    if (alerts.length === 0) {
+        const panel = document.getElementById('alertsPanel');
+        if (panel) panel.classList.add('hidden');
+    }
 }
 
 /**
@@ -187,6 +273,7 @@ window.openTagManagement = openTagManagement;
 window.closeTagManagement = closeTagManagement;
 window.createNewTag = createNewTag;
 window.deleteCustomTag = deleteCustomTag;
+window.dismissAlertById = dismissAlertById;
 
 // Initialize when DOM is ready
 init();
