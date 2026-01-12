@@ -50,8 +50,17 @@ export function toggleBookmark(jobId) {
     const states = getJobStates();
     const currentState = states[jobId] || { bookmarked: false, applied: false, ignored: false };
     
-    currentState.bookmarked = !currentState.bookmarked;
-    currentState.date = new Date().toISOString();
+    const wasBookmarked = currentState.bookmarked;
+    currentState.bookmarked = !wasBookmarked;
+    
+    // Only set date when bookmarking, not when removing
+    if (!wasBookmarked) {
+        currentState.bookmarkedDate = new Date().toISOString();
+    }
+    // Keep legacy 'date' field for backward compatibility
+    if (!currentState.date) {
+        currentState.date = new Date().toISOString();
+    }
     
     states[jobId] = currentState;
     saveJobStates(states);
@@ -68,8 +77,13 @@ export function toggleApplied(jobId) {
     const states = getJobStates();
     const currentState = states[jobId] || { bookmarked: false, applied: false, ignored: false };
     
-    currentState.applied = !currentState.applied;
-    currentState.appliedDate = new Date().toISOString();
+    const wasApplied = currentState.applied;
+    currentState.applied = !wasApplied;
+    
+    // Only set date when marking as applied, not when removing
+    if (!wasApplied) {
+        currentState.appliedDate = new Date().toISOString();
+    }
     
     states[jobId] = currentState;
     saveJobStates(states);
@@ -86,8 +100,13 @@ export function toggleIgnored(jobId) {
     const states = getJobStates();
     const currentState = states[jobId] || { bookmarked: false, applied: false, ignored: false };
     
-    currentState.ignored = !currentState.ignored;
-    currentState.ignoredDate = new Date().toISOString();
+    const wasIgnored = currentState.ignored;
+    currentState.ignored = !wasIgnored;
+    
+    // Only set date when ignoring, not when removing
+    if (!wasIgnored) {
+        currentState.ignoredDate = new Date().toISOString();
+    }
     
     states[jobId] = currentState;
     saveJobStates(states);

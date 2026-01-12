@@ -6,6 +6,10 @@ import { initIcons } from './utils.js';
 import { getAllJobStates } from './bookmarks.js';
 import { getAllJobsWithNotes, getUpcomingDates } from './notes.js';
 
+// Chart instances for cleanup
+let activityChartInstance = null;
+let statusChartInstance = null;
+
 /**
  * Initializes the dashboard with current data.
  */
@@ -70,9 +74,13 @@ function createActivityChart() {
     const notesByDay = {};
     
     Object.values(states).forEach(state => {
-        if (state.bookmarked && state.date) {
-            const dayKey = new Date(state.date).toISOString().split('T')[0];
-            bookmarksByDay[dayKey] = (bookmarksByDay[dayKey] || 0) + 1;
+        // Use bookmarkedDate if available, fallback to date
+        if (state.bookmarked) {
+            const dateStr = state.bookmarkedDate || state.date;
+            if (dateStr) {
+                const dayKey = new Date(dateStr).toISOString().split('T')[0];
+                bookmarksByDay[dayKey] = (bookmarksByDay[dayKey] || 0) + 1;
+            }
         }
         if (state.applied && state.appliedDate) {
             const dayKey = new Date(state.appliedDate).toISOString().split('T')[0];
@@ -102,7 +110,12 @@ function createActivityChart() {
         noteData.push(notesByDay[dayKey] || 0);
     }
     
-    new Chart(ctx, {
+    // Destroy existing chart if present
+    if (activityChartInstance) {
+        activityChartInstance.destroy();
+    }
+    
+    activityChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
             labels: days,
@@ -174,7 +187,12 @@ function createStatusChart() {
         }
     });
     
-    new Chart(ctx, {
+    // Destroy existing chart if present
+    if (statusChartInstance) {
+        statusChartInstance.destroy();
+    }
+    
+    statusChartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
             labels: ['À consulter', 'Postulées', 'Consultées + Postulées', 'Ignorées'],
