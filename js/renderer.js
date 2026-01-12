@@ -145,19 +145,25 @@ export function renderResults(data) {
         
         // Add bookmark button handler
         const bookmarkBtn = el.querySelector('.bookmark-btn');
-        bookmarkBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent card click
-            const newState = toggleBookmark(jobId);
-            updateCardButton(bookmarkBtn, newState, 'bookmark');
-        });
+        if (bookmarkBtn) {
+            bookmarkBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation(); // Prevent card click
+                const newState = toggleBookmark(jobId);
+                updateCardButton(bookmarkBtn, newState, 'bookmark');
+            });
+        }
         
         // Add applied button handler
         const appliedBtn = el.querySelector('.applied-btn');
-        appliedBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent card click
-            const newState = toggleApplied(jobId);
-            updateCardButton(appliedBtn, newState, 'applied');
-        });
+        if (appliedBtn) {
+            appliedBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation(); // Prevent card click
+                const newState = toggleApplied(jobId);
+                updateCardButton(appliedBtn, newState, 'applied');
+            });
+        }
         
         grid.appendChild(el);
     });
