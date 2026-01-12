@@ -9,6 +9,7 @@ import { handleSearch, handleCustomSearch, copyUrl, exportDebugJson } from './se
 import { triggerGeo, manualCitySearch } from './geolocation.js';
 import { restoreStateFromUrl } from './url-state.js';
 import { closeJobModal, handleBookmarkToggle, handleAppliedToggle } from './job-modal.js';
+import { renderResults } from './renderer.js';
 
 /**
  * Initializes the application.
@@ -51,11 +52,24 @@ function handleManualCitySearch() {
     manualCitySearch(handleSearch);
 }
 
+/**
+ * Handles status filter changes.
+ * Re-renders results with the new filter applied.
+ */
+function handleStatusFilterChange() {
+    // Get current results from the last search
+    const lastResults = window.lastSearchResults;
+    if (lastResults) {
+        renderResults(lastResults);
+    }
+}
+
 // Expose functions to window for HTML event handlers
 window.handleSearch = handleSearch;
 window.handleCustomSearch = handleCustomSearch;
 window.handleSortChange = handleSortChange;
 window.handleDistanceChange = handleDistanceChange;
+window.handleStatusFilterChange = handleStatusFilterChange;
 window.manualCitySearch = handleManualCitySearch;
 window.copyUrl = copyUrl;
 window.exportDebugJson = exportDebugJson;

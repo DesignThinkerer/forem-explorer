@@ -43,6 +43,8 @@ export async function handleSearch(e, isRestore) {
         document.getElementById('statusBar').classList.remove('hidden');
         
         if (data.total_count > 0) {
+            // Store results globally for status filter
+            window.lastSearchResults = data;
             renderResults(data);
             document.getElementById('btnExport').classList.remove('hidden');
             if (!isRestore) showToast(`${data.total_count} offres`, false);
@@ -82,6 +84,8 @@ export async function handleCustomSearch() {
         const data = await res.json();
         setRawData(data);
         document.getElementById('resultsCount').textContent = `${data.total_count} résultats`;
+        // Store results globally for status filter
+        window.lastSearchResults = data;
         renderResults(data);
         document.getElementById('btnExport').classList.remove('hidden');
     } catch (e) {
