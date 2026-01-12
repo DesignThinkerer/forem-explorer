@@ -48,6 +48,10 @@ export function renderResults(data) {
         // Check bookmark filter
         let bookmarkPass = true;
         switch (bookmarkFilter) {
+            case 'tracked':
+                // Show all tracked jobs (bookmarked OR applied)
+                bookmarkPass = state.bookmarked || state.applied;
+                break;
             case 'only':
                 bookmarkPass = state.bookmarked;
                 break;
