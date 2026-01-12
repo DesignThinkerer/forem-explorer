@@ -153,14 +153,48 @@ function handleStatusFilterChange() {
 
 /**
  * Handles saving the current search configuration.
+ * Opens a modal to enter the search name.
  */
 function handleSaveCurrentSearch() {
-    const name = prompt('Nom de cette recherche:');
-    if (!name) return;
+    const modal = document.getElementById('saveSearchModal');
+    const input = document.getElementById('saveSearchName');
+    
+    input.value = '';
+    modal.classList.remove('hidden');
+    
+    // Focus input after modal is visible
+    setTimeout(() => input.focus(), 100);
+    
+    initIcons();
+}
+
+/**
+ * Closes the save search modal.
+ */
+function closeSaveSearchModal() {
+    document.getElementById('saveSearchModal').classList.add('hidden');
+}
+
+/**
+ * Confirms and saves the search with the entered name.
+ */
+function confirmSaveSearch() {
+    const input = document.getElementById('saveSearchName');
+    const name = input.value.trim();
+    
+    if (!name) {
+        input.focus();
+        input.classList.add('border-red-500');
+        setTimeout(() => input.classList.remove('border-red-500'), 2000);
+        return;
+    }
     
     saveCurrentSearch(name);
     refreshSavedSearchesDropdown();
-    alert(`Recherche "${name}" sauvegardée!`);
+    closeSaveSearchModal();
+    
+    // Show success toast
+    showToast(`Recherche "${name}" sauvegardée!`, 'success', 3000);
 }
 
 /**
@@ -263,6 +297,8 @@ window.handleSaveCurrentSearch = handleSaveCurrentSearch;
 window.handleLoadSavedSearch = handleLoadSavedSearch;
 window.handleManageSavedSearches = handleManageSavedSearches;
 window.closeSavedSearchesModal = closeSavedSearchesModal;
+window.closeSaveSearchModal = closeSaveSearchModal;
+window.confirmSaveSearch = confirmSaveSearch;
 window.deleteSavedSearchFromModal = deleteSavedSearchFromModal;
 window.loadSavedSearch = loadSavedSearch;
 window.saveNote = saveNote;
