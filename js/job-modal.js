@@ -53,13 +53,6 @@ function populateModal(job) {
     // Store job ID for bookmark/applied handlers
     currentJobId = job.numerooffreforem;
     
-    // Get current state
-    const state = getJobState(currentJobId);
-    
-    // Update button states
-    updateBookmarkButton(state.bookmarked);
-    updateAppliedButton(state.applied);
-    
     // Log all available fields for debugging
     console.log('Available job fields:', Object.keys(job));
     console.log('Job data:', job);
@@ -254,6 +247,11 @@ function populateModal(job) {
     // Set external link
     document.getElementById('modalExternalLink').href = job.url || '#';
     
+    // Update button states based on saved state
+    const state = getJobState(currentJobId);
+    updateBookmarkButton(state.bookmarked);
+    updateAppliedButton(state.applied);
+    
     // Reinitialize icons
     setTimeout(() => initIcons(), 50);
 }
@@ -274,6 +272,8 @@ export function closeJobModal() {
  */
 function updateBookmarkButton(isBookmarked) {
     const btn = document.getElementById('btnBookmark');
+    if (!btn) return; // Safety check
+    
     const icon = btn.querySelector('i');
     const text = btn.querySelector('.bookmark-text');
     
@@ -298,6 +298,8 @@ function updateBookmarkButton(isBookmarked) {
  */
 function updateAppliedButton(isApplied) {
     const btn = document.getElementById('btnApplied');
+    if (!btn) return; // Safety check
+    
     const icon = btn.querySelector('i');
     const text = btn.querySelector('.applied-text');
     
