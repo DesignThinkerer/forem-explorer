@@ -5,7 +5,7 @@
 import { initIcons, getDistance } from './utils.js';
 import { getUserLocation } from './state.js';
 import { openJobModal } from './job-modal.js';
-import { getJobState } from './bookmarks.js';
+import { getJobState, toggleBookmark, toggleApplied } from './bookmarks.js';
 
 /**
  * Renders job search results as a grid of cards.
@@ -78,17 +78,83 @@ export function renderResults(data) {
                     <i data-lucide="map-pin" class="h-3 w-3"></i> ${city} ${distBadge}
                 </div>
             </div>
-            <div class="text-right flex flex-col items-end justify-between">
+            <div class="text-right flex flex-col items-end justify-between gap-2">
+                <div class="flex gap-2">
+                    <button class="bookmark-btn p-2 rounded-lg transition-all ${state.bookmarked ? 'bg-amber-500 text-white hover:bg-amber-600' : 'bg-slate-100 text-slate-400 hover:bg-amber-50 hover:text-amber-600'}" 
+                            data-job-id="${jobId}" 
+                            title="À consulter"
+                            aria-label="À consulter">
+                        <i data-lucide="${state.bookmarked ? 'bookmark-check' : 'bookmark'}" class="h-4 w-4"></i>
+                    </button>
+                    <button class="applied-btn p-2 rounded-lg transition-all ${state.applied ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-slate-100 text-slate-400 hover:bg-green-50 hover:text-green-600'}" 
+                            data-job-id="${jobId}" 
+                            title="Marquer comme postulé"
+                            aria-label="Marquer comme postulé">
+                        <i data-lucide="${state.applied ? 'check-circle-2' : 'check-circle'}" class="h-4 w-4"></i>
+                    </button>
+                </div>
                 <span class="text-xs font-bold bg-slate-100 px-2 py-1 rounded text-slate-700">${contract}</span>
-                <span class="text-xs text-slate-400 mt-2">${date}</span>
+                <span class="text-xs text-slate-400">${date}</span>
             </div>
         `;
         
         // Add click handler to open modal
-        el.addEventListener('click', () => openJobModal(job));
+        el.addEventListener('click', (e) => {
+            // Don't open modal if clicking on action buttons
+            if (e.target.closest('.bookmark-btn') || e.target.closest('.applied-btn')) {
+                return;
+            }
+            openJobModal(job);
+        });
+        
+        // Add bookmark button handler
+        const bookmarkBtn = el.querySelector('.bookmark-btn');
+        bookmarkBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent card click
+            const newState = toggleBookmark(jobId);
+            updateCardButton(bookmarkBtn, newState, 'bookmark');
+        });
+        
+        // Add applied button handler
+        const appliedBtn = el.querySelector('.applied-btn');
+        appliedBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent card click
+            const newState = toggleApplied(jobId);
+            updateCardButton(appliedBtn, newState, 'applied');
+        });
         
         grid.appendChild(el);
     });
+    initIcons();
+}
+
+/**
+ * Updates a single button's appearance based on state.
+ * @param {HTMLElement} btn - The button element
+ * @param {boolean} isActive - Whether the state is active
+ * @param {string} type - 'bookmark' or 'applied'
+ */
+function updateCardButton(btn, isActive, type) {
+    const icon = btn.querySelector('i');
+    
+    if (type === 'bookmark') {
+        if (isActive) {
+            btn.className = 'bookmark-btn p-2 rounded-lg transition-all bg-amber-500 text-white hover:bg-amber-600';
+            icon.setAttribute('data-lucide', 'bookmark-check');
+        } else {
+            btn.className = 'bookmark-btn p-2 rounded-lg transition-all bg-slate-100 text-slate-400 hover:bg-amber-50 hover:text-amber-600';
+            icon.setAttribute('data-lucide', 'bookmark');
+        }
+    } else if (type === 'applied') {
+        if (isActive) {
+            btn.className = 'applied-btn p-2 rounded-lg transition-all bg-green-500 text-white hover:bg-green-600';
+            icon.setAttribute('data-lucide', 'check-circle-2');
+        } else {
+            btn.className = 'applied-btn p-2 rounded-lg transition-all bg-slate-100 text-slate-400 hover:bg-green-50 hover:text-green-600';
+            icon.setAttribute('data-lucide', 'check-circle');
+        }
+    }
+    
     initIcons();
 }
 
@@ -98,6 +164,16 @@ window.addEventListener('jobStateChanged', (event) => {
     const card = document.querySelector(`[data-job-id="${jobId}"]`);
     if (!card) return;
     
+    // Update the icon buttons
+    if (type === 'bookmark') {
+        const btn = card.querySelector('.bookmark-btn');
+        if (btn) updateCardButton(btn, value, 'bookmark');
+    } else if (type === 'applied') {
+        const btn = card.querySelector('.applied-btn');
+        if (btn) updateCardButton(btn, value, 'applied');
+    }
+    
+    // Update badges in badge container
     const badgeContainer = card.querySelector('.flex-wrap');
     if (!badgeContainer) return;
     
