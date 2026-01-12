@@ -4,6 +4,10 @@
  */
 import { initIcons } from './utils.js';
 import { BASE_URL } from './config.js';
+import { getJobState, toggleBookmark, toggleApplied } from './bookmarks.js';
+
+// Store current job ID globally for bookmark/applied handlers
+let currentJobId = null;
 
 /**
  * Fetches full job details from the API by record ID.
@@ -46,6 +50,16 @@ export async function openJobModal(job) {
  * @param {Object} job - The complete job data object
  */
 function populateModal(job) {
+    // Store job ID for bookmark/applied handlers
+    currentJobId = job.numerooffreforem;
+    
+    // Get current state
+    const state = getJobState(currentJobId);
+    
+    // Update button states
+    updateBookmarkButton(state.bookmarked);
+    updateAppliedButton(state.applied);
+    
     // Log all available fields for debugging
     console.log('Available job fields:', Object.keys(job));
     console.log('Job data:', job);
@@ -251,6 +265,83 @@ export function closeJobModal() {
     const modal = document.getElementById('jobModal');
     modal.classList.add('hidden');
     document.body.style.overflow = '';
+    currentJobId = null;
+}
+
+/**
+ * Updates the bookmark button appearance based on state.
+ * @param {boolean} isBookmarked - Whether the job is bookmarked
+ */
+function updateBookmarkButton(isBookmarked) {
+    const btn = document.getElementById('btnBookmark');
+    const icon = btn.querySelector('i');
+    const text = btn.querySelector('.bookmark-text');
+    
+    if (isBookmarked) {
+        btn.classList.remove('border-amber-300', 'text-amber-700', 'hover:bg-amber-50', 'bg-white');
+        btn.classList.add('bg-amber-500', 'text-white', 'hover:bg-amber-600', 'border-amber-500');
+        icon.setAttribute('data-lucide', 'bookmark-check');
+        text.textContent = 'À consulter ✓';
+    } else {
+        btn.classList.remove('bg-amber-500', 'text-white', 'hover:bg-amber-600', 'border-amber-500');
+        btn.classList.add('border-amber-300', 'text-amber-700', 'hover:bg-amber-50', 'bg-white');
+        icon.setAttribute('data-lucide', 'bookmark');
+        text.textContent = 'À consulter';
+    }
+    
+    setTimeout(() => initIcons(), 10);
+}
+
+/**
+ * Updates the applied button appearance based on state.
+ * @param {boolean} isApplied - Whether the user has applied
+ */
+function updateAppliedButton(isApplied) {
+    const btn = document.getElementById('btnApplied');
+    const icon = btn.querySelector('i');
+    const text = btn.querySelector('.applied-text');
+    
+    if (isApplied) {
+        btn.classList.remove('border-green-300', 'text-green-700', 'hover:bg-green-50', 'bg-white');
+        btn.classList.add('bg-green-500', 'text-white', 'hover:bg-green-600', 'border-green-500');
+        icon.setAttribute('data-lucide', 'check-circle-2');
+        text.textContent = 'Postulé ✓';
+    } else {
+        btn.classList.remove('bg-green-500', 'text-white', 'hover:bg-green-600', 'border-green-500');
+        btn.classList.add('border-green-300', 'text-green-700', 'hover:bg-green-50', 'bg-white');
+        icon.setAttribute('data-lucide', 'check-circle');
+        text.textContent = 'Marquer comme postulé';
+    }
+    
+    setTimeout(() => initIcons(), 10);
+}
+
+/**
+ * Handles bookmark toggle action.
+ */
+export function handleBookmarkToggle() {
+    if (!currentJobId) return;
+    const newState = toggleBookmark(currentJobId);
+    updateBookmarkButton(newState);
+    
+    // Update the result card if visible
+    window.dispatchEvent(new CustomEvent('jobStateChanged', { 
+        detail: { jobId: currentJobId, type: 'bookmark', value: newState }
+    }));
+}
+
+/**
+ * Handles applied toggle action.
+ */
+export function handleAppliedToggle() {
+    if (!currentJobId) return;
+    const newState = toggleApplied(currentJobId);
+    updateAppliedButton(newState);
+    
+    // Update the result card if visible
+    window.dispatchEvent(new CustomEvent('jobStateChanged', { 
+        detail: { jobId: currentJobId, type: 'applied', value: newState }
+    }));
 }
 
 // Close modal on escape key

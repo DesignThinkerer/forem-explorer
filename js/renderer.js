@@ -5,6 +5,7 @@
 import { initIcons, getDistance } from './utils.js';
 import { getUserLocation } from './state.js';
 import { openJobModal } from './job-modal.js';
+import { getJobState } from './bookmarks.js';
 
 /**
  * Renders job search results as a grid of cards.
@@ -29,11 +30,26 @@ export function renderResults(data) {
     grid.innerHTML = "";
     
     data.results.forEach(job => {
+        const jobId = job.numerooffreforem;
+        const state = getJobState(jobId);
+        
         const title = job.titreoffre || "Sans titre";
         const comp = job.nomemployeur || "Confidentiel";
         const city = job.lieuxtravaillocalite ? job.lieuxtravaillocalite[0] : "Belgique";
         const date = job.datedebutdiffusion ? new Date(job.datedebutdiffusion).toLocaleDateString('fr-BE') : "?";
         const contract = job.typecontrat || "";
+        
+        // Status badges
+        const bookmarkBadge = state.bookmarked 
+            ? `<span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded border border-amber-200 text-xs font-semibold flex items-center gap-1">
+                <i data-lucide="bookmark-check" class="h-3 w-3"></i> À consulter
+               </span>` 
+            : "";
+        const appliedBadge = state.applied 
+            ? `<span class="px-2 py-0.5 bg-green-100 text-green-700 rounded border border-green-200 text-xs font-semibold flex items-center gap-1">
+                <i data-lucide="check-circle-2" class="h-3 w-3"></i> Postulé
+               </span>` 
+            : "";
         
         const regime = job.regimetravail 
             ? `<span class="px-2 py-0.5 bg-purple-50 text-purple-700 rounded border border-purple-100 text-xs">${job.regimetravail}</span>` 
@@ -50,10 +66,11 @@ export function renderResults(data) {
 
         const el = document.createElement('div');
         el.className = "bg-white border border-slate-200 p-4 rounded-lg hover:shadow-md transition-shadow flex flex-col md:flex-row gap-4 relative overflow-hidden cursor-pointer";
+        el.dataset.jobId = jobId; // Store job ID for updates
         el.innerHTML = `
             <div class="absolute left-0 top-0 bottom-0 w-1 ${contract.includes('indéterminée') ? 'bg-green-500' : 'bg-slate-300'}"></div>
             <div class="flex-1 min-w-0">
-                <div class="flex gap-2 mb-1">${regime}${edu}</div>
+                <div class="flex flex-wrap gap-2 mb-1">${bookmarkBadge}${appliedBadge}${regime}${edu}</div>
                 <h3 class="font-bold text-slate-800 truncate hover:text-blue-600">${title}</h3>
                 <div class="text-sm text-slate-600 flex items-center gap-2 mt-1">
                     <i data-lucide="building-2" class="h-3 w-3"></i> ${comp}
@@ -74,3 +91,43 @@ export function renderResults(data) {
     });
     initIcons();
 }
+
+// Listen for state changes and update cards in real-time
+window.addEventListener('jobStateChanged', (event) => {
+    const { jobId, type, value } = event.detail;
+    const card = document.querySelector(`[data-job-id="${jobId}"]`);
+    if (!card) return;
+    
+    const badgeContainer = card.querySelector('.flex-wrap');
+    if (!badgeContainer) return;
+    
+    // Remove existing badges of this type
+    const existingBookmark = badgeContainer.querySelector('[data-lucide="bookmark-check"]')?.closest('span');
+    const existingApplied = badgeContainer.querySelector('[data-lucide="check-circle-2"]')?.closest('span');
+    
+    if (type === 'bookmark') {
+        if (existingBookmark) existingBookmark.remove();
+        if (value) {
+            const badge = document.createElement('span');
+            badge.className = 'px-2 py-0.5 bg-amber-100 text-amber-700 rounded border border-amber-200 text-xs font-semibold flex items-center gap-1';
+            badge.innerHTML = '<i data-lucide="bookmark-check" class="h-3 w-3"></i> À consulter';
+            badgeContainer.insertBefore(badge, badgeContainer.firstChild);
+        }
+    } else if (type === 'applied') {
+        if (existingApplied) existingApplied.remove();
+        if (value) {
+            const badge = document.createElement('span');
+            badge.className = 'px-2 py-0.5 bg-green-100 text-green-700 rounded border border-green-200 text-xs font-semibold flex items-center gap-1';
+            badge.innerHTML = '<i data-lucide="check-circle-2" class="h-3 w-3"></i> Postulé';
+            // Insert after bookmark if it exists
+            const bookmark = badgeContainer.querySelector('[data-lucide="bookmark-check"]')?.closest('span');
+            if (bookmark) {
+                bookmark.after(badge);
+            } else {
+                badgeContainer.insertBefore(badge, badgeContainer.firstChild);
+            }
+        }
+    }
+    
+    initIcons();
+});

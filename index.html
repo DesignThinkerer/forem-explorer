@@ -295,14 +295,29 @@
             </div>
 
             <!-- Modal Footer -->
-            <div class="p-6 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-center gap-3">
-                <button onclick="closeJobModal()" class="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium transition-colors order-2 sm:order-1">
-                    Fermer
-                </button>
-                <a id="modalExternalLink" href="#" target="_blank" class="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-colors flex items-center justify-center gap-2 shadow-lg hover:shadow-xl order-1 sm:order-2">
-                    <span>Voir la description complète sur Le Forem</span>
-                    <i data-lucide="external-link" class="h-5 w-5"></i>
-                </a>
+            <div class="p-6 border-t border-slate-200 bg-slate-50 space-y-3">
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap gap-2 justify-center">
+                    <button id="btnBookmark" onclick="window.handleBookmarkToggle()" class="flex items-center gap-2 px-4 py-2 bg-white border-2 border-amber-300 text-amber-700 hover:bg-amber-50 rounded-lg font-medium transition-all">
+                        <i data-lucide="bookmark" class="h-4 w-4"></i>
+                        <span class="bookmark-text">À consulter</span>
+                    </button>
+                    <button id="btnApplied" onclick="window.handleAppliedToggle()" class="flex items-center gap-2 px-4 py-2 bg-white border-2 border-green-300 text-green-700 hover:bg-green-50 rounded-lg font-medium transition-all">
+                        <i data-lucide="check-circle" class="h-4 w-4"></i>
+                        <span class="applied-text">Marquer comme postulé</span>
+                    </button>
+                </div>
+                
+                <!-- Footer Actions -->
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-3 border-t border-slate-200">
+                    <button onclick="closeJobModal()" class="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium transition-colors order-2 sm:order-1">
+                        Fermer
+                    </button>
+                    <a id="modalExternalLink" href="#" target="_blank" class="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-colors flex items-center justify-center gap-2 shadow-lg hover:shadow-xl order-1 sm:order-2">
+                        <span>Voir la description complète sur Le Forem</span>
+                        <i data-lucide="external-link" class="h-5 w-5"></i>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
