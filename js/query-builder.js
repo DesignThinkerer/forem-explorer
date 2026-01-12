@@ -13,7 +13,8 @@ const FILTER_IDS = {
     distance: 'distanceFilter',
     regime: 'regimeFilter',
     education: 'educationFilter',
-    date: 'dateFilter'
+    date: 'dateFilter',
+    endDate: 'endDateFilter'
 };
 
 /** Map of checkbox input names to their corresponding API field names */
@@ -158,6 +159,20 @@ function buildDateCondition(daysAgo) {
 }
 
 /**
+ * Builds an end date filter condition (jobs expiring within X days).
+ * @param {string|number} daysAhead - Number of days in the future
+ * @returns {string|null} API query condition string or null if no value
+ */
+function buildEndDateCondition(daysAhead) {
+    if (!daysAhead) return null;
+    
+    const today = new Date();
+    const futureDate = new Date();
+    futureDate.setDate(today.getDate() + parseInt(daysAhead));
+    return `datefindiffusion <= date'${futureDate.toISOString().split('T')[0]}'`;
+}
+
+/**
  * Builds a geographic distance filter condition.
  * @param {string|number} distance - Maximum distance in kilometers
  * @param {Object} location - User location with lon/lat properties
@@ -182,7 +197,8 @@ export function buildQuery() {
         distance: getElementValue(FILTER_IDS.distance),
         regime: getElementValue(FILTER_IDS.regime),
         education: getElementValue(FILTER_IDS.education),
-        date: getElementValue(FILTER_IDS.date)
+        date: getElementValue(FILTER_IDS.date),
+        endDate: getElementValue(FILTER_IDS.endDate)
     };
 
     const checkboxValues = {
@@ -204,9 +220,13 @@ export function buildQuery() {
         conditions.push(...buildKeywordConditions(filters.keywords));
     }
 
-    // Date condition
+    // Date condition (start date)
     const dateCondition = buildDateCondition(filters.date);
     if (dateCondition) conditions.push(dateCondition);
+
+    // End date condition (expiring within X days)
+    const endDateCondition = buildEndDateCondition(filters.endDate);
+    if (endDateCondition) conditions.push(endDateCondition);
 
     // Simple field conditions
     if (filters.regime) conditions.push(`regimetravail:"${escapeQuotes(filters.regime)}"`);
@@ -305,6 +325,30 @@ function extractDateFilter(whereClause) {
 }
 
 /**
+ * Extracts end date filter from where clause and updates the UI.
+ * Converts the end date condition back to the closest matching preset (7, 14, 30, or 60 days).
+ * @param {string} whereClause - The API where clause string
+ */
+function extractEndDateFilter(whereClause) {
+    const match = whereClause.match(/datefindiffusion <= date'([^']+)'/);
+    if (!match) {
+        setElementValue(FILTER_IDS.endDate, "");
+        return;
+    }
+    
+    const queryDate = new Date(match[1]);
+    const today = new Date();
+    const diffDays = Math.ceil((queryDate - today) / (1000 * 60 * 60 * 24));
+    
+    // Map to closest preset value
+    if (diffDays <= 7) setElementValue(FILTER_IDS.endDate, "7");
+    else if (diffDays <= 14) setElementValue(FILTER_IDS.endDate, "14");
+    else if (diffDays <= 30) setElementValue(FILTER_IDS.endDate, "30");
+    else if (diffDays <= 60) setElementValue(FILTER_IDS.endDate, "60");
+    else setElementValue(FILTER_IDS.endDate, "");
+}
+
+/**
  * Extracts and sets checkbox filter states from a where clause.
  * Handles location, contract type, and language checkboxes.
  * @param {string} whereClause - The API where clause string
@@ -379,6 +423,7 @@ export function parseAndSyncUI(urlString) {
         // Extract all filter types
         extractSimpleFilters(whereClause);
         extractDateFilter(whereClause);
+        extractEndDateFilter(whereClause);
         extractCheckboxFilters(whereClause);
         extractKeywords(whereClause);
 

@@ -51,7 +51,7 @@
                         <!-- Row 1: Key info -->
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
                             <!-- Keyword Input -->
-                            <div class="md:col-span-5">
+                            <div class="md:col-span-4">
                                 <label class="block text-sm font-semibold text-slate-700 mb-1.5">Mots-clés</label>
                                 <div class="relative group">
                                     <i data-lucide="search" class="absolute left-3 top-2.5 h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors"></i>
@@ -62,7 +62,7 @@
                             </div>
 
                             <!-- Category Filter -->
-                            <div class="md:col-span-4">
+                            <div class="md:col-span-3">
                                 <label class="block text-sm font-semibold text-slate-700 mb-1.5">Secteur</label>
                                 <select id="categoryFilter" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm shadow-sm outline-none">
                                     <option value="M1805">💻 Dev & Programmation (M1805*)</option>
@@ -72,14 +72,26 @@
                                 </select>
                             </div>
 
-                            <!-- Date Filter -->
-                            <div class="md:col-span-3">
+                            <!-- Start Date Filter (Fraîcheur) -->
+                            <div class="md:col-span-2">
                                 <label class="block text-sm font-semibold text-slate-700 mb-1.5">Fraîcheur</label>
                                 <select id="dateFilter" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm shadow-sm outline-none">
+                                    <option value="">Toutes</option>
+                                    <option value="7">📅 7 jours</option>
+                                    <option value="14">📅 14 jours</option>
+                                    <option value="30">📅 30 jours</option>
+                                </select>
+                            </div>
+
+                            <!-- End Date Filter (Échéance) -->
+                            <div class="md:col-span-3">
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Échéance</label>
+                                <select id="endDateFilter" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm shadow-sm outline-none">
                                     <option value="">Toutes les dates</option>
-                                    <option value="7">📅 7 derniers jours</option>
-                                    <option value="14">📅 14 derniers jours</option>
-                                    <option value="30">📅 30 derniers jours</option>
+                                    <option value="7">⏰ Expire sous 7 jours</option>
+                                    <option value="14">⏰ Expire sous 14 jours</option>
+                                    <option value="30">⏰ Expire sous 30 jours</option>
+                                    <option value="60">⏰ Expire sous 60 jours</option>
                                 </select>
                             </div>
                         </div>
@@ -147,6 +159,7 @@
                                 <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Tri</label>
                                 <select id="sortFilter" onchange="window.handleSortChange(this)" class="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-sm text-slate-600 focus:ring-2 focus:ring-blue-500 outline-none">
                                     <option value="datedebutdiffusion desc">📅 Récent</option>
+                                    <option value="datefindiffusion asc">⏰ Expire bientôt</option>
                                     <option value="geo_distance">📍 Proximité</option>
                                 </select>
                             </div>

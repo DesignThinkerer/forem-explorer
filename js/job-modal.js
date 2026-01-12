@@ -66,7 +66,7 @@ function populateModal(job) {
         ${city}
     `;
     
-    // Set date
+    // Set date and calculate days left
     const date = job.datedebutdiffusion 
         ? new Date(job.datedebutdiffusion).toLocaleDateString('fr-BE', { 
             year: 'numeric', 
@@ -74,9 +74,39 @@ function populateModal(job) {
             day: 'numeric' 
           })
         : "Date non disponible";
+    
+    // Calculate days left until end of diffusion
+    let daysLeftHTML = '';
+    if (job.datefindiffusion) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset time to start of day
+        const endDate = new Date(job.datefindiffusion);
+        endDate.setHours(0, 0, 0, 0);
+        const daysLeft = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+        
+        let badgeColor = 'bg-green-100 text-green-700';
+        let icon = 'check-circle';
+        
+        if (daysLeft <= 0) {
+            badgeColor = 'bg-red-100 text-red-700';
+            icon = 'alert-circle';
+        } else if (daysLeft <= 7) {
+            badgeColor = 'bg-orange-100 text-orange-700';
+            icon = 'alert-triangle';
+        }
+        
+        daysLeftHTML = `
+            <span class="${badgeColor} px-2 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1 ml-2">
+                <i data-lucide="${icon}" class="h-3 w-3"></i>
+                ${daysLeft > 0 ? `${daysLeft} jour${daysLeft > 1 ? 's' : ''} restant${daysLeft > 1 ? 's' : ''}` : 'Expiré'}
+            </span>
+        `;
+    }
+    
     document.getElementById('modalDate').innerHTML = `
         <i data-lucide="calendar" class="h-4 w-4"></i>
         ${date}
+        ${daysLeftHTML}
     `;
     
     // Set badges
