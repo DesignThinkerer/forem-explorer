@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide d'utilisation - FOREM Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
+        <!-- Header -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h1 class="text-4xl font-bold text-slate-800 flex items-center gap-3">
+                    <i data-lucide="book-open" class="h-10 w-10 text-blue-600"></i>
+                    Guide d'utilisation
+                </h1>
+                <a href="index.html" class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all">
+                    <i data-lucide="arrow-left" class="h-4 w-4"></i>
+                    Retour à la recherche
+                </a>
+            </div>
+            <p class="text-slate-600 text-lg">
+                Bienvenue sur FOREM Explorer, votre assistant pour la recherche d'emploi en Belgique.
+            </p>
+        </div>
+
+        <!-- Recherche -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <i data-lucide="search" class="h-6 w-6 text-blue-600"></i>
+                Effectuer une recherche
+            </h2>
+            <div class="space-y-4">
+                <div>
+                    <h3 class="font-bold text-slate-700 mb-2">🔍 Recherche par mot-clé</h3>
+                    <p class="text-slate-600">
+                        Entrez des mots-clés dans la barre de recherche (ex: "développeur", "comptable", "infirmier"). 
+                        La recherche s'effectue sur les titres d'offres et les descriptions.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-700 mb-2">📍 Localisation</h3>
+                    <p class="text-slate-600">
+                        Entrez une ville (ex: "Bruxelles", "Liège", "Namur") pour filtrer les offres par localisation. 
+                        Vous pouvez aussi utiliser votre position actuelle en cliquant sur le bouton de géolocalisation.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-700 mb-2">🎯 Filtres avancés</h3>
+                    <ul class="list-disc list-inside text-slate-600 space-y-1 ml-4">
+                        <li><strong>Type de contrat:</strong> CDI, CDD, Intérim, etc.</li>
+                        <li><strong>Régime de travail:</strong> Temps plein, Temps partiel</li>
+                        <li><strong>Niveau d'études:</strong> Diplôme du secondaire, Bachelier, Master, etc.</li>
+                        <li><strong>Échéance:</strong> Afficher les offres expirant dans 7, 14, 30 ou 60 jours</li>
+                        <li><strong>Distance:</strong> Limiter les résultats dans un rayon de X km</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Système de suivi -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <i data-lucide="bookmark" class="h-6 w-6 text-amber-600"></i>
+                Système de suivi des offres
+            </h2>
+            <div class="space-y-6">
+                <div class="border-l-4 border-amber-500 pl-4">
+                    <h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2">
+                        <i data-lucide="bookmark-check" class="h-5 w-5 text-amber-600"></i>
+                        À consulter (Favoris)
+                    </h3>
+                    <p class="text-slate-600 mb-2">
+                        Marquez les offres intéressantes que vous souhaitez consulter plus tard.
+                    </p>
+                    <p class="text-sm text-slate-500">
+                        📌 Badge jaune visible sur les cartes | Filtre: "Favoris uniquement" ou "Cacher les favoris"
+                    </p>
+                </div>
+
+                <div class="border-l-4 border-green-500 pl-4">
+                    <h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2">
+                        <i data-lucide="check-circle-2" class="h-5 w-5 text-green-600"></i>
+                        Postulé
+                    </h3>
+                    <p class="text-slate-600 mb-2">
+                        Marquez les offres auxquelles vous avez déjà postulé pour garder une trace.
+                    </p>
+                    <p class="text-sm text-slate-500">
+                        ✅ Badge vert visible sur les cartes | Filtre: "Postulées uniquement" ou "Cacher les postulées"
+                    </p>
+                </div>
+
+                <div class="border-l-4 border-red-500 pl-4">
+                    <h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2">
+                        <i data-lucide="eye-off" class="h-5 w-5 text-red-600"></i>
+                        Ignorer
+                    </h3>
+                    <p class="text-slate-600 mb-2">
+                        Marquez les offres qui ne vous intéressent pas pour les masquer de vos futures recherches.
+                    </p>
+                    <p class="text-sm text-slate-500">
+                        🚫 Bouton rouge pour ignorer définitivement une offre
+                    </p>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p class="text-sm text-blue-800">
+                        <strong>💡 Astuce:</strong> Toutes vos actions sont sauvegardées localement sur votre appareil et persistent même après avoir fermé le navigateur.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Badges et indicateurs -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <i data-lucide="tag" class="h-6 w-6 text-purple-600"></i>
+                Comprendre les badges
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="border border-slate-200 rounded-lg p-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="px-2 py-0.5 bg-green-50 text-green-700 rounded border border-green-100 text-sm">
+                            Durée indéterminée
+                        </span>
+                    </div>
+                    <p class="text-sm text-slate-600">Contrat à durée indéterminée (CDI)</p>
+                </div>
+
+                <div class="border border-slate-200 rounded-lg p-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="px-2 py-0.5 bg-purple-50 text-purple-700 rounded border border-purple-100 text-sm">
+                            Temps plein
+                        </span>
+                    </div>
+                    <p class="text-sm text-slate-600">Régime de travail</p>
+                </div>
+
+                <div class="border border-slate-200 rounded-lg p-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="px-2 py-0.5 bg-orange-50 text-orange-700 rounded border border-orange-100 text-sm">
+                            Bachelier
+                        </span>
+                    </div>
+                    <p class="text-sm text-slate-600">Niveau d'études requis</p>
+                </div>
+
+                <div class="border border-slate-200 rounded-lg p-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                            15 jours restants
+                        </span>
+                    </div>
+                    <p class="text-sm text-slate-600">Expiration de l'offre (vert: >7j, orange: ≤7j, rouge: expirée)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export/Import -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <i data-lucide="download" class="h-6 w-6 text-green-600"></i>
+                Sauvegarde et restauration
+            </h2>
+            <div class="space-y-4">
+                <div>
+                    <h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2">
+                        <i data-lucide="download" class="h-4 w-4 text-green-600"></i>
+                        Exporter vos données
+                    </h3>
+                    <p class="text-slate-600 mb-2">
+                        Cliquez sur le bouton "Exporter" pour télécharger un fichier JSON contenant:
+                    </p>
+                    <ul class="list-disc list-inside text-slate-600 space-y-1 ml-4">
+                        <li>Vos favoris et offres suivies</li>
+                        <li>Les offres auxquelles vous avez postulé</li>
+                        <li>Les offres ignorées</li>
+                        <li>Vos paramètres de recherche actuels</li>
+                        <li>Les résultats de votre dernière recherche</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2">
+                        <i data-lucide="upload" class="h-4 w-4 text-blue-600"></i>
+                        Importer vos données
+                    </h3>
+                    <p class="text-slate-600 mb-2">
+                        Cliquez sur le bouton "Importer" et sélectionnez un fichier d'export précédent.
+                        L'application restaurera automatiquement:
+                    </p>
+                    <ul class="list-disc list-inside text-slate-600 space-y-1 ml-4">
+                        <li>Tous vos suivis (fusion avec les données existantes)</li>
+                        <li>Votre recherche avec tous ses paramètres</li>
+                    </ul>
+                </div>
+
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p class="text-sm text-yellow-800">
+                        <strong>⚠️ Important:</strong> Les données sont stockées localement sur votre appareil. 
+                        Pensez à exporter régulièrement pour ne pas perdre vos suivis en cas de réinitialisation du navigateur.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tri et organisation -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <i data-lucide="list-ordered" class="h-6 w-6 text-indigo-600"></i>
+                Options de tri
+            </h2>
+            <div class="space-y-2 text-slate-600">
+                <p><strong>📅 Plus récentes:</strong> Affiche les offres les plus récemment publiées en premier</p>
+                <p><strong>📍 Plus proches:</strong> Trie par distance (nécessite la géolocalisation)</p>
+                <p><strong>⏰ Expire bientôt:</strong> Montre les offres qui vont bientôt expirer en premier</p>
+            </div>
+        </div>
+
+        <!-- Astuces -->
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl shadow-lg p-8">
+            <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <i data-lucide="lightbulb" class="h-6 w-6 text-yellow-600"></i>
+                Astuces d'utilisation
+            </h2>
+            <div class="space-y-3 text-slate-700">
+                <div class="flex items-start gap-3">
+                    <span class="text-2xl">💾</span>
+                    <p><strong>Exportez régulièrement:</strong> Créez une sauvegarde de vos données pour pouvoir les restaurer sur un autre appareil ou après un nettoyage du navigateur.</p>
+                </div>
+                <div class="flex items-start gap-3">
+                    <span class="text-2xl">🔄</span>
+                    <p><strong>Combinez les filtres:</strong> Utilisez plusieurs filtres ensemble pour affiner vos résultats (ex: favoris non postulés, CDI temps plein).</p>
+                </div>
+                <div class="flex items-start gap-3">
+                    <span class="text-2xl">📌</span>
+                    <p><strong>Workflow recommandé:</strong> Marquez comme favoris → Consultez plus tard → Postulez → Marquez comme postulé.</p>
+                </div>
+                <div class="flex items-start gap-3">
+                    <span class="text-2xl">🔗</span>
+                    <p><strong>Partagez vos recherches:</strong> L'URL change avec vos filtres, vous pouvez la copier et la partager.</p>
+                </div>
+                <div class="flex items-start gap-3">
+                    <span class="text-2xl">⏱️</span>
+                    <p><strong>Surveillez les expirations:</strong> Utilisez le tri "Expire bientôt" pour prioriser les offres urgentes.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>
