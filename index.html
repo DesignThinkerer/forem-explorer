@@ -25,9 +25,13 @@
                 </div>
             </div>
             <div class="flex gap-2">
-                <button id="btnExport" onclick="window.exportDebugJson()" class="hidden flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 shadow-sm transition-all">
+                <button id="btnExport" onclick="window.exportDebugJson()" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 shadow-sm transition-all">
                     <i data-lucide="download" class="h-4 w-4"></i>
-                    JSON Brut
+                    Exporter
+                </button>
+                <button id="btnImport" onclick="window.importBookmarksFromFile()" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 shadow-sm transition-all">
+                    <i data-lucide="upload" class="h-4 w-4"></i>
+                    Importer
                 </button>
             </div>
         </div>

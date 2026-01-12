@@ -5,7 +5,7 @@
  */
 import { initIcons } from './utils.js';
 import { loadFacets } from './facets.js';
-import { handleSearch, handleCustomSearch, copyUrl, exportDebugJson } from './search.js';
+import { handleSearch, handleCustomSearch, copyUrl, exportDebugJson, importBookmarksFromFile } from './search.js';
 import { triggerGeo, manualCitySearch } from './geolocation.js';
 import { restoreStateFromUrl } from './url-state.js';
 import { closeJobModal, handleBookmarkToggle, handleAppliedToggle } from './job-modal.js';
@@ -73,6 +73,7 @@ window.handleStatusFilterChange = handleStatusFilterChange;
 window.manualCitySearch = handleManualCitySearch;
 window.copyUrl = copyUrl;
 window.exportDebugJson = exportDebugJson;
+window.importBookmarksFromFile = importBookmarksFromFile;
 window.closeJobModal = closeJobModal;
 window.handleBookmarkToggle = handleBookmarkToggle;
 window.handleAppliedToggle = handleAppliedToggle;

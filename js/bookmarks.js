@@ -119,3 +119,53 @@ export function clearAllStates() {
         window.location.reload();
     }
 }
+
+/**
+ * Imports bookmark data from an exported JSON file.
+ * Merges imported data with existing data (keeps existing + adds new).
+ * @param {Object} importedBookmarks - The bookmarks object from the export file
+ * @returns {Object} Statistics about the import
+ */
+export function importBookmarks(importedBookmarks) {
+    if (!importedBookmarks || typeof importedBookmarks !== 'object') {
+        throw new Error('Format de données invalide');
+    }
+    
+    // Get existing data
+    const existingStates = getJobStates();
+    
+    // Count what we're importing
+    let newCount = 0;
+    let updatedCount = 0;
+    
+    // Merge imported data with existing
+    Object.keys(importedBookmarks).forEach(jobId => {
+        const importedState = importedBookmarks[jobId];
+        
+        // Validate imported state structure
+        if (typeof importedState !== 'object') return;
+        
+        if (existingStates[jobId]) {
+            updatedCount++;
+        } else {
+            newCount++;
+        }
+        
+        // Merge with existing or create new
+        existingStates[jobId] = {
+            bookmarked: importedState.bookmarked || false,
+            applied: importedState.applied || false,
+            date: importedState.date || new Date().toISOString(),
+            appliedDate: importedState.appliedDate || null
+        };
+    });
+    
+    // Save merged data
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(existingStates));
+    
+    return {
+        newCount,
+        updatedCount,
+        total: newCount + updatedCount
+    };
+}

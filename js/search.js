@@ -105,15 +105,85 @@ export function copyUrl() {
 }
 
 /**
- * Exports the current search results as a JSON file.
- * Downloads a file named 'export.json' containing the raw API response data.
+ * Exports the current search results along with bookmark/applied states as a JSON file.
+ * Includes both search results and personal tracking data for backup/import purposes.
+ * Downloads a file with the current date in the filename.
  * Does nothing if no search has been performed yet.
  */
 export function exportDebugJson() {
     const rawData = getRawData();
     if (!rawData) return;
+    
+    // Get bookmark data from localStorage
+    const bookmarkData = localStorage.getItem('forem_job_states');
+    const bookmarks = bookmarkData ? JSON.parse(bookmarkData) : {};
+    
+    // Get current search parameters from URL
+    const searchParams = window.location.search;
+    
+    // Create export object with search results, personal data, and search parameters
+    const exportData = {
+        exportDate: new Date().toISOString(),
+        searchParams: searchParams,
+        searchResults: rawData,
+        bookmarks: bookmarks
+    };
+    
     const a = document.createElement('a');
-    a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(rawData));
-    a.download = "export.json";
+    a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+    a.download = `forem-export-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
+}
+
+/**
+ * Imports bookmark data from a JSON file.
+ * Prompts the user to select a file and imports the bookmark data.
+ */
+export function importBookmarksFromFile() {
+    // Create a file input element
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        try {
+            const text = await file.text();
+            const data = JSON.parse(text);
+            
+            // Check if it's our export format
+            if (!data.bookmarks) {
+                alert('Format de fichier invalide. Veuillez sélectionner un fichier d\'export FOREM valide.');
+                return;
+            }
+            
+            // Import the bookmarks (dynamic import to avoid circular dependency)
+            const { importBookmarks } = await import('./bookmarks.js');
+            const stats = importBookmarks(data.bookmarks);
+            
+            // Show success message
+            alert(`Import réussi!\n\n` +
+                  `Nouveaux suivis: ${stats.newCount}\n` +
+                  `Suivis mis à jour: ${stats.updatedCount}\n` +
+                  `Total importé: ${stats.total}\n\n` +
+                  `Les paramètres de recherche vont être restaurés...`);
+            
+            // Restore search parameters if they exist
+            if (data.searchParams) {
+                // Redirect to the URL with the saved search parameters
+                window.location.href = window.location.pathname + data.searchParams;
+            } else {
+                // Just reload if no search params
+                window.location.reload();
+            }
+            
+        } catch (error) {
+            console.error('Import error:', error);
+            alert(`Erreur lors de l'import: ${error.message}`);
+        }
+    };
+    
+    input.click();
 }
