@@ -36,10 +36,22 @@ export function renderResults(data) {
     const appliedFilter = document.getElementById('appliedFilter')?.value || 'all';
     const ignoredFilter = document.getElementById('ignoredFilter')?.value || 'show';
     
+    // Check for tracked=true URL parameter (shows all bookmarked OR applied)
+    const urlParams = new URLSearchParams(window.location.search);
+    const showTrackedOnly = urlParams.get('tracked') === 'true';
+    
     // Filter results based on all status filters
     let filteredResults = data.results.filter(job => {
         const jobId = job.numerooffreforem;
         const state = getJobState(jobId);
+        
+        // If tracked=true, show only bookmarked OR applied jobs
+        if (showTrackedOnly) {
+            if (!state.bookmarked && !state.applied) return false;
+            // Still respect ignored filter
+            if (ignoredFilter === 'hide' && state.ignored) return false;
+            return true;
+        }
         
         // Check ignored filter first (most restrictive)
         if (ignoredFilter === 'hide' && state.ignored) return false;
@@ -48,10 +60,6 @@ export function renderResults(data) {
         // Check bookmark filter
         let bookmarkPass = true;
         switch (bookmarkFilter) {
-            case 'tracked':
-                // Show all tracked jobs (bookmarked OR applied)
-                bookmarkPass = state.bookmarked || state.applied;
-                break;
             case 'only':
                 bookmarkPass = state.bookmarked;
                 break;
