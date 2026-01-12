@@ -6,6 +6,7 @@ import { initIcons, getDistance } from './utils.js';
 import { getUserLocation } from './state.js';
 import { openJobModal } from './job-modal.js';
 import { getJobState, toggleBookmark, toggleApplied, toggleIgnored } from './bookmarks.js';
+import { hasNote } from './notes.js';
 
 /**
  * Renders job search results as a grid of cards.
@@ -110,6 +111,13 @@ export function renderResults(data) {
                </span>` 
             : "";
         
+        // Note indicator badge
+        const noteBadge = hasNote(jobId)
+            ? `<span class="px-2 py-0.5 bg-purple-100 text-purple-700 rounded border border-purple-200 text-xs font-semibold flex items-center gap-1">
+                <i data-lucide="file-edit" class="h-3 w-3"></i> Note
+               </span>`
+            : "";
+        
         const regime = job.regimetravail 
             ? `<span class="px-2 py-0.5 bg-purple-50 text-purple-700 rounded border border-purple-100 text-xs">${job.regimetravail}</span>` 
             : "";
@@ -132,7 +140,7 @@ export function renderResults(data) {
         el.innerHTML = `
             <div class="absolute left-0 top-0 bottom-0 w-1 ${contract.includes('indéterminée') ? 'bg-green-500' : 'bg-slate-300'}"></div>
             <div class="flex-1 min-w-0">
-                <div class="flex flex-wrap gap-2 mb-1">${bookmarkBadge}${appliedBadge}${contractBadge}${regime}${edu}</div>
+                <div class="flex flex-wrap gap-2 mb-1">${bookmarkBadge}${appliedBadge}${noteBadge}${contractBadge}${regime}${edu}</div>
                 <h3 class="font-bold text-slate-800 truncate hover:text-blue-600">${title}</h3>
                 <div class="text-sm text-slate-600 flex items-center gap-2 mt-1">
                     <i data-lucide="building-2" class="h-3 w-3"></i> ${comp}
@@ -273,8 +281,10 @@ function updateCardBadges(card, jobId) {
     // Remove existing status badges
     const existingBookmark = badgeContainer.querySelector('[data-lucide="bookmark-check"]')?.closest('span');
     const existingApplied = badgeContainer.querySelector('[data-lucide="check-circle-2"]')?.closest('span');
+    const existingNote = badgeContainer.querySelector('[data-lucide="file-edit"]')?.closest('span');
     if (existingBookmark) existingBookmark.remove();
     if (existingApplied) existingApplied.remove();
+    if (existingNote) existingNote.remove();
     
     // Add bookmark badge if active
     if (state.bookmarked) {
@@ -291,6 +301,22 @@ function updateCardBadges(card, jobId) {
         badge.innerHTML = '<i data-lucide="check-circle-2" class="h-3 w-3"></i> Postulé';
         const bookmark = badgeContainer.querySelector('[data-lucide="bookmark-check"]')?.closest('span');
         if (bookmark) {
+            bookmark.after(badge);
+        } else {
+            badgeContainer.insertBefore(badge, badgeContainer.firstChild);
+        }
+    }
+    
+    // Add note badge if present
+    if (hasNote(jobId)) {
+        const badge = document.createElement('span');
+        badge.className = 'px-2 py-0.5 bg-purple-100 text-purple-700 rounded border border-purple-200 text-xs font-semibold flex items-center gap-1';
+        badge.innerHTML = '<i data-lucide="file-edit" class="h-3 w-3"></i> Note';
+        const applied = badgeContainer.querySelector('[data-lucide="check-circle-2"]')?.closest('span');
+        const bookmark = badgeContainer.querySelector('[data-lucide="bookmark-check"]')?.closest('span');
+        if (applied) {
+            applied.after(badge);
+        } else if (bookmark) {
             bookmark.after(badge);
         } else {
             badgeContainer.insertBefore(badge, badgeContainer.firstChild);
@@ -320,5 +346,16 @@ window.addEventListener('jobStateChanged', (event) => {
     }
     
     // Update all badges in the card
+    updateCardBadges(card, jobId);
+});
+
+// Listen for note changes and update cards
+window.addEventListener('jobNoteChanged', (event) => {
+    const { jobId } = event.detail;
+    const card = document.querySelector(`[data-job-id="${jobId}"]`);
+    
+    if (!card) return;
+    
+    // Update badges to show/hide note indicator
     updateCardBadges(card, jobId);
 });

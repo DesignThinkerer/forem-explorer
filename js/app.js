@@ -8,7 +8,7 @@ import { loadFacets } from './facets.js';
 import { handleSearch, handleCustomSearch, copyUrl, exportDebugJson, importBookmarksFromFile } from './search.js';
 import { triggerGeo, manualCitySearch } from './geolocation.js';
 import { restoreStateFromUrl } from './url-state.js';
-import { closeJobModal, handleBookmarkToggle, handleAppliedToggle, handleIgnoredToggle } from './job-modal.js';
+import { closeJobModal, handleBookmarkToggle, handleAppliedToggle, handleIgnoredToggle, saveNote, deleteNote, addNoteTag, removeNoteTag } from './job-modal.js';
 import { renderResults } from './renderer.js';
 import { saveCurrentSearch, loadSavedSearch, deleteSavedSearch, listSavedSearches } from './saved-searches.js';
 
@@ -179,6 +179,10 @@ window.handleManageSavedSearches = handleManageSavedSearches;
 window.closeSavedSearchesModal = closeSavedSearchesModal;
 window.deleteSavedSearchFromModal = deleteSavedSearchFromModal;
 window.loadSavedSearch = loadSavedSearch;
+window.saveNote = saveNote;
+window.deleteNote = deleteNote;
+window.addNoteTag = addNoteTag;
+window.removeNoteTag = removeNoteTag;
 
 // Initialize when DOM is ready
 init();

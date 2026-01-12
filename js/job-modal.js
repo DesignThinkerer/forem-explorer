@@ -5,6 +5,7 @@
 import { initIcons } from './utils.js';
 import { BASE_URL } from './config.js';
 import { getJobState, toggleBookmark, toggleApplied, toggleIgnored } from './bookmarks.js';
+import { getJobNote, saveJobNote, deleteJobNote } from './notes.js';
 
 // Store current job ID globally for bookmark/applied handlers
 let currentJobId = null;
@@ -254,6 +255,9 @@ function populateModal(job) {
     updateAppliedButton(state.applied);
     updateIgnoredButton(state.ignored);
     
+    // Load and display note
+    loadNoteIntoModal(currentJobId);
+    
     // Reinitialize icons
     setTimeout(() => initIcons(), 50);
 }
@@ -389,6 +393,129 @@ export function handleIgnoredToggle() {
     window.dispatchEvent(new CustomEvent('jobStateChanged', { 
         detail: { jobId: currentJobId, type: 'ignored', value: newState }
     }));
+}
+
+/**
+ * Loads note data into the modal form.
+ * @param {string} jobId - The job ID
+ */
+function loadNoteIntoModal(jobId) {
+    const note = getJobNote(jobId);
+    
+    document.getElementById('noteText').value = note.text || '';
+    document.getElementById('noteStatus').value = note.detailedStatus || '';
+    document.getElementById('noteDate').value = note.customDate || '';
+    
+    // Display tags
+    displayNoteTags(note.tags || []);
+}
+
+/**
+ * Displays tags in the modal.
+ * @param {Array<string>} tags - Array of tag strings
+ */
+function displayNoteTags(tags) {
+    const container = document.getElementById('noteTagsList');
+    container.innerHTML = tags.map(tag => `
+        <span class="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium">
+            ${tag}
+            <button onclick="window.removeNoteTag('${tag}')" class="hover:text-purple-900">
+                <i data-lucide="x" class="h-3 w-3"></i>
+            </button>
+        </span>
+    `).join('');
+    initIcons();
+}
+
+/**
+ * Saves the current note to localStorage.
+ */
+export function saveNote() {
+    if (!currentJobId) return;
+    
+    const text = document.getElementById('noteText').value;
+    const status = document.getElementById('noteStatus').value;
+    const date = document.getElementById('noteDate').value;
+    const tagsContainer = document.getElementById('noteTagsList');
+    const tags = Array.from(tagsContainer.querySelectorAll('span')).map(span => 
+        span.textContent.trim()
+    );
+    
+    saveJobNote(currentJobId, {
+        text,
+        detailedStatus: status,
+        customDate: date,
+        tags
+    });
+    
+    // Show confirmation
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i data-lucide="check" class="h-4 w-4"></i> Enregistré !';
+    btn.classList.add('bg-green-500', 'hover:bg-green-600');
+    btn.classList.remove('bg-purple-500', 'hover:bg-purple-600');
+    
+    setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.classList.remove('bg-green-500', 'hover:bg-green-600');
+        btn.classList.add('bg-purple-500', 'hover:bg-purple-600');
+        initIcons();
+    }, 2000);
+}
+
+/**
+ * Deletes the current note.
+ */
+export function deleteNote() {
+    if (!currentJobId) return;
+    
+    if (!confirm('Supprimer cette note ?')) return;
+    
+    deleteJobNote(currentJobId);
+    
+    // Clear form
+    document.getElementById('noteText').value = '';
+    document.getElementById('noteStatus').value = '';
+    document.getElementById('noteDate').value = '';
+    document.getElementById('noteTagsList').innerHTML = '';
+}
+
+/**
+ * Adds a tag to the current note.
+ */
+export function addNoteTag() {
+    const input = document.getElementById('noteTagInput');
+    const tag = input.value.trim();
+    
+    if (!tag) return;
+    
+    const tagsContainer = document.getElementById('noteTagsList');
+    const existingTags = Array.from(tagsContainer.querySelectorAll('span')).map(span => 
+        span.textContent.trim()
+    );
+    
+    if (existingTags.includes(tag)) {
+        alert('Ce tag existe déjà');
+        return;
+    }
+    
+    existingTags.push(tag);
+    displayNoteTags(existingTags);
+    input.value = '';
+}
+
+/**
+ * Removes a tag from the current note.
+ * @param {string} tag - The tag to remove
+ */
+export function removeNoteTag(tag) {
+    const tagsContainer = document.getElementById('noteTagsList');
+    const existingTags = Array.from(tagsContainer.querySelectorAll('span')).map(span => 
+        span.textContent.trim()
+    );
+    
+    const filtered = existingTags.filter(t => t !== tag);
+    displayNoteTags(filtered);
 }
 
 // Close modal on escape key
