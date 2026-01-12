@@ -1,8 +1,25 @@
-// Facets Loading Module
+/**
+ * Facets Loading Module
+ * Fetches and populates filter options from the API.
+ * Handles both checkbox groups and select dropdowns.
+ */
 import { FACETS_URL } from './config.js';
 
+/**
+ * Loads facet data from the API and populates filter UI elements.
+ * Fetches available values for regions, contract types, work regimes, education levels, and languages.
+ * Creates either checkbox groups or select dropdowns based on facet configuration.
+ * @returns {Promise<void>}
+ * @throws Will log error to console if facet loading fails
+ */
 export async function loadFacets() {
+    /** @type {string[]} List of facet fields to fetch from the API */
     const facets = ['lieuxtravailregion', 'typecontrat', 'regimetravail', 'niveauxetudes', 'langues'];
+    
+    /** 
+     * Configuration mapping for each facet field
+     * @type {Object.<string, {type: 'checkbox'|'select', id: string}>}
+     */
     const config = {
         'lieuxtravailregion': { type: 'checkbox', id: 'locContainer' },
         'typecontrat': { type: 'checkbox', id: 'contractContainer' },

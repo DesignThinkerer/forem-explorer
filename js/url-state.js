@@ -1,7 +1,17 @@
-// URL State Management Module
+/**
+ * URL State Management Module
+ * Synchronizes application state with browser URL for deep linking and navigation.
+ * Enables sharing searches and using browser back/forward buttons.
+ */
 import { getUserLocation, setUserLocation } from './state.js';
 import { updateDistanceUI } from './geolocation.js';
 
+/**
+ * Updates the browser URL to reflect the current filter state.
+ * Encodes all active filters (keywords, category, location, etc.) into URL query parameters.
+ * Skips default values to keep URLs clean.
+ * Uses replaceState to avoid polluting browser history on every filter change.
+ */
 export function updateUrlParams() {
     try {
         const p = new URLSearchParams();
@@ -30,6 +40,13 @@ export function updateUrlParams() {
     }
 }
 
+/**
+ * Restores application state from URL query parameters.
+ * Reads URL parameters and sets corresponding UI filter values.
+ * Restores user location if lat/lon parameters are present.
+ * Triggers search automatically if any parameters are found.
+ * @param {Function} handleSearchCallback - Callback function to execute after state restoration (typically handleSearch)
+ */
 export function restoreStateFromUrl(handleSearchCallback) {
     const p = new URLSearchParams(window.location.search);
     const map = {

@@ -1,11 +1,25 @@
-// Utility Functions
+/**
+ * Utility Functions Module
+ * Collection of reusable helper functions for UI operations, calculations, and clipboard management.
+ */
 
+/**
+ * Initializes Lucide icons throughout the application.
+ * Scans the DOM for icon elements and renders them.
+ * Safe to call multiple times and checks for Lucide availability.
+ */
 export function initIcons() { 
     if (typeof lucide !== 'undefined') {
         lucide.createIcons(); 
     }
 }
 
+/**
+ * Displays a temporary toast notification at the bottom-right of the screen.
+ * Toast automatically slides away after 4 seconds.
+ * @param {string} msg - The message to display in the toast
+ * @param {boolean} [isError=false] - If true, shows red error styling; otherwise shows green success styling
+ */
 export function showToast(msg, isError = false) {
     const t = document.getElementById('toast');
     if (!t) return;
@@ -18,10 +32,24 @@ export function showToast(msg, isError = false) {
     setTimeout(() => t.style.transform = "translateY(150%)", 4000);
 }
 
+/**
+ * Converts degrees to radians.
+ * @param {number} deg - Angle in degrees
+ * @returns {number} Angle in radians
+ */
 export function deg2rad(deg) { 
     return deg * (Math.PI / 180); 
 }
 
+/**
+ * Calculates the distance between two geographic coordinates using the Haversine formula.
+ * Returns the great-circle distance between two points on Earth.
+ * @param {number} lat1 - Latitude of first point
+ * @param {number} lon1 - Longitude of first point
+ * @param {number} lat2 - Latitude of second point
+ * @param {number} lon2 - Longitude of second point
+ * @returns {string} Distance in kilometers, rounded to 1 decimal place
+ */
 export function getDistance(lat1, lon1, lat2, lon2) {
     const R = 6371; 
     const dLat = deg2rad(lat2 - lat1); 
@@ -32,6 +60,11 @@ export function getDistance(lat1, lon1, lat2, lon2) {
     return (R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)))).toFixed(1);
 }
 
+/**
+ * Copies text to the system clipboard.
+ * Creates a temporary textarea element to leverage the legacy execCommand API.
+ * @param {string} text - The text to copy to clipboard
+ */
 export function copyToClipboard(text) {
     const el = document.createElement('textarea');
     el.value = text;

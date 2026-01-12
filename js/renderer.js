@@ -1,7 +1,26 @@
-// Results Renderer Module
+/**
+ * Results Renderer Module
+ * Handles the display of job search results in a card-based grid layout.
+ */
 import { initIcons, getDistance } from './utils.js';
 import { getUserLocation } from './state.js';
 
+/**
+ * Renders job search results as a grid of cards.
+ * Creates HTML cards for each job with title, company, location, contract type, and optional badges.
+ * Displays distance if user location is available.
+ * @param {Object} data - The search results data from the API
+ * @param {Array} data.results - Array of job objects
+ * @param {string} data.results[].titreoffre - Job title
+ * @param {string} data.results[].nomemployeur - Employer name
+ * @param {string[]} data.results[].lieuxtravaillocalite - Job location(s)
+ * @param {string} data.results[].datedebutdiffusion - Publication date (ISO format)
+ * @param {string} data.results[].typecontrat - Contract type
+ * @param {string} data.results[].regimetravail - Work regime (full-time, part-time, etc.)
+ * @param {string[]} data.results[].niveauxetudes - Required education levels
+ * @param {Object[]} data.results[].lieuxtravailgeo - Geographic coordinates for location
+ * @param {string} data.results[].url - URL to the job posting
+ */
 export function renderResults(data) {
     const grid = document.getElementById('resultsGrid');
     const userLocation = getUserLocation();

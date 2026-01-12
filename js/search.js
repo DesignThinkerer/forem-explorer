@@ -1,4 +1,7 @@
-// Search Module
+/**
+ * Search Module
+ * Handles job search operations, URL parameter management, and data export functionality.
+ */
 import { BASE_URL } from './config.js';
 import { setRawData, setFullUrl, getRawData, getFullUrl } from './state.js';
 import { showToast, copyToClipboard } from './utils.js';
@@ -6,6 +9,14 @@ import { buildQuery, parseAndSyncUI } from './query-builder.js';
 import { renderResults } from './renderer.js';
 import { updateUrlParams } from './url-state.js';
 
+/**
+ * Performs a job search based on current UI filter values.
+ * Builds query from UI state, fetches results from API, and renders them.
+ * Updates URL parameters and shows loading states during the operation.
+ * @param {Event} [e] - Optional event object (will call preventDefault if provided)
+ * @param {boolean} [isRestore] - If true, skips URL parameter update (used for restoring from URL)
+ * @returns {Promise<void>}
+ */
 export async function handleSearch(e, isRestore) {
     if (e) e.preventDefault();
     
@@ -47,6 +58,12 @@ export async function handleSearch(e, isRestore) {
     }
 }
 
+/**
+ * Executes a custom search using a manually entered query string or full URL.
+ * Allows advanced users to input raw API query parameters.
+ * Syncs the UI filters to match the custom query.
+ * @returns {Promise<void>}
+ */
 export async function handleCustomSearch() {
     const val = document.getElementById('queryInput').value.trim().replace(/\n/g, '');
     if (!val) return;
@@ -71,11 +88,20 @@ export async function handleCustomSearch() {
     }
 }
 
+/**
+ * Copies the current search URL to the clipboard.
+ * Provides visual feedback via toast notification.
+ */
 export function copyUrl() {
     copyToClipboard(getFullUrl());
     showToast("Copié !");
 }
 
+/**
+ * Exports the current search results as a JSON file.
+ * Downloads a file named 'export.json' containing the raw API response data.
+ * Does nothing if no search has been performed yet.
+ */
 export function exportDebugJson() {
     const rawData = getRawData();
     if (!rawData) return;
