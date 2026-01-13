@@ -353,13 +353,20 @@ export function calculateLocalScore(profile, job) {
             }
         });
         
-        // Score proportionnel au nombre de compétences matchées
-        const matchRatio = matched / Math.max(3, profile.skills.length);
-        const skillScore = Math.min(35, Math.round(matchRatio * 50));
-        score += skillScore;
+        // Score basé sur le nombre absolu de compétences matchées (pas le ratio)
+        // Chaque skill matché vaut des points, avec bonus pour les premiers matches
+        // 1er match = 10pts, 2e = 8pts, 3e = 6pts, 4e = 5pts, 5e+ = 3pts chacun
+        let skillScore = 0;
+        const matchedCount = Math.round(matched);
+        if (matchedCount >= 1) skillScore += 10;
+        if (matchedCount >= 2) skillScore += 8;
+        if (matchedCount >= 3) skillScore += 6;
+        if (matchedCount >= 4) skillScore += 5;
+        if (matchedCount >= 5) skillScore += Math.min(11, (matchedCount - 4) * 3); // 3pts par skill supplémentaire, max 40 total
+        score += Math.min(40, skillScore);
         
-        // Bonus pour match dans le titre (+10 max)
-        score += Math.min(10, titleMatched * 5);
+        // Bonus pour match dans le titre (+15 max, plus important)
+        score += Math.min(15, titleMatched * 8);
         
         details.skillsMatched = Math.round(matched);
         details.titleMatches = titleMatched;
@@ -402,7 +409,8 @@ export function calculateLocalScore(profile, job) {
                 }
             }
         });
-        score += Math.min(10, keywordMatches * 2);
+        // 3 points par keyword matché (plus généreux)
+        score += Math.min(15, keywordMatches * 3);
         details.keywordsMatched = keywordMatches;
     }
     
