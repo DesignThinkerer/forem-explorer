@@ -6,6 +6,8 @@
     <title>Le Forem - Job Explorer (Pro Edition)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Export PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen pb-12">
@@ -667,6 +669,10 @@
                         <button onclick="window.copyLetter()" class="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg font-medium transition-all">
                             <i data-lucide="copy" class="h-4 w-4"></i>
                             <span>Copier</span>
+                        </button>
+                        <button onclick="window.exportLetterPDF()" class="flex items-center gap-2 px-4 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-lg font-medium transition-all">
+                            <i data-lucide="download" class="h-4 w-4"></i>
+                            <span>PDF</span>
                         </button>
                         <button onclick="window.saveLetter()" class="flex items-center gap-2 px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg font-medium transition-all">
                             <i data-lucide="save" class="h-4 w-4"></i>

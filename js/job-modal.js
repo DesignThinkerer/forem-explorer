@@ -917,6 +917,58 @@ export async function copyLetter() {
 }
 
 /**
+ * Exports the letter to PDF.
+ */
+export function exportLetterPDF() {
+    if (!currentGeneratedLetter) return;
+    
+    // Créer un élément temporaire pour le PDF
+    const element = document.createElement('div');
+    element.style.padding = '40px';
+    element.style.fontFamily = 'Georgia, serif';
+    element.style.fontSize = '12pt';
+    element.style.lineHeight = '1.6';
+    element.style.color = '#333';
+    
+    // Formater la date
+    const date = new Date().toLocaleDateString('fr-BE', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    
+    // Construire le contenu HTML
+    element.innerHTML = `
+        <div style="text-align: right; margin-bottom: 30px; color: #666; font-size: 10pt;">
+            ${date}
+        </div>
+        <div style="margin-bottom: 20px;">
+            <strong>Objet :</strong> Candidature pour le poste de ${currentGeneratedLetter.jobTitle || 'Non spécifié'}
+        </div>
+        ${currentGeneratedLetter.company ? `<div style="margin-bottom: 30px;"><strong>${currentGeneratedLetter.company}</strong></div>` : ''}
+        <div style="white-space: pre-wrap; text-align: justify;">
+${currentGeneratedLetter.letter}
+        </div>
+    `;
+    
+    // Configuration html2pdf
+    const opt = {
+        margin: [15, 15, 15, 15],
+        filename: `lettre-${(currentGeneratedLetter.company || 'motivation').toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Date.now()}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    // Générer le PDF
+    if (typeof html2pdf !== 'undefined') {
+        html2pdf().set(opt).from(element).save();
+    } else {
+        alert('Erreur: html2pdf non chargé');
+    }
+}
+
+/**
  * Saves the letter.
  */
 export function saveLetter() {
