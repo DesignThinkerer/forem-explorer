@@ -179,6 +179,149 @@
             </div>
         </div>
 
+        <!-- Security Section -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+            <h3 class="text-lg font-semibold text-slate-800 flex items-center gap-2 mb-4">
+                <i data-lucide="shield" class="h-5 w-5 text-violet-600"></i>
+                Sécurité & Chiffrement
+            </h3>
+            
+            <div class="space-y-4">
+                <!-- Encryption Status -->
+                <div id="encryptionStatus" class="flex items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                    <i data-lucide="lock-open" class="h-5 w-5 text-slate-400"></i>
+                    <span class="text-sm text-slate-600">Chiffrement non activé</span>
+                </div>
+                
+                <!-- Setup Encryption (when not enabled) -->
+                <div id="setupEncryption" class="space-y-3">
+                    <p class="text-sm text-slate-600">
+                        Protégez vos données sensibles (CV, clé API, lettres) avec un mot de passe.
+                    </p>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Nouveau mot de passe</label>
+                        <input 
+                            type="password" 
+                            id="newPasswordInput" 
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm"
+                            placeholder="Au moins 6 caractères..."
+                        >
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Confirmer le mot de passe</label>
+                        <input 
+                            type="password" 
+                            id="confirmPasswordInput" 
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm"
+                            placeholder="Répétez le mot de passe..."
+                        >
+                    </div>
+                    <button 
+                        onclick="enableEncryption()"
+                        class="w-full px-4 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 rounded-lg transition-all"
+                    >
+                        <i data-lucide="shield-check" class="h-4 w-4 inline mr-1"></i>
+                        Activer le chiffrement
+                    </button>
+                </div>
+                
+                <!-- Unlock Vault (when locked) -->
+                <div id="unlockVault" class="space-y-3 hidden">
+                    <p class="text-sm text-slate-600">
+                        Entrez votre mot de passe pour accéder à vos données.
+                    </p>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Mot de passe</label>
+                        <input 
+                            type="password" 
+                            id="unlockPasswordInput" 
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm"
+                            placeholder="Votre mot de passe..."
+                        >
+                    </div>
+                    <button 
+                        onclick="unlockEncryption()"
+                        class="w-full px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all"
+                    >
+                        <i data-lucide="unlock" class="h-4 w-4 inline mr-1"></i>
+                        Déverrouiller
+                    </button>
+                </div>
+                
+                <!-- Manage Encryption (when unlocked) -->
+                <div id="manageEncryption" class="space-y-3 hidden">
+                    <div class="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+                        <i data-lucide="shield-check" class="h-5 w-5 text-emerald-600"></i>
+                        <span class="text-sm text-emerald-700">Coffre-fort déverrouillé</span>
+                        <button 
+                            onclick="lockEncryption()"
+                            class="ml-auto px-3 py-1 text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-all"
+                        >
+                            <i data-lucide="lock" class="h-3 w-3 inline mr-1"></i>
+                            Verrouiller
+                        </button>
+                    </div>
+                    
+                    <div class="border-t border-slate-200 pt-3">
+                        <p class="text-sm text-slate-500 mb-2">Actions avancées</p>
+                        <div class="flex gap-2">
+                            <button 
+                                onclick="showChangePassword()"
+                                class="flex-1 px-3 py-2 text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 transition-all"
+                            >
+                                <i data-lucide="key" class="h-3 w-3 inline mr-1"></i>
+                                Changer mot de passe
+                            </button>
+                            <button 
+                                onclick="disableEncryptionHandler()"
+                                class="px-3 py-2 text-xs font-medium text-red-600 bg-white hover:bg-red-50 rounded-lg border border-red-200 transition-all"
+                            >
+                                <i data-lucide="shield-off" class="h-3 w-3 inline mr-1"></i>
+                                Désactiver
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Change Password Form -->
+                <div id="changePasswordForm" class="space-y-3 hidden border-t border-slate-200 pt-3">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Ancien mot de passe</label>
+                        <input 
+                            type="password" 
+                            id="oldPasswordInput" 
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm"
+                        >
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Nouveau mot de passe</label>
+                        <input 
+                            type="password" 
+                            id="changeNewPasswordInput" 
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-sm"
+                        >
+                    </div>
+                    <div class="flex gap-2">
+                        <button 
+                            onclick="cancelChangePassword()"
+                            class="flex-1 px-3 py-2 text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 transition-all"
+                        >
+                            Annuler
+                        </button>
+                        <button 
+                            onclick="confirmChangePassword()"
+                            class="flex-1 px-3 py-2 text-xs font-medium text-white bg-violet-600 hover:bg-violet-700 rounded-lg transition-all"
+                        >
+                            Confirmer
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Security Result -->
+                <div id="securityResult" class="hidden"></div>
+            </div>
+        </div>
+
         <!-- Info Section -->
         <div class="bg-blue-50 rounded-xl border border-blue-200 p-6">
             <h3 class="text-lg font-semibold text-blue-800 flex items-center gap-2 mb-3">
@@ -227,6 +370,18 @@
             getCacheStats,
             getRemainingRequests
         } from './js/gemini-client.js';
+        import {
+            isEncryptionSupported,
+            isEncryptionEnabled,
+            isVaultUnlocked,
+            hasPassword,
+            setupEncryption as setupEnc,
+            unlockVault,
+            lockVault,
+            changePassword,
+            disableEncryption,
+            getEncryptionStatus
+        } from './js/encryption.js';
 
         // Initialize Lucide icons
         lucide.createIcons();
@@ -241,12 +396,208 @@
         const cacheEntries = document.getElementById('cacheEntries');
         const cacheSize = document.getElementById('cacheSize');
 
+        // Security DOM elements
+        const encryptionStatus = document.getElementById('encryptionStatus');
+        const setupEncryptionEl = document.getElementById('setupEncryption');
+        const unlockVaultEl = document.getElementById('unlockVault');
+        const manageEncryptionEl = document.getElementById('manageEncryption');
+        const changePasswordFormEl = document.getElementById('changePasswordForm');
+        const securityResult = document.getElementById('securityResult');
+
         // Initialize page
         function init() {
             updateApiStatus();
             updateUsageStats();
             updateCacheStats();
+            updateSecurityStatus();
         }
+
+        // Update security status display
+        function updateSecurityStatus() {
+            const status = getEncryptionStatus();
+            
+            // Hide all panels first
+            setupEncryptionEl.classList.add('hidden');
+            unlockVaultEl.classList.add('hidden');
+            manageEncryptionEl.classList.add('hidden');
+            changePasswordFormEl.classList.add('hidden');
+            
+            if (!status.supported) {
+                encryptionStatus.innerHTML = `
+                    <i data-lucide="alert-triangle" class="h-5 w-5 text-amber-500"></i>
+                    <span class="text-sm text-amber-600">Votre navigateur ne supporte pas le chiffrement</span>
+                `;
+            } else if (!status.enabled || !status.hasPassword) {
+                encryptionStatus.innerHTML = `
+                    <i data-lucide="lock-open" class="h-5 w-5 text-slate-400"></i>
+                    <span class="text-sm text-slate-600">Chiffrement non activé</span>
+                `;
+                setupEncryptionEl.classList.remove('hidden');
+            } else if (!status.unlocked) {
+                encryptionStatus.innerHTML = `
+                    <i data-lucide="lock" class="h-5 w-5 text-amber-500"></i>
+                    <span class="text-sm text-amber-600">Coffre-fort verrouillé</span>
+                `;
+                unlockVaultEl.classList.remove('hidden');
+            } else {
+                encryptionStatus.innerHTML = `
+                    <i data-lucide="shield-check" class="h-5 w-5 text-emerald-600"></i>
+                    <span class="text-sm text-emerald-700">Chiffrement actif - Coffre déverrouillé</span>
+                `;
+                manageEncryptionEl.classList.remove('hidden');
+            }
+            
+            lucide.createIcons();
+        }
+
+        // Show security result message
+        function showSecurityResult(success, message) {
+            securityResult.classList.remove('hidden');
+            
+            if (success === null) {
+                securityResult.innerHTML = `
+                    <div class="flex items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                        <div class="animate-spin h-5 w-5 border-2 border-violet-600 border-t-transparent rounded-full"></div>
+                        <span class="text-sm text-slate-600">${message}</span>
+                    </div>
+                `;
+            } else if (success) {
+                securityResult.innerHTML = `
+                    <div class="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+                        <i data-lucide="check-circle" class="h-5 w-5 text-emerald-600"></i>
+                        <span class="text-sm text-emerald-700">${message}</span>
+                    </div>
+                `;
+                setTimeout(() => securityResult.classList.add('hidden'), 3000);
+            } else {
+                securityResult.innerHTML = `
+                    <div class="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
+                        <i data-lucide="x-circle" class="h-5 w-5 text-red-600"></i>
+                        <span class="text-sm text-red-700">${message}</span>
+                    </div>
+                `;
+            }
+            
+            lucide.createIcons();
+        }
+
+        // Enable encryption
+        window.enableEncryption = async function() {
+            const password = document.getElementById('newPasswordInput').value;
+            const confirm = document.getElementById('confirmPasswordInput').value;
+            
+            if (!password || password.length < 6) {
+                showSecurityResult(false, 'Le mot de passe doit contenir au moins 6 caractères');
+                return;
+            }
+            
+            if (password !== confirm) {
+                showSecurityResult(false, 'Les mots de passe ne correspondent pas');
+                return;
+            }
+            
+            showSecurityResult(null, 'Activation du chiffrement...');
+            
+            try {
+                const success = await setupEnc(password);
+                if (success) {
+                    showSecurityResult(true, 'Chiffrement activé! Vos données sont maintenant protégées.');
+                    document.getElementById('newPasswordInput').value = '';
+                    document.getElementById('confirmPasswordInput').value = '';
+                    updateSecurityStatus();
+                } else {
+                    showSecurityResult(false, 'Erreur lors de l\'activation');
+                }
+            } catch (e) {
+                showSecurityResult(false, e.message);
+            }
+        };
+
+        // Unlock encryption
+        window.unlockEncryption = async function() {
+            const password = document.getElementById('unlockPasswordInput').value;
+            
+            if (!password) {
+                showSecurityResult(false, 'Veuillez entrer votre mot de passe');
+                return;
+            }
+            
+            showSecurityResult(null, 'Déverrouillage...');
+            
+            try {
+                await unlockVault(password);
+                showSecurityResult(true, 'Coffre-fort déverrouillé!');
+                document.getElementById('unlockPasswordInput').value = '';
+                updateSecurityStatus();
+            } catch (e) {
+                showSecurityResult(false, e.message || 'Mot de passe incorrect');
+            }
+        };
+
+        // Lock encryption
+        window.lockEncryption = function() {
+            lockVault();
+            showSecurityResult(true, 'Coffre-fort verrouillé');
+            updateSecurityStatus();
+        };
+
+        // Show change password form
+        window.showChangePassword = function() {
+            changePasswordFormEl.classList.remove('hidden');
+        };
+
+        // Cancel change password
+        window.cancelChangePassword = function() {
+            changePasswordFormEl.classList.add('hidden');
+            document.getElementById('oldPasswordInput').value = '';
+            document.getElementById('changeNewPasswordInput').value = '';
+        };
+
+        // Confirm change password
+        window.confirmChangePassword = async function() {
+            const oldPwd = document.getElementById('oldPasswordInput').value;
+            const newPwd = document.getElementById('changeNewPasswordInput').value;
+            
+            if (!oldPwd || !newPwd) {
+                showSecurityResult(false, 'Veuillez remplir tous les champs');
+                return;
+            }
+            
+            if (newPwd.length < 6) {
+                showSecurityResult(false, 'Le nouveau mot de passe doit contenir au moins 6 caractères');
+                return;
+            }
+            
+            showSecurityResult(null, 'Changement du mot de passe...');
+            
+            try {
+                await changePassword(oldPwd, newPwd);
+                showSecurityResult(true, 'Mot de passe changé avec succès!');
+                cancelChangePassword();
+            } catch (e) {
+                showSecurityResult(false, e.message);
+            }
+        };
+
+        // Disable encryption
+        window.disableEncryptionHandler = async function() {
+            const password = prompt('Entrez votre mot de passe pour désactiver le chiffrement:');
+            if (!password) return;
+            
+            if (!confirm('⚠️ Attention: vos données seront stockées en clair. Continuer?')) {
+                return;
+            }
+            
+            showSecurityResult(null, 'Désactivation du chiffrement...');
+            
+            try {
+                await disableEncryption(password);
+                showSecurityResult(true, 'Chiffrement désactivé. Vos données sont maintenant en clair.');
+                updateSecurityStatus();
+            } catch (e) {
+                showSecurityResult(false, e.message);
+            }
+        };
 
         // Update API status display
         function updateApiStatus() {
