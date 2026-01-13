@@ -288,14 +288,27 @@ export function parseJsonResponse(text) {
             // Essayer de compléter un JSON tronqué
             try {
                 let truncated = cleaned;
-                // Si ça se termine par un tableau ouvert, le fermer
-                if (truncated.match(/\[\s*$/)) {
-                    truncated += ']}';
+                
+                // Compter les guillemets - si impair, on est au milieu d'une string
+                const quotes = (truncated.match(/"/g) || []).length;
+                if (quotes % 2 !== 0) {
+                    // Fermer la string incomplète
+                    truncated += '"';
                 }
-                // Si ça se termine par une virgule ou une valeur incomplète
+                
+                // Si ça se termine par un tableau ouvert ou une virgule dans un tableau
+                if (truncated.match(/\[\s*$/) || truncated.match(/\["[^"]*"\s*$/)) {
+                    // Ne rien ajouter, on va fermer après
+                }
+                // Si ça se termine par une virgule
                 if (truncated.match(/,\s*$/)) {
                     truncated = truncated.replace(/,\s*$/, '');
                 }
+                // Si ça se termine par une string qui était dans un tableau
+                if (truncated.match(/"\s*$/)) {
+                    // C'est OK, on va fermer les structures
+                }
+                
                 // Compter les accolades/crochets ouverts
                 const openBraces = (truncated.match(/\{/g) || []).length;
                 const closeBraces = (truncated.match(/\}/g) || []).length;

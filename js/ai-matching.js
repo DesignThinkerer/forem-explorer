@@ -596,7 +596,7 @@ export async function scoreJobWithAi(job) {
         const response = await generateContent(prompt, {
             generationConfig: {
                 temperature: 0.1, // Très déterministe pour le scoring
-                maxOutputTokens: 512 // JSON compact devrait tenir en moins
+                maxOutputTokens: 1024 // Assez pour le JSON
             },
             skipCache: true // Toujours requête fraîche pour scoring
         });
