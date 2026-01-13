@@ -13,6 +13,7 @@ import { renderResults } from './renderer.js';
 import { saveCurrentSearch, loadSavedSearch, deleteSavedSearch, listSavedSearches } from './saved-searches.js';
 import { getActiveAlerts, dismissAlert, showToast } from './alerts.js';
 import { getProfile } from './cv-profile.js';
+import { saveProfile } from './cv-storage.js';
 import { scoreJobWithAi, isAiScoringAvailable, getStoredScore } from './ai-matching.js';
 import { getRawData } from './state.js';
 
@@ -369,10 +370,15 @@ function openScoreModal(scoreData, jobData) {
         ).join('');
     } else if (scoreData.missingSkills && scoreData.missingSkills.length > 0) {
         fuzzySection.classList.remove('hidden');
-        document.querySelector('#scoreModalFuzzySection h4').innerHTML = '<i data-lucide="alert-circle" class="h-4 w-4 text-red-500"></i> Compétences manquantes';
-        fuzzyEl.innerHTML = scoreData.missingSkills.map(s => 
-            `<span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium">${s}</span>`
-        ).join('');
+        document.querySelector('#scoreModalFuzzySection h4').innerHTML = '<i data-lucide="alert-circle" class="h-4 w-4 text-red-500"></i> Compétences manquantes (cliquer pour ajouter)';
+        fuzzyEl.innerHTML = scoreData.missingSkills.map(s => {
+            const safeName = s.replace(/'/g, "\\'");
+            return `<button onclick="window.addMissingSkill('${safeName}')" data-skill-name="${s.replace(/"/g, '&quot;')}" class="px-2 py-1 bg-red-50 text-red-700 hover:bg-green-50 hover:text-green-700 hover:border-green-200 border border-transparent rounded text-xs font-medium transition-all flex items-center gap-1 group" title="Ajouter au profil">
+                ${s} <i data-lucide="plus" class="h-3 w-3 opacity-50 group-hover:opacity-100"></i>
+            </button>`;
+        }).join('');
+        // Re-init icons for the new buttons
+        setTimeout(initIcons, 0);
     } else {
         fuzzySection.classList.add('hidden');
     }
@@ -561,6 +567,51 @@ function copyScoreDebugJson() {
         console.error('Erreur copie:', err);
         showToast('Erreur lors de la copie', 'error', 2000);
     });
+}
+
+/**
+ * Adds a missing skill to the user profile
+ * @param {string} skillName 
+ */
+function addMissingSkill(skillName) {
+    const profile = getProfile();
+    if (!profile) return;
+    
+    // Check if skills array exists
+    if (!profile.skills) profile.skills = [];
+    
+    // Check for duplicates (case insensitive)
+    const exists = profile.skills.some(s => 
+        (typeof s === 'string' ? s : s.name).toLowerCase() === skillName.toLowerCase()
+    );
+    
+    if (exists) {
+        showToast(`La compétence "${skillName}" est déjà dans votre profil`, 'info');
+        return;
+    }
+    
+    // Add skill (as object to match structure)
+    profile.skills.push({
+        name: skillName,
+        level: 'unknown',
+        keywords: []
+    });
+    
+    if (saveProfile(profile)) {
+        showToast(`Compétence "${skillName}" ajoutée !`, 'success');
+        
+        // Remove the button from the modal to give immediate feedback
+        const btn = document.querySelector(`button[data-skill-name="${skillName.replace(/"/g, '&quot;')}"]`);
+        if (btn) {
+            btn.className = "px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium transition-all flex items-center gap-1";
+            btn.innerHTML = `${skillName} <i data-lucide="check" class="h-3 w-3"></i>`;
+            btn.onclick = null;
+            btn.title = "Ajouté";
+            initIcons();
+        }
+    } else {
+        showToast('Erreur lors de la sauvegarde', 'error');
+    }
 }
 
 /**
@@ -870,6 +921,7 @@ window.openScoreModal = openScoreModal;
 window.closeScoreModal = closeScoreModal;
 window.copyScoreDebugJson = copyScoreDebugJson;
 window.recalculateScore = recalculateScore;
+window.addMissingSkill = addMissingSkill;
 
 // Initialize when DOM is ready
 init();
