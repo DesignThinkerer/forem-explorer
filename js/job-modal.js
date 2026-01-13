@@ -7,9 +7,25 @@ import { BASE_URL } from './config.js';
 import { getJobState, toggleBookmark, toggleApplied, toggleIgnored } from './bookmarks.js';
 import { getJobNote, saveJobNote, deleteJobNote } from './notes.js';
 import { getJobTags, listTags, addTagToJob, removeTagFromJob, createTag, deleteTag, getJobsByTag } from './tags.js';
+import { 
+    generateCoverLetter, 
+    isLetterGenerationAvailable, 
+    copyToClipboard, 
+    saveLetter as saveLetterToStorage,
+    getLettersForJob,
+    LETTER_STYLES 
+} from './ai-cover-letter.js';
 
 // Store current job ID globally for bookmark/applied handlers
 let currentJobId = null;
+// Store current job data for cover letter generation
+let currentJobData = null;
+// Current selected letter style
+let selectedLetterStyle = 'balanced';
+// Current generated letter
+let currentGeneratedLetter = null;
+// Is letter in edit mode
+let letterEditMode = false;
 
 /**
  * Fetches full job details from the API by record ID.
@@ -55,6 +71,8 @@ export async function openJobModal(job) {
 function populateModal(job) {
     // Store job ID for bookmark/applied handlers
     currentJobId = job.numerooffreforem;
+    // Store full job data for cover letter generation
+    currentJobData = job;
     
     // Log all available fields for debugging
     console.log('Available job fields:', Object.keys(job));
@@ -646,7 +664,13 @@ export function deleteCustomTag(tagId) {
 // Close modal on escape key
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-        closeJobModal();
+        // Close cover letter modal first if open
+        const coverLetterModal = document.getElementById('coverLetterModal');
+        if (coverLetterModal && !coverLetterModal.classList.contains('hidden')) {
+            closeCoverLetterModal();
+        } else {
+            closeJobModal();
+        }
     }
 });
 
@@ -656,3 +680,265 @@ document.getElementById('jobModal')?.addEventListener('click', (e) => {
         closeJobModal();
     }
 });
+
+// =============================================
+// Cover Letter Modal Functions
+// =============================================
+
+/**
+ * Opens the cover letter generation modal.
+ */
+export function openCoverLetterModal() {
+    if (!currentJobData) {
+        alert('Aucune offre sélectionnée');
+        return;
+    }
+    
+    const modal = document.getElementById('coverLetterModal');
+    if (!modal) return;
+    
+    // Reset state
+    selectedLetterStyle = 'balanced';
+    currentGeneratedLetter = null;
+    letterEditMode = false;
+    
+    // Set job title
+    const jobTitleEl = document.getElementById('coverLetterJobTitle');
+    if (jobTitleEl) {
+        jobTitleEl.textContent = `Pour: ${currentJobData.titreoffre || currentJobData.libelleoffre || 'Offre'}`;
+    }
+    
+    // Check AI availability
+    const availability = isLetterGenerationAvailable();
+    const statusEl = document.getElementById('coverLetterAiStatus');
+    const statusTextEl = document.getElementById('coverLetterAiStatusText');
+    const generateBtn = document.getElementById('btnGenerateLetter');
+    
+    if (!availability.available) {
+        statusEl?.classList.remove('hidden');
+        if (statusTextEl) statusTextEl.textContent = availability.reason;
+        if (generateBtn) generateBtn.disabled = true;
+    } else {
+        statusEl?.classList.add('hidden');
+        if (generateBtn) generateBtn.disabled = false;
+    }
+    
+    // Reset UI
+    document.getElementById('coverLetterOptions')?.classList.remove('hidden');
+    document.getElementById('coverLetterLoading')?.classList.add('hidden');
+    document.getElementById('coverLetterResult')?.classList.add('hidden');
+    document.getElementById('coverLetterHighlights').value = '';
+    
+    // Reset style selection
+    updateStyleButtons();
+    
+    // Show modal
+    modal.classList.remove('hidden');
+    
+    setTimeout(() => initIcons(), 50);
+}
+
+/**
+ * Closes the cover letter modal.
+ */
+export function closeCoverLetterModal() {
+    const modal = document.getElementById('coverLetterModal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+
+/**
+ * Selects a letter style.
+ * @param {string} style - The style ID
+ */
+export function selectLetterStyle(style) {
+    selectedLetterStyle = style;
+    updateStyleButtons();
+}
+
+/**
+ * Updates the style button appearances.
+ */
+function updateStyleButtons() {
+    document.querySelectorAll('.letter-style-btn').forEach(btn => {
+        const btnStyle = btn.getAttribute('data-style');
+        if (btnStyle === selectedLetterStyle) {
+            btn.classList.add('border-violet-500', 'bg-violet-50');
+            btn.classList.remove('border-slate-200');
+        } else {
+            btn.classList.remove('border-violet-500', 'bg-violet-50');
+            btn.classList.add('border-slate-200');
+        }
+    });
+}
+
+/**
+ * Generates a cover letter.
+ */
+export async function generateLetter() {
+    if (!currentJobData) return;
+    
+    const highlights = document.getElementById('coverLetterHighlights')?.value || '';
+    
+    // Show loading
+    document.getElementById('coverLetterOptions')?.classList.add('hidden');
+    document.getElementById('coverLetterLoading')?.classList.remove('hidden');
+    document.getElementById('coverLetterResult')?.classList.add('hidden');
+    
+    try {
+        const result = await generateCoverLetter(currentJobData, {
+            style: selectedLetterStyle,
+            highlights: highlights
+        });
+        
+        if (result.success) {
+            currentGeneratedLetter = result;
+            displayGeneratedLetter(result.letter);
+        } else {
+            alert('Erreur: ' + result.error);
+            showLetterOptions();
+        }
+    } catch (error) {
+        console.error('Error generating letter:', error);
+        alert('Une erreur est survenue lors de la génération');
+        showLetterOptions();
+    }
+    
+    // Hide loading
+    document.getElementById('coverLetterLoading')?.classList.add('hidden');
+}
+
+/**
+ * Displays the generated letter.
+ * @param {string} letter - The letter text
+ */
+function displayGeneratedLetter(letter) {
+    const textEl = document.getElementById('coverLetterText');
+    const resultEl = document.getElementById('coverLetterResult');
+    
+    if (textEl) textEl.textContent = letter;
+    resultEl?.classList.remove('hidden');
+    
+    // Reset edit mode
+    letterEditMode = false;
+    document.getElementById('coverLetterEditMode')?.classList.add('hidden');
+    document.getElementById('coverLetterText')?.parentElement.classList.remove('hidden');
+    const editBtn = document.getElementById('btnEditLetter');
+    if (editBtn) {
+        editBtn.innerHTML = '<i data-lucide="pencil" class="h-4 w-4"></i><span>Modifier</span>';
+    }
+    
+    setTimeout(() => initIcons(), 50);
+}
+
+/**
+ * Shows the letter options panel.
+ */
+export function showLetterOptions() {
+    document.getElementById('coverLetterOptions')?.classList.remove('hidden');
+    document.getElementById('coverLetterResult')?.classList.add('hidden');
+    document.getElementById('coverLetterLoading')?.classList.add('hidden');
+}
+
+/**
+ * Toggles letter edit mode.
+ */
+export function toggleLetterEdit() {
+    letterEditMode = !letterEditMode;
+    
+    const textContainer = document.getElementById('coverLetterText')?.parentElement;
+    const editContainer = document.getElementById('coverLetterEditMode');
+    const editor = document.getElementById('coverLetterEditor');
+    const editBtn = document.getElementById('btnEditLetter');
+    
+    if (letterEditMode) {
+        // Switch to edit mode
+        if (editor && currentGeneratedLetter) {
+            editor.value = currentGeneratedLetter.letter;
+        }
+        textContainer?.classList.add('hidden');
+        editContainer?.classList.remove('hidden');
+        if (editBtn) {
+            editBtn.innerHTML = '<i data-lucide="check" class="h-4 w-4"></i><span>Appliquer</span>';
+        }
+    } else {
+        // Apply edits and switch back
+        if (editor && currentGeneratedLetter) {
+            currentGeneratedLetter.letter = editor.value;
+            displayGeneratedLetter(editor.value);
+        }
+        textContainer?.classList.remove('hidden');
+        editContainer?.classList.add('hidden');
+        if (editBtn) {
+            editBtn.innerHTML = '<i data-lucide="pencil" class="h-4 w-4"></i><span>Modifier</span>';
+        }
+    }
+    
+    setTimeout(() => initIcons(), 50);
+}
+
+/**
+ * Regenerates the letter with same options.
+ */
+export async function regenerateLetter() {
+    await generateLetter();
+}
+
+/**
+ * Copies the letter to clipboard.
+ */
+export async function copyLetter() {
+    if (!currentGeneratedLetter?.letter) return;
+    
+    const success = await copyToClipboard(currentGeneratedLetter.letter);
+    
+    if (success) {
+        // Show feedback
+        const btn = event.target.closest('button');
+        if (btn) {
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="check" class="h-4 w-4"></i><span>Copié !</span>';
+            btn.classList.add('bg-green-200', 'text-green-700');
+            btn.classList.remove('bg-blue-100', 'text-blue-700');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.classList.remove('bg-green-200', 'text-green-700');
+                btn.classList.add('bg-blue-100', 'text-blue-700');
+                initIcons();
+            }, 2000);
+            
+            initIcons();
+        }
+    } else {
+        alert('Erreur lors de la copie');
+    }
+}
+
+/**
+ * Saves the letter.
+ */
+export function saveLetter() {
+    if (!currentGeneratedLetter) return;
+    
+    const id = saveLetterToStorage(currentGeneratedLetter);
+    
+    if (id) {
+        // Show feedback
+        const btn = event.target.closest('button');
+        if (btn) {
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="check" class="h-4 w-4"></i><span>Sauvegardé !</span>';
+            
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                initIcons();
+            }, 2000);
+            
+            initIcons();
+        }
+    } else {
+        alert('Erreur lors de la sauvegarde');
+    }
+}

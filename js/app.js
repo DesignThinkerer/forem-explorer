@@ -8,7 +8,7 @@ import { loadFacets } from './facets.js';
 import { handleSearch, handleCustomSearch, copyUrl, exportDebugJson, importBookmarksFromFile } from './search.js';
 import { triggerGeo, manualCitySearch } from './geolocation.js';
 import { restoreStateFromUrl } from './url-state.js';
-import { closeJobModal, handleBookmarkToggle, handleAppliedToggle, handleIgnoredToggle, saveNote, deleteNote, addJobTagFromDropdown, removeJobTag, openTagManagement, closeTagManagement, createNewTag, deleteCustomTag } from './job-modal.js';
+import { closeJobModal, handleBookmarkToggle, handleAppliedToggle, handleIgnoredToggle, saveNote, deleteNote, addJobTagFromDropdown, removeJobTag, openTagManagement, closeTagManagement, createNewTag, deleteCustomTag, openCoverLetterModal, closeCoverLetterModal, selectLetterStyle, generateLetter, toggleLetterEdit, regenerateLetter, copyLetter, saveLetter, showLetterOptions } from './job-modal.js';
 import { renderResults } from './renderer.js';
 import { saveCurrentSearch, loadSavedSearch, deleteSavedSearch, listSavedSearches } from './saved-searches.js';
 import { getActiveAlerts, dismissAlert, showToast } from './alerts.js';
@@ -322,6 +322,16 @@ window.closeTagManagement = closeTagManagement;
 window.createNewTag = createNewTag;
 window.deleteCustomTag = deleteCustomTag;
 window.dismissAlertById = dismissAlertById;
+// Cover letter functions
+window.openCoverLetterModal = openCoverLetterModal;
+window.closeCoverLetterModal = closeCoverLetterModal;
+window.selectLetterStyle = selectLetterStyle;
+window.generateLetter = generateLetter;
+window.toggleLetterEdit = toggleLetterEdit;
+window.regenerateLetter = regenerateLetter;
+window.copyLetter = copyLetter;
+window.saveLetter = saveLetter;
+window.showLetterOptions = showLetterOptions;
 
 // Initialize when DOM is ready
 init();

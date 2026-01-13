@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="fr-BE">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Lettres de Motivation - Forem Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-100 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3">
+            <div class="flex items-center justify-between">
+                <a href="index.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity" title="Retour à l'accueil">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                        <i data-lucide="briefcase" class="h-6 w-6 text-white"></i>
+                    </div>
+                    <h1 class="text-xl font-bold text-slate-800">Forem Explorer</h1>
+                </a>
+                
+                <div class="flex items-center gap-2">
+                    <a href="index.html" class="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-all">
+                        <i data-lucide="search" class="h-4 w-4"></i>
+                        Recherche
+                    </a>
+                    <a href="dashboard.html" class="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-all">
+                        <i data-lucide="layout-dashboard" class="h-4 w-4"></i>
+                        Dashboard
+                    </a>
+                    <a href="profile.html" class="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition-all">
+                        <i data-lucide="user" class="h-4 w-4"></i>
+                        Profil
+                    </a>
+                    <a href="settings.html" class="flex items-center gap-2 px-4 py-2 bg-violet-500 hover:bg-violet-600 text-white rounded-lg font-medium transition-all">
+                        <i data-lucide="sparkles" class="h-4 w-4"></i>
+                        IA
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="p-3 bg-violet-100 rounded-xl">
+                    <i data-lucide="file-pen" class="h-8 w-8 text-violet-600"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold text-slate-800">Mes Lettres de Motivation</h1>
+                    <p class="text-slate-600">Consultez et gérez vos lettres générées par l'IA</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Bar -->
+        <div id="statsBar" class="bg-white rounded-xl shadow-sm p-4 mb-6 flex items-center gap-6">
+            <div class="text-center px-4 border-r border-slate-200">
+                <div id="totalLetters" class="text-2xl font-bold text-slate-800">0</div>
+                <div class="text-xs text-slate-500">Total lettres</div>
+            </div>
+            <div class="text-center px-4 border-r border-slate-200">
+                <div id="uniqueJobs" class="text-2xl font-bold text-blue-600">0</div>
+                <div class="text-xs text-slate-500">Offres concernées</div>
+            </div>
+            <div class="flex items-center gap-4 px-4">
+                <div class="text-center">
+                    <span class="text-lg">👔</span>
+                    <div id="formalCount" class="text-sm font-medium text-slate-700">0</div>
+                </div>
+                <div class="text-center">
+                    <span class="text-lg">⚖️</span>
+                    <div id="balancedCount" class="text-sm font-medium text-slate-700">0</div>
+                </div>
+                <div class="text-center">
+                    <span class="text-lg">🚀</span>
+                    <div id="dynamicCount" class="text-sm font-medium text-slate-700">0</div>
+                </div>
+            </div>
+            <div class="ml-auto flex items-center gap-2">
+                <button onclick="clearAllLettersConfirm()" class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-medium transition-all flex items-center gap-2">
+                    <i data-lucide="trash-2" class="h-4 w-4"></i>
+                    Tout supprimer
+                </button>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="bg-white rounded-xl shadow-sm p-4 mb-6 flex items-center gap-4">
+            <div class="flex items-center gap-2">
+                <label for="filterStyle" class="text-sm font-medium text-slate-700">Style:</label>
+                <select id="filterStyle" onchange="filterLetters()" class="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm" title="Filtrer par style" aria-label="Filtrer par style">
+                    <option value="">Tous les styles</option>
+                    <option value="formal">👔 Formel</option>
+                    <option value="balanced">⚖️ Équilibré</option>
+                    <option value="dynamic">🚀 Dynamique</option>
+                </select>
+            </div>
+            <div class="flex items-center gap-2">
+                <label for="sortLetters" class="text-sm font-medium text-slate-700">Trier par:</label>
+                <select id="sortLetters" onchange="filterLetters()" class="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm" title="Trier les lettres" aria-label="Trier les lettres">
+                    <option value="newest">Plus récentes</option>
+                    <option value="oldest">Plus anciennes</option>
+                    <option value="job">Par offre</option>
+                </select>
+            </div>
+            <div class="flex-1"></div>
+            <input type="text" id="searchLetters" onkeyup="filterLetters()" placeholder="Rechercher dans les lettres..." class="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm w-64" title="Rechercher dans les lettres" aria-label="Rechercher dans les lettres">
+        </div>
+
+        <!-- Letters List -->
+        <div id="lettersList" class="space-y-4">
+            <!-- Letters will be rendered here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-16">
+            <div class="w-24 h-24 bg-violet-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="file-pen" class="h-12 w-12 text-violet-400"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-800 mb-2">Aucune lettre sauvegardée</h2>
+            <p class="text-slate-600 mb-6">Générez votre première lettre de motivation depuis une offre d'emploi</p>
+            <a href="index.html" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all">
+                <i data-lucide="search" class="h-5 w-5"></i>
+                Rechercher des offres
+            </a>
+        </div>
+    </main>
+
+    <!-- Letter Detail Modal -->
+    <div id="letterDetailModal" onclick="if(event.target === this) closeLetterDetailModal()" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-violet-50 to-slate-50">
+                <div>
+                    <h2 id="detailModalTitle" class="text-xl font-bold text-slate-800"></h2>
+                    <p id="detailModalMeta" class="text-sm text-slate-600 mt-1"></p>
+                </div>
+                <button onclick="closeLetterDetailModal()" class="text-slate-400 hover:text-slate-600 transition-colors" title="Fermer" aria-label="Fermer le modal">
+                    <i data-lucide="x" class="h-6 w-6"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Body -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-inner">
+                    <div id="detailModalText" class="whitespace-pre-wrap text-slate-800 leading-relaxed font-serif"></div>
+                </div>
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="p-6 border-t border-slate-200 bg-slate-50 flex flex-wrap gap-2 justify-center">
+                <button onclick="copyLetterFromDetail()" class="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg font-medium transition-all">
+                    <i data-lucide="copy" class="h-4 w-4"></i>
+                    Copier
+                </button>
+                <button onclick="deleteLetterFromDetail()" class="flex items-center gap-2 px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg font-medium transition-all">
+                    <i data-lucide="trash-2" class="h-4 w-4"></i>
+                    Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { getSavedLetters, getLettersStats, deleteLetter, clearAllLetters, copyToClipboard } from './js/ai-cover-letter.js';
+        
+        let allLetters = [];
+        let currentDetailLetter = null;
+        
+        const styleIcons = {
+            formal: '👔',
+            balanced: '⚖️',
+            dynamic: '🚀'
+        };
+        
+        const styleNames = {
+            formal: 'Formel',
+            balanced: 'Équilibré',
+            dynamic: 'Dynamique'
+        };
+        
+        function init() {
+            loadLetters();
+            lucide.createIcons();
+        }
+        
+        function loadLetters() {
+            allLetters = getSavedLetters();
+            updateStats();
+            filterLetters();
+        }
+        
+        function updateStats() {
+            const stats = getLettersStats();
+            document.getElementById('totalLetters').textContent = stats.total;
+            document.getElementById('uniqueJobs').textContent = stats.uniqueJobs;
+            document.getElementById('formalCount').textContent = stats.byStyle.formal;
+            document.getElementById('balancedCount').textContent = stats.byStyle.balanced;
+            document.getElementById('dynamicCount').textContent = stats.byStyle.dynamic;
+        }
+        
+        window.filterLetters = function() {
+            const styleFilter = document.getElementById('filterStyle').value;
+            const sortBy = document.getElementById('sortLetters').value;
+            const searchQuery = document.getElementById('searchLetters').value.toLowerCase();
+            
+            let filtered = [...allLetters];
+            
+            // Apply style filter
+            if (styleFilter) {
+                filtered = filtered.filter(l => l.style === styleFilter);
+            }
+            
+            // Apply search filter
+            if (searchQuery) {
+                filtered = filtered.filter(l => 
+                    (l.letter && l.letter.toLowerCase().includes(searchQuery)) ||
+                    (l.jobTitle && l.jobTitle.toLowerCase().includes(searchQuery)) ||
+                    (l.company && l.company.toLowerCase().includes(searchQuery))
+                );
+            }
+            
+            // Apply sort
+            if (sortBy === 'newest') {
+                filtered.sort((a, b) => new Date(b.savedAt || b.generatedAt) - new Date(a.savedAt || a.generatedAt));
+            } else if (sortBy === 'oldest') {
+                filtered.sort((a, b) => new Date(a.savedAt || a.generatedAt) - new Date(b.savedAt || b.generatedAt));
+            } else if (sortBy === 'job') {
+                filtered.sort((a, b) => (a.jobTitle || '').localeCompare(b.jobTitle || ''));
+            }
+            
+            renderLetters(filtered);
+        };
+        
+        function renderLetters(letters) {
+            const container = document.getElementById('lettersList');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (letters.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            container.innerHTML = letters.map(letter => {
+                const date = new Date(letter.savedAt || letter.generatedAt).toLocaleDateString('fr-BE', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                const preview = letter.letter ? letter.letter.substring(0, 200) + (letter.letter.length > 200 ? '...' : '') : '';
+                
+                return `
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all">
+                        <div class="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl" title="${styleNames[letter.style] || 'Inconnu'}">${styleIcons[letter.style] || '📄'}</span>
+                                <div>
+                                    <h3 class="font-semibold text-slate-800">${letter.jobTitle || 'Offre inconnue'}</h3>
+                                    <p class="text-sm text-slate-500">${letter.company || 'Entreprise non spécifiée'}</p>
+                                </div>
+                            </div>
+                            <div class="text-sm text-slate-500">${date}</div>
+                        </div>
+                        <div class="p-4">
+                            <p class="text-slate-600 text-sm leading-relaxed">${preview}</p>
+                        </div>
+                        <div class="px-4 pb-4 flex gap-2">
+                            <button onclick="viewLetterDetail('${letter.id}')" class="flex items-center gap-1 px-3 py-1.5 bg-violet-100 hover:bg-violet-200 text-violet-700 rounded-lg text-sm font-medium transition-all">
+                                <i data-lucide="eye" class="h-4 w-4"></i>
+                                Voir
+                            </button>
+                            <button onclick="copyLetterById('${letter.id}')" class="flex items-center gap-1 px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm font-medium transition-all">
+                                <i data-lucide="copy" class="h-4 w-4"></i>
+                                Copier
+                            </button>
+                            <button onclick="deleteLetterById('${letter.id}')" class="flex items-center gap-1 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-medium transition-all">
+                                <i data-lucide="trash-2" class="h-4 w-4"></i>
+                                Supprimer
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            lucide.createIcons();
+        }
+        
+        window.viewLetterDetail = function(id) {
+            const letter = allLetters.find(l => l.id === id);
+            if (!letter) return;
+            
+            currentDetailLetter = letter;
+            
+            document.getElementById('detailModalTitle').textContent = letter.jobTitle || 'Lettre de motivation';
+            document.getElementById('detailModalMeta').textContent = `${styleIcons[letter.style] || ''} ${styleNames[letter.style] || ''} • ${letter.company || 'Entreprise inconnue'} • ${new Date(letter.savedAt || letter.generatedAt).toLocaleDateString('fr-BE')}`;
+            document.getElementById('detailModalText').textContent = letter.letter || '';
+            
+            document.getElementById('letterDetailModal').classList.remove('hidden');
+            lucide.createIcons();
+        };
+        
+        window.closeLetterDetailModal = function() {
+            document.getElementById('letterDetailModal').classList.add('hidden');
+            currentDetailLetter = null;
+        };
+        
+        window.copyLetterById = async function(id) {
+            const letter = allLetters.find(l => l.id === id);
+            if (!letter) return;
+            
+            const success = await copyToClipboard(letter.letter);
+            if (success) {
+                alert('Lettre copiée !');
+            }
+        };
+        
+        window.copyLetterFromDetail = async function() {
+            if (!currentDetailLetter) return;
+            
+            const success = await copyToClipboard(currentDetailLetter.letter);
+            if (success) {
+                alert('Lettre copiée !');
+            }
+        };
+        
+        window.deleteLetterById = function(id) {
+            if (!confirm('Supprimer cette lettre ?')) return;
+            
+            deleteLetter(id);
+            loadLetters();
+        };
+        
+        window.deleteLetterFromDetail = function() {
+            if (!currentDetailLetter) return;
+            if (!confirm('Supprimer cette lettre ?')) return;
+            
+            deleteLetter(currentDetailLetter.id);
+            closeLetterDetailModal();
+            loadLetters();
+        };
+        
+        window.clearAllLettersConfirm = function() {
+            if (!confirm('Supprimer TOUTES les lettres sauvegardées ? Cette action est irréversible.')) return;
+            
+            clearAllLetters();
+            loadLetters();
+        };
+        
+        // Handle escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeLetterDetailModal();
+            }
+        });
+        
+        init();
+    </script>
+</body>
+</html>
