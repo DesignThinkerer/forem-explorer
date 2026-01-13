@@ -621,7 +621,7 @@ export async function scoreJobWithAi(job) {
         const response = await generateContent(prompt, {
             generationConfig: {
                 temperature: 0.3, // Plus déterministe pour le scoring
-                maxOutputTokens: 1024
+                maxOutputTokens: 2048 // Assez pour une réponse JSON complète
             }
         });
         

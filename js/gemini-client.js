@@ -256,7 +256,8 @@ export function parseJsonResponse(text) {
     let cleaned = text.trim();
     
     // Log pour debug
-    console.log('Gemini raw response:', cleaned.substring(0, 200) + '...');
+    console.log('Gemini raw response (start):', cleaned.substring(0, 200));
+    console.log('Gemini raw response (end):', cleaned.substring(cleaned.length - 100));
     
     // Enlever les blocs de code markdown (```json ... ``` ou ``` ... ```)
     // Regex plus robuste pour gérer les variantes
@@ -270,6 +271,9 @@ export function parseJsonResponse(text) {
         cleaned = jsonMatch[0];
     }
     
+    console.log('Cleaned JSON (first 300 chars):', cleaned.substring(0, 300));
+    console.log('Cleaned JSON (last 100 chars):', cleaned.substring(cleaned.length - 100));
+    
     try {
         return JSON.parse(cleaned);
     } catch (e) {
@@ -281,7 +285,7 @@ export function parseJsonResponse(text) {
             fixed = fixed.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
             return JSON.parse(fixed);
         } catch (e2) {
-            console.error('JSON parse failed. Cleaned text:', cleaned.substring(0, 300));
+            console.error('JSON parse failed. Full cleaned text:', cleaned);
             throw new GeminiError(
                 'La réponse n\'est pas un JSON valide',
                 'INVALID_JSON',
