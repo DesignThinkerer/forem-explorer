@@ -171,7 +171,7 @@ export function showToast(message, type = 'info', duration = 3000) {
     toastMsg.textContent = message;
     
     // Update colors based on type
-    toast.className = 'fixed bottom-6 right-6 text-white px-6 py-4 rounded-xl shadow-2xl transform translate-y-24 transition-transform duration-300 z-50 flex items-center gap-4 max-w-sm';
+    toast.className = 'fixed bottom-6 right-6 text-white px-6 py-4 rounded-xl shadow-2xl transform translate-y-24 transition-transform duration-300 z-[100] flex items-center gap-4 max-w-sm';
     
     let bgColor = 'bg-emerald-600';
     let iconName = 'check';
