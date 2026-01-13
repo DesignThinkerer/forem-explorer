@@ -9,6 +9,51 @@ import { getProfile } from './cv-profile.js';
 // Storage pour les scores calculés
 const SCORES_STORAGE = 'forem_matching_scores';
 
+// DEBUG: Exposer des fonctions pour analyser le scoring dans la console
+window.debugScoring = function() {
+    const profile = getProfile();
+    if (!profile) {
+        console.log('❌ Pas de profil CV chargé');
+        return null;
+    }
+    
+    console.log('📋 PROFIL CV:');
+    console.log('  - Headline:', profile.headline);
+    console.log('  - Skills (' + (profile.skills?.length || 0) + '):', profile.skills?.map(s => s.name).join(', '));
+    console.log('  - Keywords (' + (profile.keywords?.length || 0) + '):', profile.keywords?.slice(0, 20).join(', '));
+    console.log('  - Location:', profile.location);
+    console.log('  - Languages:', profile.languages?.map(l => l.name).join(', '));
+    console.log('  - Experience:', profile.totalExperienceYears, 'ans');
+    
+    return profile;
+};
+
+// Tester le score d'un job fictif
+window.testScore = function(jobText) {
+    const profile = getProfile();
+    if (!profile) {
+        console.log('❌ Pas de profil CV chargé');
+        return null;
+    }
+    
+    // Créer un faux job avec le texte fourni
+    const fakeJob = {
+        titreoffre: jobText,
+        description: jobText
+    };
+    
+    // Importer la fonction (elle sera dispo car même module)
+    const result = calculateLocalScore(profile, fakeJob);
+    
+    console.log('\n🎯 RÉSULTAT DU SCORING:');
+    console.log('  - Score:', result.score + '%');
+    console.log('  - Mots-clés matchés:', result.matchingKeywords.join(', ') || 'aucun');
+    console.log('  - Fuzzy matches:', result.fuzzyMatches?.join(', ') || 'aucun');
+    console.log('  - Détails:', result.details);
+    
+    return result;
+};
+
 /**
  * Récupère les scores stockés
  * @returns {Object} Map jobId -> score data
@@ -74,6 +119,112 @@ export function isAiScoringAvailable() {
 }
 
 /**
+ * Calcule la distance de Levenshtein entre deux chaînes
+ * @param {string} a - Première chaîne
+ * @param {string} b - Deuxième chaîne
+ * @returns {number} Distance (nombre d'éditions)
+ */
+function levenshteinDistance(a, b) {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+    
+    const matrix = [];
+    
+    // Initialiser la première colonne
+    for (let i = 0; i <= b.length; i++) {
+        matrix[i] = [i];
+    }
+    
+    // Initialiser la première ligne
+    for (let j = 0; j <= a.length; j++) {
+        matrix[0][j] = j;
+    }
+    
+    // Remplir la matrice
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1, // substitution
+                    matrix[i][j - 1] + 1,     // insertion
+                    matrix[i - 1][j] + 1      // suppression
+                );
+            }
+        }
+    }
+    
+    return matrix[b.length][a.length];
+}
+
+/**
+ * Calcule la similarité entre deux chaînes (0-1)
+ * @param {string} a - Première chaîne
+ * @param {string} b - Deuxième chaîne
+ * @returns {number} Similarité entre 0 et 1
+ */
+function similarity(a, b) {
+    const aLower = a.toLowerCase();
+    const bLower = b.toLowerCase();
+    
+    // Match exact
+    if (aLower === bLower) return 1;
+    
+    // Un mot contient l'autre (ex: "Angular" dans "AngularJS")
+    if (aLower.includes(bLower) || bLower.includes(aLower)) {
+        return 0.9;
+    }
+    
+    // Distance de Levenshtein
+    const distance = levenshteinDistance(aLower, bLower);
+    const maxLen = Math.max(aLower.length, bLower.length);
+    
+    return 1 - (distance / maxLen);
+}
+
+/**
+ * Trouve le meilleur match pour un mot dans une liste de mots
+ * @param {string} word - Le mot à chercher
+ * @param {string[]} wordList - Liste de mots où chercher
+ * @param {number} threshold - Seuil de similarité minimum (défaut 0.7)
+ * @returns {Object|null} { word, match, similarity } ou null
+ */
+function findBestMatch(word, wordList, threshold = 0.7) {
+    let bestMatch = null;
+    let bestSimilarity = threshold;
+    
+    for (const candidate of wordList) {
+        const sim = similarity(word, candidate);
+        if (sim > bestSimilarity) {
+            bestSimilarity = sim;
+            bestMatch = candidate;
+        }
+    }
+    
+    if (bestMatch) {
+        return { word, match: bestMatch, similarity: bestSimilarity };
+    }
+    return null;
+}
+
+/**
+ * Extrait tous les mots significatifs d'un texte
+ * @param {string} text - Le texte à analyser
+ * @returns {string[]} Liste de mots uniques
+ */
+function extractWords(text) {
+    // Extraire les mots de 3+ caractères, en minuscules
+    const words = text.toLowerCase()
+        .replace(/[^a-zàâäéèêëïîôùûüç\s\-\.]/gi, ' ')
+        .split(/[\s\-\.\/,;:()]+/)
+        .filter(w => w.length >= 3)
+        .filter(w => !['les', 'des', 'une', 'pour', 'avec', 'dans', 'sur', 'par', 'aux', 'est', 'sont', 'être', 'avoir', 'vous', 'nous', 'votre', 'notre', 'cette', 'ces', 'qui', 'que', 'dont', 'the', 'and', 'for', 'with', 'you', 'your'].includes(w));
+    
+    return [...new Set(words)];
+}
+
+/**
  * Calcule un score local rapide (sans IA)
  * @param {Object} profile - Le profil candidat
  * @param {Object} job - L'offre d'emploi
@@ -84,6 +235,7 @@ export function calculateLocalScore(profile, job) {
     
     let score = 0; // Commence à 0, pas 50
     const matchingKeywords = [];
+    const fuzzyMatches = []; // Matches approximatifs via Levenshtein
     const details = {};
     
     // Collecter TOUT le texte disponible de l'offre (utiliser tous les champs)
@@ -113,6 +265,10 @@ export function calculateLocalScore(profile, job) {
         };
     }
     
+    // Extraire tous les mots de l'offre pour le matching Levenshtein
+    const jobWords = extractWords(jobText);
+    const titleWords = extractWords(jobTitle);
+    
     // 1. Match des compétences (max 45 points)
     if (profile.skills && profile.skills.length > 0) {
         let matched = 0;
@@ -120,18 +276,56 @@ export function calculateLocalScore(profile, job) {
         
         profile.skills.forEach(skill => {
             const skillLower = skill.name.toLowerCase();
-            const skillWords = skillLower.split(/[\s\-\/]+/);
+            const skillWords = skillLower.split(/[\s\-\/]+/).filter(w => w.length >= 2);
             
-            // Match exact ou partiel
-            const isMatch = jobText.includes(skillLower) || 
-                           skillWords.some(w => w.length > 3 && jobText.includes(w));
+            let isMatch = false;
+            let isTitleMatch = false;
+            
+            // 1a. Match exact (contient le mot entier)
+            if (jobText.includes(skillLower)) {
+                isMatch = true;
+                if (jobTitle.includes(skillLower)) {
+                    isTitleMatch = true;
+                }
+            }
+            
+            // 1b. Match des sous-mots de la compétence
+            if (!isMatch) {
+                for (const word of skillWords) {
+                    if (word.length >= 3 && jobText.includes(word)) {
+                        isMatch = true;
+                        if (jobTitle.includes(word)) {
+                            isTitleMatch = true;
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            // 1c. Match fuzzy avec Levenshtein (seuil 0.75 = 75% similarité)
+            if (!isMatch) {
+                for (const word of skillWords) {
+                    if (word.length >= 4) { // Seulement pour les mots de 4+ caractères
+                        const fuzzyResult = findBestMatch(word, jobWords, 0.75);
+                        if (fuzzyResult) {
+                            isMatch = true;
+                            fuzzyMatches.push(`${skill.name} ≈ ${fuzzyResult.match} (${Math.round(fuzzyResult.similarity * 100)}%)`);
+                            
+                            // Vérifier aussi dans le titre
+                            const titleFuzzy = findBestMatch(word, titleWords, 0.75);
+                            if (titleFuzzy) {
+                                isTitleMatch = true;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
             
             if (isMatch) {
                 matched++;
                 matchingKeywords.push(skill.name);
-                
-                // Bonus si dans le titre
-                if (jobTitle.includes(skillLower) || skillWords.some(w => w.length > 3 && jobTitle.includes(w))) {
+                if (isTitleMatch) {
                     titleMatched++;
                 }
             }
@@ -140,9 +334,20 @@ export function calculateLocalScore(profile, job) {
             if (skill.keywords) {
                 skill.keywords.forEach(kw => {
                     const kwLower = kw.toLowerCase();
-                    if (kwLower.length > 2 && jobText.includes(kwLower) && !matchingKeywords.includes(kw)) {
-                        matched += 0.5;
-                        matchingKeywords.push(kw);
+                    if (kwLower.length >= 3 && !matchingKeywords.includes(kw)) {
+                        // Match exact
+                        if (jobText.includes(kwLower)) {
+                            matched += 0.5;
+                            matchingKeywords.push(kw);
+                        } 
+                        // Match fuzzy pour les mots de 4+ caractères
+                        else if (kwLower.length >= 4) {
+                            const fuzzyResult = findBestMatch(kwLower, jobWords, 0.8);
+                            if (fuzzyResult) {
+                                matched += 0.3;
+                                fuzzyMatches.push(`${kw} ≈ ${fuzzyResult.match}`);
+                            }
+                        }
                     }
                 });
             }
@@ -158,6 +363,7 @@ export function calculateLocalScore(profile, job) {
         
         details.skillsMatched = Math.round(matched);
         details.titleMatches = titleMatched;
+        details.fuzzyMatches = fuzzyMatches;
     }
     
     // 2. Match du headline/métier (max 15 points)
@@ -166,8 +372,17 @@ export function calculateLocalScore(profile, job) {
         let headlineMatches = 0;
         
         headlineWords.forEach(word => {
+            // Match exact
             if (jobTitle.includes(word) || jobText.includes(word)) {
                 headlineMatches++;
+            }
+            // Match fuzzy
+            else if (word.length >= 4) {
+                const fuzzyResult = findBestMatch(word, jobWords, 0.75);
+                if (fuzzyResult) {
+                    headlineMatches += 0.7;
+                    fuzzyMatches.push(`headline: ${word} ≈ ${fuzzyResult.match}`);
+                }
             }
         });
         
@@ -265,6 +480,7 @@ export function calculateLocalScore(profile, job) {
     return {
         score,
         matchingKeywords: matchingKeywords.slice(0, 15),
+        fuzzyMatches: fuzzyMatches.slice(0, 10),
         isLocalScore: true,
         details
     };
