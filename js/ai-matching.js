@@ -570,9 +570,10 @@ Retourne ce JSON exact avec tes valeurs:
 /**
  * Score une offre avec Gemini
  * @param {Object} job - L'offre d'emploi
+ * @param {boolean} force - Forcer le recalcul (ignorer le cache)
  * @returns {Promise<Object>} Le score et les détails
  */
-export async function scoreJobWithAi(job) {
+export async function scoreJobWithAi(job, force = false) {
     const availability = isAiScoringAvailable();
     if (!availability.available) {
         throw new GeminiError(availability.reason, 'NOT_AVAILABLE');
@@ -581,11 +582,13 @@ export async function scoreJobWithAi(job) {
     const profile = getProfile();
     const jobId = job.numerooffreforem || job.id;
     
-    // Vérifier si on a déjà un score récent
-    const cached = getStoredScore(jobId);
-    if (cached) {
-        console.log('Score depuis le cache local');
-        return cached;
+    // Vérifier si on a déjà un score récent (sauf si force=true)
+    if (!force) {
+        const cached = getStoredScore(jobId);
+        if (cached) {
+            console.log('Score depuis le cache local');
+            return cached;
+        }
     }
     
     // Générer le prompt

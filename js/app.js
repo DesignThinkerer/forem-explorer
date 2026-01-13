@@ -622,8 +622,9 @@ async function recalculateScore(mode = 'local') {
                 return;
             }
             
-            newScore = await scoreJobWithAi(fullJob);
-            showToast('Score IA calculé!', 'success', 2000);
+            // Force recalculation by passing true as second argument
+            newScore = await scoreJobWithAi(fullJob, true);
+            showToast('Score IA recalculé (forcé)!', 'success', 2000);
         } else {
             // Use local scoring
             const { calculateLocalScore } = await import('./ai-matching.js');
