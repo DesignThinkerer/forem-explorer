@@ -420,11 +420,15 @@
             
             <!-- Modal Footer -->
             <div class="p-4 border-t border-slate-200 bg-slate-50 flex gap-2">
-                <button onclick="window.recalculateScore()" class="flex-1 px-4 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 rounded-lg transition-colors flex items-center justify-center gap-2">
-                    <i data-lucide="refresh-cw" class="h-4 w-4"></i>
-                    Recalculer
+                <button onclick="window.recalculateScore('local')" class="flex-1 px-4 py-2 text-sm font-medium text-white bg-slate-600 hover:bg-slate-700 rounded-lg transition-colors flex items-center justify-center gap-2" title="Recalcul rapide avec l'algorithme local">
+                    <i data-lucide="calculator" class="h-4 w-4"></i>
+                    Local
                 </button>
-                <button onclick="window.closeScoreModal()" class="flex-1 px-4 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-100 rounded-lg border border-slate-300 transition-colors">
+                <button onclick="window.recalculateScore('ai')" class="flex-1 px-4 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 rounded-lg transition-colors flex items-center justify-center gap-2" title="Scoring avancé avec Gemini AI">
+                    <i data-lucide="sparkles" class="h-4 w-4"></i>
+                    Score IA
+                </button>
+                <button onclick="window.closeScoreModal()" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-100 rounded-lg border border-slate-300 transition-colors">
                     Fermer
                 </button>
             </div>

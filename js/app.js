@@ -520,8 +520,9 @@ function copyScoreDebugJson() {
 
 /**
  * Recalculates the score for the current job in the modal
+ * @param {string} mode - 'local' or 'ai'
  */
-async function recalculateScore() {
+async function recalculateScore(mode = 'local') {
     if (!currentScoreDebugData || !currentScoreDebugData.job) {
         showToast('Données insuffisantes pour recalculer', 'error', 2000);
         return;
@@ -543,17 +544,20 @@ async function recalculateScore() {
         return;
     }
     
-    // Show loading state
-    const recalcBtn = document.querySelector('#scoreModal button[onclick="window.recalculateScore()"]');
-    if (recalcBtn) {
-        recalcBtn.disabled = true;
-        recalcBtn.innerHTML = '<i data-lucide="loader-2" class="h-4 w-4 animate-spin"></i> Calcul...';
+    // Show loading state on the clicked button
+    const btnSelector = mode === 'ai' 
+        ? '#scoreModal button[onclick="window.recalculateScore(\'ai\')"]'
+        : '#scoreModal button[onclick="window.recalculateScore(\'local\')"]';
+    const btn = document.querySelector(btnSelector);
+    const originalHtml = btn?.innerHTML;
+    
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i data-lucide="loader-2" class="h-4 w-4 animate-spin"></i> Calcul...';
         initIcons();
     }
     
     try {
-        // Recalculate using local score
-        const { calculateLocalScore } = await import('./ai-matching.js');
         const profile = getProfile();
         
         if (!profile) {
@@ -561,24 +565,42 @@ async function recalculateScore() {
             return;
         }
         
-        const newScore = calculateLocalScore(profile, fullJob);
+        let newScore;
+        
+        if (mode === 'ai') {
+            // Use AI scoring
+            const { scoreJobWithAi, isAiScoringAvailable } = await import('./ai-matching.js');
+            
+            const availability = isAiScoringAvailable();
+            if (!availability.available) {
+                showToast(availability.reason, 'error', 3000);
+                return;
+            }
+            
+            newScore = await scoreJobWithAi(fullJob);
+            showToast('Score IA calculé!', 'success', 2000);
+        } else {
+            // Use local scoring
+            const { calculateLocalScore } = await import('./ai-matching.js');
+            newScore = calculateLocalScore(profile, fullJob);
+            showToast('Score local recalculé!', 'success', 2000);
+        }
         
         if (newScore) {
             // Update the modal with new score
             openScoreModal(newScore, currentScoreDebugData.job);
-            showToast('Score recalculé!', 'success', 2000);
             
             // Also update the card in the grid if visible
             updateJobCardScore(jobId, newScore);
         }
     } catch (error) {
         console.error('Erreur recalcul:', error);
-        showToast('Erreur lors du recalcul: ' + error.message, 'error', 3000);
+        showToast('Erreur: ' + error.message, 'error', 3000);
     } finally {
         // Restore button
-        if (recalcBtn) {
-            recalcBtn.disabled = false;
-            recalcBtn.innerHTML = '<i data-lucide="refresh-cw" class="h-4 w-4"></i> Recalculer';
+        if (btn && originalHtml) {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
             initIcons();
         }
     }
