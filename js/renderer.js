@@ -346,6 +346,11 @@ export function renderResults(data) {
         grid.appendChild(el);
     });
     initIcons();
+    
+    // Update AI score button visibility
+    if (window.updateAiScoreButton) {
+        window.updateAiScoreButton();
+    }
 }
 
 /**

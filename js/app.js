@@ -3,7 +3,7 @@
  * Entry point for the FOREM job search application.
  * Initializes components, sets up event handlers, and manages application lifecycle.
  */
-import { initIcons } from './utils.js';
+import { initIcons, showToast as utilShowToast } from './utils.js';
 import { loadFacets } from './facets.js';
 import { handleSearch, handleCustomSearch, copyUrl, exportDebugJson, importBookmarksFromFile } from './search.js';
 import { triggerGeo, manualCitySearch, initializeLocation } from './geolocation.js';
@@ -13,6 +13,8 @@ import { renderResults } from './renderer.js';
 import { saveCurrentSearch, loadSavedSearch, deleteSavedSearch, listSavedSearches } from './saved-searches.js';
 import { getActiveAlerts, dismissAlert, showToast } from './alerts.js';
 import { getProfile } from './cv-profile.js';
+import { scoreJobWithAi, isAiScoringAvailable, getStoredScore } from './ai-matching.js';
+import { getRawData } from './state.js';
 
 /**
  * Initializes the application.
@@ -442,6 +444,142 @@ function copyScoreDebugJson() {
         showToast('Erreur lors de la copie', 'error', 2000);
     });
 }
+
+/**
+ * Score visible jobs with AI
+ * Scores all currently displayed jobs using Gemini AI
+ */
+async function scoreVisibleJobsWithAI() {
+    const profile = getProfile();
+    if (!profile) {
+        showToast('Veuillez d\'abord configurer votre profil CV', 'error', 3000);
+        return;
+    }
+    
+    const availability = isAiScoringAvailable();
+    if (!availability.available) {
+        showToast(availability.reason, 'error', 3000);
+        return;
+    }
+    
+    // Get current visible jobs from the grid
+    const rawData = getRawData();
+    if (!rawData || !rawData.results || rawData.results.length === 0) {
+        showToast('Aucune offre à scorer', 'warning', 2000);
+        return;
+    }
+    
+    // Get jobs that are currently visible (not filtered out)
+    const visibleCards = document.querySelectorAll('#resultsGrid > div[data-job-id]');
+    const visibleJobIds = new Set(Array.from(visibleCards).map(card => card.dataset.jobId));
+    
+    // Filter jobs to only those visible and not already AI-scored
+    const jobsToScore = rawData.results.filter(job => {
+        const jobId = job.numerooffreforem;
+        if (!visibleJobIds.has(jobId)) return false;
+        
+        const existing = getStoredScore(jobId);
+        return !existing || !existing.isAiScore;
+    });
+    
+    if (jobsToScore.length === 0) {
+        showToast('Toutes les offres visibles ont déjà un score IA', 'info', 2000);
+        return;
+    }
+    
+    // Update button state
+    const btn = document.getElementById('btnAiScore');
+    const btnText = document.getElementById('btnAiScoreText');
+    const btnCount = document.getElementById('btnAiScoreCount');
+    
+    btn.disabled = true;
+    const totalToScore = jobsToScore.length;
+    let scored = 0;
+    let errors = 0;
+    
+    btnText.textContent = 'Scoring...';
+    btnCount.textContent = `0/${totalToScore}`;
+    
+    // Score each job sequentially (to respect rate limits)
+    for (const job of jobsToScore) {
+        try {
+            btnCount.textContent = `${scored + 1}/${totalToScore}`;
+            await scoreJobWithAi(job);
+            scored++;
+            
+            // Small delay between requests to avoid rate limiting
+            await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (error) {
+            console.error('Error scoring job:', job.numerooffreforem, error);
+            errors++;
+            
+            // If we hit rate limit, stop
+            if (error.code === 'RATE_LIMITED' || error.message?.includes('429')) {
+                showToast('Limite de requêtes atteinte, réessayez plus tard', 'warning', 3000);
+                break;
+            }
+        }
+    }
+    
+    // Re-render results to show new scores
+    renderResults(rawData);
+    initIcons();
+    
+    // Update button state
+    btn.disabled = false;
+    btnText.textContent = 'Scorer avec IA';
+    updateAiScoreButton();
+    
+    // Show result
+    if (errors > 0) {
+        showToast(`${scored} offres scorées, ${errors} erreurs`, 'warning', 3000);
+    } else {
+        showToast(`${scored} offres scorées avec succès!`, 'success', 3000);
+    }
+}
+
+/**
+ * Updates the AI score button visibility and count
+ */
+function updateAiScoreButton() {
+    const btn = document.getElementById('btnAiScore');
+    const btnCount = document.getElementById('btnAiScoreCount');
+    
+    if (!btn) return;
+    
+    const profile = getProfile();
+    const rawData = getRawData();
+    
+    if (!profile || !rawData || !rawData.results) {
+        btn.classList.add('hidden');
+        btn.classList.remove('flex');
+        return;
+    }
+    
+    // Count visible jobs without AI score
+    const visibleCards = document.querySelectorAll('#resultsGrid > div[data-job-id]');
+    const visibleJobIds = new Set(Array.from(visibleCards).map(card => card.dataset.jobId));
+    
+    const jobsWithoutAiScore = rawData.results.filter(job => {
+        const jobId = job.numerooffreforem;
+        if (!visibleJobIds.has(jobId)) return false;
+        const existing = getStoredScore(jobId);
+        return !existing || !existing.isAiScore;
+    }).length;
+    
+    if (jobsWithoutAiScore > 0) {
+        btn.classList.remove('hidden');
+        btn.classList.add('flex');
+        btnCount.textContent = jobsWithoutAiScore;
+    } else {
+        btn.classList.add('hidden');
+        btn.classList.remove('flex');
+    }
+}
+
+// Export for use after render
+window.updateAiScoreButton = updateAiScoreButton;
+window.scoreVisibleJobsWithAI = scoreVisibleJobsWithAI;
 
 window.handleSearch = handleSearch;
 window.handleCustomSearch = handleCustomSearch;
