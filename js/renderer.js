@@ -126,6 +126,16 @@ export function renderResults(data) {
         });
     }
     
+    // Sort by score if selected
+    const sortFilter = document.getElementById('sortFilter')?.value || '';
+    if (sortFilter === 'score_desc' && profile) {
+        filteredResults.sort((a, b) => {
+            const scoreA = getStoredScore(a.numerooffreforem) || calculateLocalScore(profile, a);
+            const scoreB = getStoredScore(b.numerooffreforem) || calculateLocalScore(profile, b);
+            return (scoreB?.score || 0) - (scoreA?.score || 0);
+        });
+    }
+    
     // Show message if no results after filtering
     if (filteredResults.length === 0) {
         grid.innerHTML = `
