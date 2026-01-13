@@ -205,12 +205,15 @@ export function importBookmarks(importedBookmarks) {
             newCount++;
         }
         
-        // Merge with existing or create new
+        // Merge with existing or create new, preserving all fields
         existingStates[jobId] = {
             bookmarked: importedState.bookmarked || false,
             applied: importedState.applied || false,
+            ignored: importedState.ignored || false,
             date: importedState.date || new Date().toISOString(),
-            appliedDate: importedState.appliedDate || null
+            bookmarkedDate: importedState.bookmarkedDate || null,
+            appliedDate: importedState.appliedDate || null,
+            ignoredDate: importedState.ignoredDate || null
         };
     });
     

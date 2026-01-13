@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Profil - Forem Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen pb-12">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <a href="index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <div class="bg-blue-600 p-2 rounded-lg text-white">
+                    <i data-lucide="database" class="h-6 w-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800 leading-tight">
+                        Forem Explorer
+                    </h1>
+                    <p class="text-xs text-slate-500 font-medium">Open Data v2.1</p>
+                </div>
+            </a>
+            <div class="flex gap-2">
+                <a href="index.html" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 shadow-sm transition-all">
+                    <i data-lucide="search" class="h-4 w-4"></i>
+                    Rechercher
+                </a>
+                <a href="dashboard.html" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 shadow-sm transition-all">
+                    <i data-lucide="bar-chart-3" class="h-4 w-4"></i>
+                    Dashboard
+                </a>
+                <a href="aide.html" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 shadow-sm transition-all">
+                    <i data-lucide="help-circle" class="h-4 w-4"></i>
+                    Aide
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        
+        <!-- Page Title -->
+        <div class="flex items-center gap-3 mb-6">
+            <div class="bg-emerald-600 p-3 rounded-xl text-white">
+                <i data-lucide="user-circle" class="h-8 w-8"></i>
+            </div>
+            <div>
+                <h2 class="text-2xl font-bold text-slate-800">Mon Profil</h2>
+                <p class="text-slate-500">Importez votre CV pour un matching intelligent avec les offres</p>
+            </div>
+        </div>
+
+        <!-- Import Zone (shown when no profile) -->
+        <div id="importZone" class="bg-white rounded-xl shadow-sm border-2 border-dashed border-slate-300 p-12 text-center mb-6 hover:border-blue-400 hover:bg-blue-50/50 transition-all cursor-pointer">
+            <div class="flex flex-col items-center gap-4">
+                <div class="bg-blue-100 p-4 rounded-full">
+                    <i data-lucide="file-up" class="h-12 w-12 text-blue-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-slate-800 mb-2">Importez votre CV</h3>
+                    <p class="text-slate-500 mb-4">Glissez votre fichier <span class="font-mono bg-slate-100 px-2 py-1 rounded">rx-resume.json</span> ici</p>
+                    <p class="text-sm text-slate-400">ou cliquez pour sélectionner un fichier</p>
+                </div>
+                <input type="file" id="cvFileInput" accept=".json" class="hidden" aria-label="Sélectionner un fichier CV">
+            </div>
+        </div>
+
+        <!-- Profile Display (shown when profile exists) -->
+        <div id="profileDisplay" class="hidden">
+            
+            <!-- Profile Header Card -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+                <div class="flex flex-col md:flex-row justify-between items-start gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="bg-emerald-100 p-4 rounded-full">
+                            <i data-lucide="user" class="h-10 w-10 text-emerald-600"></i>
+                        </div>
+                        <div>
+                            <h3 id="profileName" class="text-2xl font-bold text-slate-800">-</h3>
+                            <p id="profileHeadline" class="text-slate-500">-</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="window.reloadCV()" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 shadow-sm transition-all">
+                            <i data-lucide="refresh-cw" class="h-4 w-4"></i>
+                            Recharger
+                        </button>
+                        <button onclick="window.deleteProfile()" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 bg-white hover:bg-red-50 rounded-lg border border-red-200 shadow-sm transition-all">
+                            <i data-lucide="trash-2" class="h-4 w-4"></i>
+                            Supprimer
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Contact Info -->
+                <div class="mt-4 pt-4 border-t border-slate-100 flex flex-wrap gap-4 text-sm text-slate-600">
+                    <span id="profileEmail" class="flex items-center gap-1">
+                        <i data-lucide="mail" class="h-4 w-4"></i>
+                        <span>-</span>
+                    </span>
+                    <span id="profilePhone" class="flex items-center gap-1">
+                        <i data-lucide="phone" class="h-4 w-4"></i>
+                        <span>-</span>
+                    </span>
+                    <span id="profileLocation" class="flex items-center gap-1">
+                        <i data-lucide="map-pin" class="h-4 w-4"></i>
+                        <span>-</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-blue-100 p-2 rounded-lg">
+                            <i data-lucide="briefcase" class="h-5 w-5 text-blue-600"></i>
+                        </div>
+                        <div>
+                            <p id="statExperience" class="text-2xl font-bold text-slate-800">-</p>
+                            <p class="text-xs text-slate-500">Années d'expérience</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-emerald-100 p-2 rounded-lg">
+                            <i data-lucide="zap" class="h-5 w-5 text-emerald-600"></i>
+                        </div>
+                        <div>
+                            <p id="statSkills" class="text-2xl font-bold text-slate-800">-</p>
+                            <p class="text-xs text-slate-500">Compétences</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-purple-100 p-2 rounded-lg">
+                            <i data-lucide="graduation-cap" class="h-5 w-5 text-purple-600"></i>
+                        </div>
+                        <div>
+                            <p id="statEducation" class="text-2xl font-bold text-slate-800">-</p>
+                            <p class="text-xs text-slate-500">Niveau d'études</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-amber-100 p-2 rounded-lg">
+                            <i data-lucide="languages" class="h-5 w-5 text-amber-600"></i>
+                        </div>
+                        <div>
+                            <p id="statLanguages" class="text-2xl font-bold text-slate-800">-</p>
+                            <p class="text-xs text-slate-500">Langues</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Skills Section -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="sparkles" class="h-5 w-5 text-emerald-600"></i>
+                        Compétences
+                    </h4>
+                    <button onclick="window.showAddSkillModal()" class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-all">
+                        <i data-lucide="plus" class="h-4 w-4"></i>
+                        Ajouter
+                    </button>
+                </div>
+                <div id="skillsList" class="flex flex-wrap gap-2">
+                    <!-- Skills will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Experience Section -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+                <h4 class="text-lg font-semibold text-slate-800 flex items-center gap-2 mb-4">
+                    <i data-lucide="briefcase" class="h-5 w-5 text-blue-600"></i>
+                    Expériences professionnelles
+                </h4>
+                <div id="experiencesList" class="space-y-4">
+                    <!-- Experiences will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Education Section -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+                <h4 class="text-lg font-semibold text-slate-800 flex items-center gap-2 mb-4">
+                    <i data-lucide="graduation-cap" class="h-5 w-5 text-purple-600"></i>
+                    Formation
+                </h4>
+                <div id="educationsList" class="space-y-4">
+                    <!-- Education will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Languages Section -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+                <h4 class="text-lg font-semibold text-slate-800 flex items-center gap-2 mb-4">
+                    <i data-lucide="globe" class="h-5 w-5 text-amber-600"></i>
+                    Langues
+                </h4>
+                <div id="languagesList" class="flex flex-wrap gap-3">
+                    <!-- Languages will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Import Info -->
+            <div class="text-center text-sm text-slate-400">
+                <p>CV importé le <span id="importDate">-</span></p>
+                <p class="mt-1">Format: <span class="font-mono">rx-resume</span> (Reactive Resume)</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Add Skill Modal -->
+    <div id="addSkillModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-slate-800">Ajouter une compétence</h3>
+                <button onclick="window.closeAddSkillModal()" class="text-slate-400 hover:text-slate-600" title="Fermer">
+                    <i data-lucide="x" class="h-5 w-5"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Nom de la compétence</label>
+                    <input type="text" id="newSkillName" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Ex: Python">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Niveau (1-5)</label>
+                    <input type="range" id="newSkillLevel" min="1" max="5" value="3" class="w-full" aria-label="Niveau de compétence">
+                    <div class="flex justify-between text-xs text-slate-500">
+                        <span>Débutant</span>
+                        <span>Expert</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Catégorie</label>
+                    <select id="newSkillCategory" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" title="Catégorie de compétence">
+                        <option value="programming">Programmation</option>
+                        <option value="framework">Framework</option>
+                        <option value="database">Base de données</option>
+                        <option value="devops">DevOps</option>
+                        <option value="design">Design</option>
+                        <option value="soft">Soft skills</option>
+                        <option value="other">Autre</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="window.closeAddSkillModal()" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 transition-all">
+                    Annuler
+                </button>
+                <button onclick="window.saveNewSkill()" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all">
+                    Ajouter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { processCV, getProfile, addSkill, removeSkill } from './js/cv-profile.js';
+        import { clearCV, hasProfile } from './js/cv-storage.js';
+
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // DOM elements
+        const importZone = document.getElementById('importZone');
+        const profileDisplay = document.getElementById('profileDisplay');
+        const cvFileInput = document.getElementById('cvFileInput');
+
+        // Category colors
+        const categoryColors = {
+            programming: 'bg-blue-100 text-blue-700 border-blue-200',
+            framework: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+            database: 'bg-purple-100 text-purple-700 border-purple-200',
+            devops: 'bg-orange-100 text-orange-700 border-orange-200',
+            design: 'bg-pink-100 text-pink-700 border-pink-200',
+            soft: 'bg-amber-100 text-amber-700 border-amber-200',
+            other: 'bg-slate-100 text-slate-700 border-slate-200'
+        };
+
+        // Education level labels
+        const educationLabels = {
+            'doctorat': 'Doctorat',
+            'phd': 'PhD',
+            'master': 'Master',
+            'mba': 'MBA',
+            'licence': 'Licence',
+            'bachelor': 'Bachelor',
+            'bts': 'BTS',
+            'dut': 'DUT',
+            'baccalauréat': 'Baccalauréat',
+            'bac': 'Bac',
+            'cess': 'CESS',
+            'unknown': 'Non spécifié'
+        };
+
+        // Language level labels
+        const languageLevelLabels = {
+            native: 'Langue maternelle',
+            fluent: 'Courant',
+            advanced: 'Avancé',
+            intermediate: 'Intermédiaire',
+            basic: 'Notions'
+        };
+
+        // Check if profile exists on load
+        function init() {
+            const profile = getProfile();
+            if (profile) {
+                showProfile(profile);
+            } else {
+                showImportZone();
+            }
+        }
+
+        // Show import zone
+        function showImportZone() {
+            importZone.classList.remove('hidden');
+            profileDisplay.classList.add('hidden');
+        }
+
+        // Show profile display
+        function showProfile(profile) {
+            importZone.classList.add('hidden');
+            profileDisplay.classList.remove('hidden');
+            renderProfile(profile);
+        }
+
+        // Render profile data
+        function renderProfile(profile) {
+            // Header
+            document.getElementById('profileName').textContent = profile.name || 'Nom inconnu';
+            document.getElementById('profileHeadline').textContent = profile.headline || profile.summary?.substring(0, 100) || '';
+            document.getElementById('profileEmail').querySelector('span').textContent = profile.email || '-';
+            document.getElementById('profilePhone').querySelector('span').textContent = profile.phone || '-';
+            document.getElementById('profileLocation').querySelector('span').textContent = profile.location || '-';
+
+            // Stats
+            document.getElementById('statExperience').textContent = profile.totalExperienceYears || '0';
+            document.getElementById('statSkills').textContent = profile.skillsCount || '0';
+            document.getElementById('statEducation').textContent = educationLabels[profile.educationLevel] || 'Non spécifié';
+            document.getElementById('statLanguages').textContent = profile.languages?.length || '0';
+
+            // Skills
+            renderSkills(profile.skills || []);
+
+            // Experiences
+            renderExperiences(profile.experiences || []);
+
+            // Education
+            renderEducations(profile.educations || []);
+
+            // Languages
+            renderLanguages(profile.languages || []);
+
+            // Import date
+            if (profile.importDate) {
+                document.getElementById('importDate').textContent = new Date(profile.importDate).toLocaleDateString('fr-BE');
+            }
+
+            // Re-initialize icons
+            lucide.createIcons();
+        }
+
+        // Render skills
+        function renderSkills(skills) {
+            const container = document.getElementById('skillsList');
+            container.innerHTML = skills.map(skill => {
+                const colors = categoryColors[skill.category] || categoryColors.other;
+                const levelBars = '●'.repeat(skill.level || 3) + '○'.repeat(5 - (skill.level || 3));
+                return `
+                    <div class="group flex items-center gap-2 px-3 py-1.5 rounded-lg border ${colors} text-sm">
+                        <span class="font-medium">${skill.name}</span>
+                        <span class="text-xs opacity-60">${levelBars}</span>
+                        <button onclick="window.deleteSkill('${skill.name}')" class="hidden group-hover:block text-red-500 hover:text-red-700 ml-1">
+                            <i data-lucide="x" class="h-3 w-3"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render experiences
+        function renderExperiences(experiences) {
+            const container = document.getElementById('experiencesList');
+            if (experiences.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 text-sm">Aucune expérience renseignée</p>';
+                return;
+            }
+            container.innerHTML = experiences.map(exp => `
+                <div class="border-l-2 border-blue-200 pl-4">
+                    <h5 class="font-semibold text-slate-800">${exp.position || 'Poste non spécifié'}</h5>
+                    <p class="text-sm text-slate-600">${exp.company || 'Entreprise non spécifiée'}</p>
+                    <p class="text-xs text-slate-400 mt-1">${exp.date || ''} ${exp.location ? '• ' + exp.location : ''}</p>
+                    ${exp.summary ? `<p class="text-sm text-slate-500 mt-2">${exp.summary}</p>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Render educations
+        function renderEducations(educations) {
+            const container = document.getElementById('educationsList');
+            if (educations.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 text-sm">Aucune formation renseignée</p>';
+                return;
+            }
+            container.innerHTML = educations.map(edu => `
+                <div class="border-l-2 border-purple-200 pl-4">
+                    <h5 class="font-semibold text-slate-800">${edu.studyType || 'Diplôme'} ${edu.area ? 'en ' + edu.area : ''}</h5>
+                    <p class="text-sm text-slate-600">${edu.institution || 'Institution non spécifiée'}</p>
+                    <p class="text-xs text-slate-400 mt-1">${edu.date || ''}</p>
+                </div>
+            `).join('');
+        }
+
+        // Render languages
+        function renderLanguages(languages) {
+            const container = document.getElementById('languagesList');
+            if (languages.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 text-sm">Aucune langue renseignée</p>';
+                return;
+            }
+            container.innerHTML = languages.map(lang => `
+                <div class="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-200">
+                    <span class="font-medium text-amber-800">${lang.name}</span>
+                    <span class="text-xs text-amber-600">${languageLevelLabels[lang.level] || lang.level}</span>
+                </div>
+            `).join('');
+        }
+
+        // File input handlers
+        importZone.addEventListener('click', () => cvFileInput.click());
+        
+        importZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            importZone.classList.add('border-blue-500', 'bg-blue-50');
+        });
+        
+        importZone.addEventListener('dragleave', () => {
+            importZone.classList.remove('border-blue-500', 'bg-blue-50');
+        });
+        
+        importZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            importZone.classList.remove('border-blue-500', 'bg-blue-50');
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(file);
+        });
+
+        cvFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        });
+
+        // Handle file upload
+        async function handleFile(file) {
+            if (!file.name.endsWith('.json')) {
+                alert('Veuillez sélectionner un fichier JSON');
+                return;
+            }
+
+            try {
+                const text = await file.text();
+                const result = processCV(text);
+
+                if (result.success) {
+                    showProfile(result.profile);
+                    alert('CV importé avec succès!');
+                } else {
+                    alert('Erreur: ' + result.error);
+                }
+            } catch (error) {
+                alert('Erreur lors de la lecture du fichier: ' + error.message);
+            }
+        }
+
+        // Global functions
+        window.reloadCV = () => {
+            cvFileInput.click();
+        };
+
+        window.deleteProfile = () => {
+            if (confirm('Voulez-vous vraiment supprimer votre profil?')) {
+                clearCV();
+                showImportZone();
+            }
+        };
+
+        window.deleteSkill = (skillName) => {
+            if (removeSkill(skillName)) {
+                const profile = getProfile();
+                renderSkills(profile.skills || []);
+                document.getElementById('statSkills').textContent = profile.skillsCount || '0';
+                lucide.createIcons();
+            }
+        };
+
+        window.showAddSkillModal = () => {
+            document.getElementById('addSkillModal').classList.remove('hidden');
+            document.getElementById('addSkillModal').classList.add('flex');
+            lucide.createIcons();
+        };
+
+        window.closeAddSkillModal = () => {
+            document.getElementById('addSkillModal').classList.add('hidden');
+            document.getElementById('addSkillModal').classList.remove('flex');
+        };
+
+        window.saveNewSkill = () => {
+            const name = document.getElementById('newSkillName').value.trim();
+            const level = parseInt(document.getElementById('newSkillLevel').value);
+            const category = document.getElementById('newSkillCategory').value;
+
+            if (!name) {
+                alert('Veuillez entrer un nom de compétence');
+                return;
+            }
+
+            if (addSkill({ name, level, category })) {
+                const profile = getProfile();
+                renderSkills(profile.skills || []);
+                document.getElementById('statSkills').textContent = profile.skillsCount || '0';
+                window.closeAddSkillModal();
+                document.getElementById('newSkillName').value = '';
+                lucide.createIcons();
+            } else {
+                alert('Cette compétence existe déjà');
+            }
+        };
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 
 ## Bugs à corriger
 
-- [ ] **Corriger l'import/export** - Il manque des informations lors de l'export/import des données utilisateur
+- [x] **Corriger l'import/export** - Il manque des informations lors de l'export/import des données utilisateur ✅ Corrigé: ajout des champs `ignored`, `ignoredDate` et `bookmarkedDate` dans l'import
 
 ## Améliorations planifiées
 

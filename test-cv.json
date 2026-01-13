@@ -1,0 +1,159 @@
+{
+  "basics": {
+    "name": "Jean Dupont",
+    "headline": "Développeur Full Stack JavaScript",
+    "email": "jean.dupont@email.com",
+    "phone": "+32 470 12 34 56",
+    "location": "Liège, Belgique",
+    "url": {
+      "href": "https://jeandupont.dev"
+    },
+    "summary": "Développeur passionné avec 5 ans d'expérience dans le développement d'applications web modernes. Expert en JavaScript, React et Node.js. Adepte des méthodologies Agile et du travail en équipe."
+  },
+  "sections": {
+    "experience": {
+      "name": "Expérience",
+      "items": [
+        {
+          "id": "exp1",
+          "company": "TechCorp SA",
+          "position": "Développeur Full Stack Senior",
+          "location": "Liège",
+          "date": "Jan 2022 - Present",
+          "summary": "Développement d'applications web avec React et Node.js. Mise en place de pipelines CI/CD avec Docker et GitHub Actions. Mentorat de développeurs juniors.",
+          "url": {
+            "href": "https://techcorp.be"
+          }
+        },
+        {
+          "id": "exp2",
+          "company": "WebAgency",
+          "position": "Développeur Frontend",
+          "location": "Bruxelles",
+          "date": "Mar 2019 - Dec 2021",
+          "summary": "Création d'interfaces utilisateur avec React et Vue.js. Intégration de maquettes Figma. Optimisation des performances web."
+        },
+        {
+          "id": "exp3",
+          "company": "StartupXYZ",
+          "position": "Développeur Junior",
+          "location": "Namur",
+          "date": "Sep 2018 - Feb 2019",
+          "summary": "Développement de sites web avec PHP et Laravel. Maintenance de bases de données MySQL."
+        }
+      ]
+    },
+    "education": {
+      "name": "Formation",
+      "items": [
+        {
+          "id": "edu1",
+          "institution": "Université de Liège",
+          "studyType": "Master",
+          "area": "Informatique",
+          "date": "2016 - 2018",
+          "summary": "Spécialisation en génie logiciel et intelligence artificielle."
+        },
+        {
+          "id": "edu2",
+          "institution": "Haute École de la Province de Liège",
+          "studyType": "Bachelier",
+          "area": "Informatique de gestion",
+          "date": "2013 - 2016",
+          "summary": ""
+        }
+      ]
+    },
+    "skills": {
+      "name": "Compétences",
+      "items": [
+        {
+          "id": "skill1",
+          "name": "JavaScript",
+          "level": 5,
+          "keywords": ["ES6+", "TypeScript", "Node.js"]
+        },
+        {
+          "id": "skill2",
+          "name": "React",
+          "level": 5,
+          "keywords": ["Next.js", "Redux", "Hooks"]
+        },
+        {
+          "id": "skill3",
+          "name": "Node.js",
+          "level": 4,
+          "keywords": ["Express", "NestJS", "API REST"]
+        },
+        {
+          "id": "skill4",
+          "name": "SQL",
+          "level": 4,
+          "keywords": ["PostgreSQL", "MySQL", "MongoDB"]
+        },
+        {
+          "id": "skill5",
+          "name": "Docker",
+          "level": 3,
+          "keywords": ["Docker Compose", "Kubernetes"]
+        },
+        {
+          "id": "skill6",
+          "name": "Git",
+          "level": 5,
+          "keywords": ["GitHub", "GitLab", "CI/CD"]
+        },
+        {
+          "id": "skill7",
+          "name": "Agile",
+          "level": 4,
+          "keywords": ["Scrum", "Kanban", "Jira"]
+        }
+      ]
+    },
+    "languages": {
+      "name": "Langues",
+      "items": [
+        {
+          "id": "lang1",
+          "name": "Français",
+          "description": "Langue maternelle"
+        },
+        {
+          "id": "lang2",
+          "name": "Anglais",
+          "description": "Courant"
+        },
+        {
+          "id": "lang3",
+          "name": "Néerlandais",
+          "description": "Intermédiaire"
+        }
+      ]
+    },
+    "certifications": {
+      "name": "Certifications",
+      "items": [
+        {
+          "id": "cert1",
+          "name": "AWS Certified Developer - Associate",
+          "issuer": "Amazon Web Services",
+          "date": "2023"
+        }
+      ]
+    },
+    "projects": {
+      "name": "Projets",
+      "items": [
+        {
+          "id": "proj1",
+          "name": "OpenSource Dashboard",
+          "description": "Dashboard d'analytics open source en React",
+          "url": {
+            "href": "https://github.com/jeandupont/dashboard"
+          }
+        }
+      ]
+    }
+  }
+}
