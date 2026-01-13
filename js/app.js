@@ -152,6 +152,17 @@ function handleStatusFilterChange() {
 }
 
 /**
+ * Handles score filter changes.
+ * Re-renders results with the score filter applied.
+ */
+function handleScoreFilterChange() {
+    const lastResults = window.lastSearchResults;
+    if (lastResults) {
+        renderResults(lastResults);
+    }
+}
+
+/**
  * Handles saving the current search configuration.
  * Opens a modal to enter the search name.
  */
@@ -285,6 +296,7 @@ window.handleCustomSearch = handleCustomSearch;
 window.handleSortChange = handleSortChange;
 window.handleDistanceChange = handleDistanceChange;
 window.handleStatusFilterChange = handleStatusFilterChange;
+window.handleScoreFilterChange = handleScoreFilterChange;
 window.manualCitySearch = handleManualCitySearch;
 window.copyUrl = copyUrl;
 window.exportDebugJson = exportDebugJson;

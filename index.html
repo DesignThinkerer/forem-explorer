@@ -237,6 +237,17 @@
                                 </select>
                             </div>
 
+                            <!-- AI Score Filter -->
+                            <div id="scoreFilterContainer" class="md:col-span-1 hidden">
+                                <label class="block text-xs font-bold text-violet-600 uppercase tracking-wider mb-1.5">🎯 Score min</label>
+                                <select id="scoreFilter" onchange="window.handleScoreFilterChange()" class="w-full px-2 py-1.5 bg-violet-50 border border-violet-300 rounded text-sm text-violet-700 focus:ring-2 focus:ring-violet-500 outline-none">
+                                    <option value="0">Tous</option>
+                                    <option value="40">40%+</option>
+                                    <option value="60">60%+</option>
+                                    <option value="80">80%+</option>
+                                </select>
+                            </div>
+
                             <!-- Distance (Hidden By Default) -->
                             <div id="distanceContainer" class="md:col-span-1 hidden">
                                 <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Rayon Max</label>

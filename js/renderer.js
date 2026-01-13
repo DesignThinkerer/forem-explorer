@@ -8,6 +8,8 @@ import { openJobModal } from './job-modal.js';
 import { getJobState, toggleBookmark, toggleApplied, toggleIgnored } from './bookmarks.js';
 import { hasNote } from './notes.js';
 import { getJobTags } from './tags.js';
+import { getStoredScore, calculateLocalScore, getScoreColor } from './ai-matching.js';
+import { getProfile } from './cv-profile.js';
 
 /**
  * Renders job search results as a grid of cards.
@@ -97,6 +99,32 @@ export function renderResults(data) {
         // Job must pass all filters
         return bookmarkPass && appliedPass;
     });
+
+    // Apply score filter if profile exists
+    const profile = getProfile();
+    const scoreFilter = parseInt(document.getElementById('scoreFilter')?.value || '0');
+    const scoreFilterContainer = document.getElementById('scoreFilterContainer');
+    
+    // Show/hide score filter based on profile existence
+    if (scoreFilterContainer) {
+        if (profile) {
+            scoreFilterContainer.classList.remove('hidden');
+        } else {
+            scoreFilterContainer.classList.add('hidden');
+        }
+    }
+    
+    // Filter by minimum score if profile exists and filter is set
+    if (profile && scoreFilter > 0) {
+        filteredResults = filteredResults.filter(job => {
+            const jobId = job.numerooffreforem;
+            let scoreData = getStoredScore(jobId);
+            if (!scoreData) {
+                scoreData = calculateLocalScore(profile, job);
+            }
+            return scoreData && scoreData.score >= scoreFilter;
+        });
+    }
     
     // Show message if no results after filtering
     if (filteredResults.length === 0) {
@@ -171,13 +199,34 @@ export function renderResults(data) {
             distBadge = `<span class="ml-2 text-xs font-bold text-emerald-600 bg-emerald-50 px-1 rounded">${km} km</span>`;
         }
 
+        // AI Matching score badge
+        let scoreBadge = "";
+        const profile = getProfile();
+        if (profile) {
+            // Check for stored AI score first, then calculate local score
+            let scoreData = getStoredScore(jobId);
+            if (!scoreData) {
+                scoreData = calculateLocalScore(profile, job);
+            }
+            if (scoreData && scoreData.score !== undefined) {
+                const colors = getScoreColor(scoreData.score);
+                const isAi = scoreData.isAiScore;
+                scoreBadge = `
+                    <div class="flex items-center gap-1 px-2 py-0.5 rounded ${colors.bg} border ${colors.border}" title="${isAi ? 'Score IA' : 'Score estimé'}">
+                        <span class="text-xs font-bold ${colors.text}">${scoreData.score}%</span>
+                        ${isAi ? '<i data-lucide="sparkles" class="h-3 w-3 text-violet-500"></i>' : ''}
+                    </div>
+                `;
+            }
+        }
+
         const el = document.createElement('div');
         el.className = "bg-white border border-slate-200 p-4 rounded-lg hover:shadow-md transition-shadow flex flex-col md:flex-row gap-4 relative overflow-hidden cursor-pointer";
         el.dataset.jobId = jobId; // Store job ID for updates
         el.innerHTML = `
             <div class="absolute left-0 top-0 bottom-0 w-1 ${contract.includes('indéterminée') ? 'bg-green-500' : 'bg-slate-300'}"></div>
             <div class="flex-1 min-w-0">
-                <div class="flex flex-wrap gap-2 mb-1">${bookmarkBadge}${appliedBadge}${noteBadge}${tagBadges}${contractBadge}${regime}${edu}</div>
+                <div class="flex flex-wrap gap-2 mb-1">${scoreBadge}${bookmarkBadge}${appliedBadge}${noteBadge}${tagBadges}${contractBadge}${regime}${edu}</div>
                 <h3 class="font-bold text-slate-800 truncate hover:text-blue-600">${title}</h3>
                 <div class="text-sm text-slate-600 flex items-center gap-2 mt-1">
                     <i data-lucide="building-2" class="h-3 w-3"></i> ${comp}
