@@ -5,6 +5,8 @@
 
 import { generateContent, parseJsonResponse, GeminiError, hasApiKey, canMakeRequest } from './gemini-client.js';
 import { getProfile } from './cv-profile.js';
+import { getUserLocation } from './state.js';
+import { getDistance } from './utils.js';
 
 // Storage pour les scores calculés
 const SCORES_STORAGE = 'forem_matching_scores';
@@ -393,54 +395,97 @@ export function calculateLocalScore(profile, job) {
             }
         });
         
-        const headlineScore = Math.min(15, Math.round((headlineMatches / Math.max(1, headlineWords.length)) * 20));
+        // Points fixes par mot du headline matché (pas de ratio)
+        // "developer" ou "développeur" dans le titre = très important
+        const headlineScore = Math.min(15, headlineMatches * 5);
         score += headlineScore;
         details.headlineMatch = headlineMatches > 0;
+        details.headlineMatchCount = headlineMatches;
     }
     
-    // 3. Match des mots-clés extraits du CV (max 10 points)
+    // 3. Match des mots-clés extraits du CV (max 20 points)
     if (profile.keywords && profile.keywords.length > 0) {
         let keywordMatches = 0;
+        let keywordTitleMatches = 0;
+        
         profile.keywords.forEach(kw => {
-            if (kw.length > 3 && jobText.includes(kw.toLowerCase())) {
+            const kwLower = kw.toLowerCase();
+            if (kwLower.length > 3 && jobText.includes(kwLower)) {
                 keywordMatches++;
                 if (!matchingKeywords.includes(kw)) {
                     matchingKeywords.push(kw);
                 }
+                // BONUS: keyword qui matche le TITRE de l'offre (très pertinent!)
+                if (jobTitle.includes(kwLower)) {
+                    keywordTitleMatches++;
+                }
             }
         });
-        // 3 points par keyword matché (plus généreux)
-        score += Math.min(15, keywordMatches * 3);
+        
+        // 3 points par keyword matché
+        score += Math.min(12, keywordMatches * 3);
+        // BONUS +8 points par keyword dans le titre (max 16)
+        score += Math.min(16, keywordTitleMatches * 8);
+        
         details.keywordsMatched = keywordMatches;
+        details.keywordTitleMatches = keywordTitleMatches;
     }
     
-    // 4. Localisation (max 10 points)
-    const jobLocation = (job.localiteaffichage || job.lieuxtravaillocalite?.[0] || '').toLowerCase();
-    if (profile.location && jobLocation) {
-        const profileLoc = profile.location.toLowerCase();
+    // 4. Localisation (max 15 points) - Basé sur la distance géographique
+    const userLocation = getUserLocation();
+    const jobGeo = job.lieuxtravailgeo?.[0];
+    
+    if (userLocation && jobGeo && jobGeo.lat && jobGeo.lon) {
+        // Calcul de la distance réelle en km
+        const distanceKm = parseFloat(getDistance(userLocation.lat, userLocation.lon, jobGeo.lat, jobGeo.lon));
+        details.distanceKm = distanceKm;
         
-        // Villes belges
-        const cities = ['bruxelles', 'brussels', 'liège', 'liege', 'namur', 'charleroi', 'mons', 
-                        'tournai', 'arlon', 'bruges', 'gand', 'ghent', 'anvers', 'antwerpen', 
-                        'leuven', 'louvain', 'hasselt', 'wavre', 'nivelles', 'ottignies'];
-        
-        for (const city of cities) {
-            if (profileLoc.includes(city) && jobLocation.includes(city)) {
-                score += 10;
-                details.locationMatch = 'exact';
-                break;
-            }
+        // Attribution des points selon la distance
+        if (distanceKm <= 10) {
+            score += 15;
+            details.locationMatch = 'très proche';
+        } else if (distanceKm <= 25) {
+            score += 12;
+            details.locationMatch = 'proche';
+        } else if (distanceKm <= 50) {
+            score += 8;
+            details.locationMatch = 'accessible';
+        } else if (distanceKm <= 75) {
+            score += 5;
+            details.locationMatch = 'éloigné';
+        } else if (distanceKm <= 100) {
+            score += 2;
+            details.locationMatch = 'lointain';
+        } else {
+            details.locationMatch = 'très lointain';
         }
-        
-        // Match de province/région
-        if (!details.locationMatch) {
-            const regions = ['wallonie', 'flandre', 'bruxelles', 'hainaut', 'liège', 'namur', 
-                            'luxembourg', 'brabant', 'limbourg', 'anvers'];
-            for (const region of regions) {
-                if (profileLoc.includes(region) && jobLocation.includes(region)) {
-                    score += 5;
-                    details.locationMatch = 'region';
+    } else {
+        // Fallback: match par nom de ville si pas de géolocalisation
+        const jobLocation = (job.localiteaffichage || job.lieuxtravaillocalite?.[0] || '').toLowerCase();
+        if (profile.location && jobLocation) {
+            const profileLoc = profile.location.toLowerCase();
+            
+            const cities = ['bruxelles', 'brussels', 'liège', 'liege', 'namur', 'charleroi', 'mons', 
+                            'tournai', 'arlon', 'bruges', 'gand', 'ghent', 'anvers', 'antwerpen', 
+                            'leuven', 'louvain', 'hasselt', 'wavre', 'nivelles', 'ottignies'];
+            
+            for (const city of cities) {
+                if (profileLoc.includes(city) && jobLocation.includes(city)) {
+                    score += 10;
+                    details.locationMatch = 'même ville';
                     break;
+                }
+            }
+            
+            if (!details.locationMatch) {
+                const regions = ['wallonie', 'flandre', 'bruxelles', 'hainaut', 'liège', 'namur', 
+                                'luxembourg', 'brabant', 'limbourg', 'anvers'];
+                for (const region of regions) {
+                    if (profileLoc.includes(region) && jobLocation.includes(region)) {
+                        score += 5;
+                        details.locationMatch = 'même région';
+                        break;
+                    }
                 }
             }
         }

@@ -378,6 +378,12 @@ function openScoreModal(scoreData, jobData) {
     if (details.locationMatch) {
         detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Localisation:</span><span class="font-medium">${details.locationMatch}</span></div>`;
     }
+    if (details.distanceKm !== undefined) {
+        const distColor = details.distanceKm <= 25 ? 'text-emerald-600' : details.distanceKm <= 50 ? 'text-blue-600' : 'text-amber-600';
+        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Distance:</span><span class="font-medium ${distColor}">${details.distanceKm} km (${details.locationMatch})</span></div>`;
+    } else if (details.locationMatch) {
+        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Localisation:</span><span class="font-medium">${details.locationMatch}</span></div>`;
+    }
     if (details.languageMatch !== undefined) {
         detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Langues:</span><span class="font-medium">${details.languageMatch ? 'Oui' : 'Non'}</span></div>`;
     }
@@ -386,6 +392,9 @@ function openScoreModal(scoreData, jobData) {
     }
     if (details.keywordsMatched !== undefined) {
         detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Mots-clés CV matchés:</span><span class="font-medium">${details.keywordsMatched}</span></div>`;
+    }
+    if (details.keywordTitleMatches !== undefined && details.keywordTitleMatches > 0) {
+        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Keywords dans le titre:</span><span class="font-medium text-emerald-600">+${details.keywordTitleMatches} ⭐</span></div>`;
     }
     if (details.fuzzyMatches && details.fuzzyMatches.length > 0) {
         detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Matches approximatifs:</span><span class="font-medium">${details.fuzzyMatches.length}</span></div>`;
