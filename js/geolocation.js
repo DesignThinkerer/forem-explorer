@@ -5,6 +5,7 @@
  */
 import { showToast } from './utils.js';
 import { setUserLocation, getUserLocation } from './state.js';
+import { getProfile } from './cv-profile.js';
 
 /**
  * Updates the distance filter UI visibility based on whether user location is available.
@@ -18,6 +19,63 @@ export function updateDistanceUI() {
     } else {
         distContainer.classList.add('hidden');
     }
+}
+
+/**
+ * Geocodes the profile location from CV if available and no user location is set.
+ * Uses OpenStreetMap Nominatim API to convert city name to coordinates.
+ * @returns {Promise<boolean>} True if location was successfully geocoded
+ */
+export async function geocodeProfileLocation() {
+    // Don't override existing location
+    if (getUserLocation()) {
+        return true;
+    }
+    
+    const profile = getProfile();
+    if (!profile || !profile.location) {
+        return false;
+    }
+    
+    // Extract city name from location (e.g., "Tournai, BE" -> "Tournai")
+    const locationParts = profile.location.split(',');
+    const cityName = locationParts[0].trim();
+    
+    if (!cityName || cityName.length < 2) {
+        return false;
+    }
+    
+    try {
+        console.log(`[Geolocation] Geocoding profile location: "${cityName}"`);
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}&countrycodes=be&limit=1`);
+        const data = await response.json();
+        
+        if (data.length > 0) {
+            const coords = { 
+                lat: parseFloat(data[0].lat), 
+                lon: parseFloat(data[0].lon), 
+                name: data[0].display_name.split(',')[0] || cityName,
+                source: 'cv-profile'
+            };
+            setUserLocation(coords);
+            
+            // Update UI
+            const gpsInfo = document.getElementById('gpsInfo');
+            const gpsCoords = document.getElementById('gpsCoords');
+            if (gpsInfo && gpsCoords) {
+                gpsInfo.classList.remove('hidden');
+                gpsCoords.textContent = `📍 ${coords.name} (CV)`;
+            }
+            updateDistanceUI();
+            
+            console.log(`[Geolocation] Profile location geocoded: ${coords.name} (${coords.lat}, ${coords.lon})`);
+            return true;
+        }
+    } catch (error) {
+        console.warn('[Geolocation] Failed to geocode profile location:', error);
+    }
+    
+    return false;
 }
 
 /**
