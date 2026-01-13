@@ -316,14 +316,14 @@ export function renderResults(data) {
         }
         
         // Add score badge handler
-        const scoreBadge = el.querySelector('.score-badge');
-        if (scoreBadge) {
-            scoreBadge.addEventListener('click', (e) => {
+        const scoreBadgeBtn = el.querySelector('.score-badge');
+        if (scoreBadgeBtn) {
+            scoreBadgeBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation(); // Prevent card click
                 try {
-                    const scoreData = JSON.parse(decodeURIComponent(scoreBadge.dataset.score));
-                    const jobData = JSON.parse(decodeURIComponent(scoreBadge.dataset.job));
+                    const scoreData = JSON.parse(decodeURIComponent(scoreBadgeBtn.dataset.score));
+                    const jobData = JSON.parse(decodeURIComponent(scoreBadgeBtn.dataset.job));
                     if (window.openScoreModal) {
                         window.openScoreModal(scoreData, jobData);
                     }
