@@ -211,11 +211,22 @@ export function renderResults(data) {
             if (scoreData && scoreData.score !== undefined) {
                 const colors = getScoreColor(scoreData.score);
                 const isAi = scoreData.isAiScore;
+                // Store score data for the modal
+                const scoreDataEncoded = encodeURIComponent(JSON.stringify(scoreData));
+                const jobDataEncoded = encodeURIComponent(JSON.stringify({
+                    titreoffre: job.titreoffre,
+                    numerooffreforem: job.numerooffreforem,
+                    nomemployeur: job.nomemployeur,
+                    localiteaffichage: job.localiteaffichage || job.lieuxtravaillocalite?.[0]
+                }));
                 scoreBadge = `
-                    <div class="flex items-center gap-1 px-2 py-0.5 rounded ${colors.bg} border ${colors.border}" title="${isAi ? 'Score IA' : 'Score estimé'}">
+                    <button class="score-badge flex items-center gap-1 px-2 py-0.5 rounded ${colors.bg} border ${colors.border} hover:opacity-80 transition-opacity cursor-pointer" 
+                            title="Cliquez pour voir le détail du score"
+                            data-score='${scoreDataEncoded}'
+                            data-job='${jobDataEncoded}'>
                         <span class="text-xs font-bold ${colors.text}">${scoreData.score}%</span>
                         ${isAi ? '<i data-lucide="sparkles" class="h-3 w-3 text-violet-500"></i>' : ''}
-                    </div>
+                    </button>
                 `;
             }
         }
@@ -301,6 +312,24 @@ export function renderResults(data) {
                 const newState = toggleIgnored(jobId);
                 updateCardButton(ignoredBtn, newState, 'ignored');
                 updateCardBadges(el, jobId); // Update badges too
+            });
+        }
+        
+        // Add score badge handler
+        const scoreBadge = el.querySelector('.score-badge');
+        if (scoreBadge) {
+            scoreBadge.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation(); // Prevent card click
+                try {
+                    const scoreData = JSON.parse(decodeURIComponent(scoreBadge.dataset.score));
+                    const jobData = JSON.parse(decodeURIComponent(scoreBadge.dataset.job));
+                    if (window.openScoreModal) {
+                        window.openScoreModal(scoreData, jobData);
+                    }
+                } catch (err) {
+                    console.error('Erreur parsing score data:', err);
+                }
             });
         }
         

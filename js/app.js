@@ -12,6 +12,7 @@ import { closeJobModal, handleBookmarkToggle, handleAppliedToggle, handleIgnored
 import { renderResults } from './renderer.js';
 import { saveCurrentSearch, loadSavedSearch, deleteSavedSearch, listSavedSearches } from './saved-searches.js';
 import { getActiveAlerts, dismissAlert, showToast } from './alerts.js';
+import { getProfile } from './cv-profile.js';
 
 /**
  * Initializes the application.
@@ -291,6 +292,144 @@ function refreshSavedSearchesDropdown() {
 }
 
 // Expose functions to window for HTML event handlers
+// Store current score data for copy/debug
+let currentScoreDebugData = null;
+
+/**
+ * Opens the score detail modal
+ * @param {Object} scoreData - The score data
+ * @param {Object} jobData - The job data
+ */
+function openScoreModal(scoreData, jobData) {
+    const modal = document.getElementById('scoreModal');
+    if (!modal) return;
+    
+    // Get profile for debug JSON
+    const profile = getProfile();
+    
+    // Store debug data
+    currentScoreDebugData = {
+        profile: profile ? {
+            headline: profile.headline,
+            skills: profile.skills?.map(s => s.name),
+            keywords: profile.keywords?.slice(0, 30),
+            location: profile.location,
+            languages: profile.languages,
+            totalExperienceYears: profile.totalExperienceYears
+        } : null,
+        job: jobData,
+        score: scoreData
+    };
+    
+    // Update modal content
+    document.getElementById('scoreModalJobTitle').textContent = jobData.titreoffre || 'Offre';
+    document.getElementById('scoreModalValue').textContent = scoreData.score + '%';
+    document.getElementById('scoreModalType').textContent = scoreData.isAiScore ? 'Score IA (Gemini)' : 'Score local (algorithme)';
+    
+    // Color based on score
+    const valueEl = document.getElementById('scoreModalValue');
+    valueEl.className = 'text-5xl font-bold';
+    if (scoreData.score >= 70) {
+        valueEl.classList.add('text-emerald-600');
+    } else if (scoreData.score >= 50) {
+        valueEl.classList.add('text-amber-600');
+    } else if (scoreData.score >= 30) {
+        valueEl.classList.add('text-orange-600');
+    } else {
+        valueEl.classList.add('text-red-600');
+    }
+    
+    // Keywords
+    const keywordsEl = document.getElementById('scoreModalKeywords');
+    if (scoreData.matchingKeywords && scoreData.matchingKeywords.length > 0) {
+        keywordsEl.innerHTML = scoreData.matchingKeywords.map(kw => 
+            `<span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-medium">${kw}</span>`
+        ).join('');
+    } else {
+        keywordsEl.innerHTML = '<span class="text-sm text-slate-400 italic">Aucune correspondance exacte</span>';
+    }
+    
+    // Fuzzy matches
+    const fuzzySection = document.getElementById('scoreModalFuzzySection');
+    const fuzzyEl = document.getElementById('scoreModalFuzzy');
+    if (scoreData.fuzzyMatches && scoreData.fuzzyMatches.length > 0) {
+        fuzzySection.classList.remove('hidden');
+        fuzzyEl.innerHTML = scoreData.fuzzyMatches.map(fm => 
+            `<span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium">${fm}</span>`
+        ).join('');
+    } else {
+        fuzzySection.classList.add('hidden');
+    }
+    
+    // Details
+    const detailsEl = document.getElementById('scoreModalDetails');
+    const details = scoreData.details || {};
+    let detailsHtml = '';
+    
+    if (details.skillsMatched !== undefined) {
+        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Compétences matchées:</span><span class="font-medium">${details.skillsMatched}</span></div>`;
+    }
+    if (details.titleMatches !== undefined) {
+        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Match dans le titre:</span><span class="font-medium">${details.titleMatches}</span></div>`;
+    }
+    if (details.headlineMatch !== undefined) {
+        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Match headline:</span><span class="font-medium">${details.headlineMatch ? 'Oui' : 'Non'}</span></div>`;
+    }
+    if (details.locationMatch) {
+        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Localisation:</span><span class="font-medium">${details.locationMatch}</span></div>`;
+    }
+    if (details.languageMatch !== undefined) {
+        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Langues:</span><span class="font-medium">${details.languageMatch ? 'Oui' : 'Non'}</span></div>`;
+    }
+    if (details.experienceMatch) {
+        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Expérience:</span><span class="font-medium">${details.experienceMatch}</span></div>`;
+    }
+    if (details.keywordsMatched !== undefined) {
+        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Mots-clés CV matchés:</span><span class="font-medium">${details.keywordsMatched}</span></div>`;
+    }
+    if (details.fuzzyMatches && details.fuzzyMatches.length > 0) {
+        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Matches approximatifs:</span><span class="font-medium">${details.fuzzyMatches.length}</span></div>`;
+    }
+    if (details.noData) {
+        detailsHtml += `<div class="text-amber-600 italic">Données insuffisantes dans l'offre</div>`;
+    }
+    
+    detailsEl.innerHTML = detailsHtml || '<span class="text-slate-400 italic">Pas de détails disponibles</span>';
+    
+    // JSON
+    document.getElementById('scoreModalJson').textContent = JSON.stringify(currentScoreDebugData, null, 2);
+    
+    // Show modal
+    modal.classList.remove('hidden');
+    initIcons();
+}
+
+/**
+ * Closes the score detail modal
+ */
+function closeScoreModal() {
+    const modal = document.getElementById('scoreModal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+    currentScoreDebugData = null;
+}
+
+/**
+ * Copies the debug JSON to clipboard
+ */
+function copyScoreDebugJson() {
+    if (!currentScoreDebugData) return;
+    
+    const json = JSON.stringify(currentScoreDebugData, null, 2);
+    navigator.clipboard.writeText(json).then(() => {
+        showToast('JSON copié dans le presse-papier!', 'success', 2000);
+    }).catch(err => {
+        console.error('Erreur copie:', err);
+        showToast('Erreur lors de la copie', 'error', 2000);
+    });
+}
+
 window.handleSearch = handleSearch;
 window.handleCustomSearch = handleCustomSearch;
 window.handleSortChange = handleSortChange;
@@ -333,6 +472,10 @@ window.copyLetter = copyLetter;
 window.saveLetter = saveLetter;
 window.showLetterOptions = showLetterOptions;
 window.exportLetterPDF = exportLetterPDF;
+// Score modal functions
+window.openScoreModal = openScoreModal;
+window.closeScoreModal = closeScoreModal;
+window.copyScoreDebugJson = copyScoreDebugJson;
 
 // Initialize when DOM is ready
 init();
