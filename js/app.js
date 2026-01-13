@@ -519,6 +519,106 @@ function copyScoreDebugJson() {
 }
 
 /**
+ * Recalculates the score for the current job in the modal
+ */
+async function recalculateScore() {
+    if (!currentScoreDebugData || !currentScoreDebugData.job) {
+        showToast('Données insuffisantes pour recalculer', 'error', 2000);
+        return;
+    }
+    
+    const jobId = currentScoreDebugData.job.numerooffreforem;
+    if (!jobId) {
+        showToast('ID de l\'offre manquant', 'error', 2000);
+        return;
+    }
+    
+    // Find the full job data from the current results
+    const jobs = window.currentJobs || [];
+    const fullJob = jobs.find(j => j.numerooffreforem === jobId);
+    
+    if (!fullJob) {
+        showToast('Offre non trouvée dans les résultats', 'error', 2000);
+        return;
+    }
+    
+    // Show loading state
+    const recalcBtn = document.querySelector('#scoreModal button[onclick="window.recalculateScore()"]');
+    if (recalcBtn) {
+        recalcBtn.disabled = true;
+        recalcBtn.innerHTML = '<i data-lucide="loader-2" class="h-4 w-4 animate-spin"></i> Calcul...';
+        initIcons();
+    }
+    
+    try {
+        // Recalculate using local score
+        const { calculateLocalScore } = await import('./ai-matching.js');
+        const profile = getProfile();
+        
+        if (!profile) {
+            showToast('Profil non chargé', 'error', 2000);
+            return;
+        }
+        
+        const newScore = calculateLocalScore(profile, fullJob);
+        
+        if (newScore) {
+            // Update the modal with new score
+            openScoreModal(newScore, currentScoreDebugData.job);
+            showToast('Score recalculé!', 'success', 2000);
+            
+            // Also update the card in the grid if visible
+            updateJobCardScore(jobId, newScore);
+        }
+    } catch (error) {
+        console.error('Erreur recalcul:', error);
+        showToast('Erreur lors du recalcul: ' + error.message, 'error', 3000);
+    } finally {
+        // Restore button
+        if (recalcBtn) {
+            recalcBtn.disabled = false;
+            recalcBtn.innerHTML = '<i data-lucide="refresh-cw" class="h-4 w-4"></i> Recalculer';
+            initIcons();
+        }
+    }
+}
+
+/**
+ * Updates a job card's score badge in the grid
+ */
+function updateJobCardScore(jobId, scoreData) {
+    const card = document.querySelector(`[data-job-id="${jobId}"]`);
+    if (!card) return;
+    
+    const scoreBadge = card.querySelector('.score-badge');
+    if (scoreBadge) {
+        // Update the badge data
+        scoreBadge.dataset.score = encodeURIComponent(JSON.stringify(scoreData));
+        
+        // Update the displayed score
+        const scoreText = scoreBadge.querySelector('span');
+        if (scoreText) {
+            scoreText.textContent = scoreData.score + '%';
+        }
+        
+        // Update colors
+        const colors = getScoreColor(scoreData.score);
+        scoreBadge.className = `score-badge flex items-center gap-1 px-2 py-0.5 rounded ${colors.bg} border ${colors.border} hover:opacity-80 transition-opacity cursor-pointer`;
+        scoreText.className = `text-xs font-bold ${colors.text}`;
+    }
+}
+
+/**
+ * Gets score color classes based on score value
+ */
+function getScoreColor(score) {
+    if (score >= 70) return { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700' };
+    if (score >= 50) return { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700' };
+    if (score >= 30) return { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-700' };
+    return { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700' };
+}
+
+/**
  * Score visible jobs with AI
  * Scores all currently displayed jobs using Gemini AI
  */
@@ -700,6 +800,7 @@ window.exportLetterPDF = exportLetterPDF;
 window.openScoreModal = openScoreModal;
 window.closeScoreModal = closeScoreModal;
 window.copyScoreDebugJson = copyScoreDebugJson;
+window.recalculateScore = recalculateScore;
 
 // Initialize when DOM is ready
 init();
