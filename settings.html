@@ -105,10 +105,13 @@
                 <div id="apiStatus" class="hidden">
                     <div class="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
                         <i data-lucide="check-circle" class="h-5 w-5 text-emerald-600"></i>
-                        <span class="text-sm text-emerald-700">Clé API configurée</span>
+                        <div class="flex-1">
+                            <span class="text-sm text-emerald-700">Clé API configurée</span>
+                            <span id="modelBadge" class="ml-2 px-2 py-0.5 text-xs font-medium bg-violet-100 text-violet-700 rounded-full"></span>
+                        </div>
                         <button 
                             onclick="testApiKey()"
-                            class="ml-auto px-3 py-1 text-xs font-medium text-emerald-700 bg-emerald-100 hover:bg-emerald-200 rounded-lg transition-all"
+                            class="px-3 py-1 text-xs font-medium text-emerald-700 bg-emerald-100 hover:bg-emerald-200 rounded-lg transition-all"
                         >
                             Tester
                         </button>
@@ -144,7 +147,7 @@
                     </div>
                 </div>
                 
-                <div class="grid grid-cols-2 gap-4 pt-2">
+                <div class="grid grid-cols-3 gap-4 pt-2">
                     <div class="text-center p-3 bg-slate-50 rounded-lg">
                         <p id="remainingRequests" class="text-2xl font-bold text-slate-800">100</p>
                         <p class="text-xs text-slate-500">Requêtes restantes</p>
@@ -152,6 +155,10 @@
                     <div class="text-center p-3 bg-slate-50 rounded-lg">
                         <p id="cacheEntries" class="text-2xl font-bold text-slate-800">0</p>
                         <p class="text-xs text-slate-500">Réponses en cache</p>
+                    </div>
+                    <div class="text-center p-3 bg-violet-50 rounded-lg">
+                        <p id="currentModel" class="text-sm font-bold text-violet-700 truncate" title="">-</p>
+                        <p class="text-xs text-slate-500">Modèle IA</p>
                     </div>
                 </div>
             </div>
@@ -395,6 +402,8 @@
         const remainingRequests = document.getElementById('remainingRequests');
         const cacheEntries = document.getElementById('cacheEntries');
         const cacheSize = document.getElementById('cacheSize');
+        const modelBadge = document.getElementById('modelBadge');
+        const currentModel = document.getElementById('currentModel');
 
         // Security DOM elements
         const encryptionStatus = document.getElementById('encryptionStatus');
@@ -621,6 +630,12 @@
             usageCount.textContent = `${stats.today} / ${max}`;
             usageBar.style.width = `${percentage}%`;
             remainingRequests.textContent = getRemainingRequests();
+            
+            // Afficher le modèle
+            const model = GEMINI_CONFIG.model;
+            modelBadge.textContent = model;
+            currentModel.textContent = model;
+            currentModel.title = model;
             
             // Change color based on usage
             if (percentage > 80) {

@@ -10,8 +10,8 @@ const GEMINI_USAGE_STORAGE = 'forem_gemini_usage';
  * Configuration par défaut de Gemini
  */
 export const GEMINI_CONFIG = {
-    // Modèle à utiliser (gemini-2.0-flash est gratuit et rapide)
-    model: 'gemini-2.0-flash',
+    // Modèle à utiliser (gemini-2.5-flash est stable et recommandé par la doc)
+    model: 'gemini-2.5-flash',
     
     // URL de base de l'API
     apiUrl: 'https://generativelanguage.googleapis.com/v1beta/models',
@@ -27,7 +27,7 @@ export const GEMINI_CONFIG = {
     // Rate limiting côté client
     limits: {
         maxRequestsPerMinute: 15,
-        maxRequestsPerDay: 100
+        maxRequestsPerDay: 1500 // 1500 RPD pour le tier gratuit
     },
     
     // Cache
