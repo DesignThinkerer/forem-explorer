@@ -10,8 +10,8 @@ const GEMINI_USAGE_STORAGE = 'forem_gemini_usage';
  * Configuration par défaut de Gemini
  */
 export const GEMINI_CONFIG = {
-    // Modèle à utiliser
-    model: 'gemini-1.5-flash',
+    // Modèle à utiliser (gemini-2.0-flash est gratuit et rapide)
+    model: 'gemini-2.0-flash',
     
     // URL de base de l'API
     apiUrl: 'https://generativelanguage.googleapis.com/v1beta/models',
