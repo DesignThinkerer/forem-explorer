@@ -345,32 +345,76 @@ function openScoreModal(scoreData, jobData) {
         valueEl.classList.add('text-red-600');
     }
     
-    // Keywords
+    // Keywords (local score) ou matchingSkills (AI score)
     const keywordsEl = document.getElementById('scoreModalKeywords');
-    if (scoreData.matchingKeywords && scoreData.matchingKeywords.length > 0) {
-        keywordsEl.innerHTML = scoreData.matchingKeywords.map(kw => 
+    const matchedSkills = scoreData.matchingKeywords || scoreData.matchingSkills || [];
+    if (matchedSkills.length > 0) {
+        keywordsEl.innerHTML = matchedSkills.map(kw => 
             `<span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-medium">${kw}</span>`
         ).join('');
     } else {
         keywordsEl.innerHTML = '<span class="text-sm text-slate-400 italic">Aucune correspondance exacte</span>';
     }
     
-    // Fuzzy matches
+    // Missing skills (AI score only)
     const fuzzySection = document.getElementById('scoreModalFuzzySection');
     const fuzzyEl = document.getElementById('scoreModalFuzzy');
+    
+    // Fuzzy matches (local) ou missing skills (AI)
     if (scoreData.fuzzyMatches && scoreData.fuzzyMatches.length > 0) {
         fuzzySection.classList.remove('hidden');
+        document.querySelector('#scoreModalFuzzySection h4').innerHTML = '<i data-lucide="search" class="h-4 w-4 text-amber-600"></i> Correspondances approximatives (Levenshtein)';
         fuzzyEl.innerHTML = scoreData.fuzzyMatches.map(fm => 
             `<span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium">${fm}</span>`
+        ).join('');
+    } else if (scoreData.missingSkills && scoreData.missingSkills.length > 0) {
+        fuzzySection.classList.remove('hidden');
+        document.querySelector('#scoreModalFuzzySection h4').innerHTML = '<i data-lucide="alert-circle" class="h-4 w-4 text-red-500"></i> Compétences manquantes';
+        fuzzyEl.innerHTML = scoreData.missingSkills.map(s => 
+            `<span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium">${s}</span>`
         ).join('');
     } else {
         fuzzySection.classList.add('hidden');
     }
     
-    // Details
+    // Details - different display for AI vs local score
     const detailsEl = document.getElementById('scoreModalDetails');
-    const details = scoreData.details || {};
     let detailsHtml = '<div class="space-y-1.5">';
+    
+    if (scoreData.isAiScore) {
+        // AI Score display
+        if (scoreData.experienceMatch) {
+            const expLabel = scoreData.experienceMatch === 'good' ? 'Bonne' : 
+                            scoreData.experienceMatch === 'partial' ? 'Partielle' : 
+                            scoreData.experienceMatch === 'excellent' ? 'Excellente' : scoreData.experienceMatch;
+            detailsHtml += `<div class="flex justify-between items-center">
+                <span class="text-slate-600">Expérience:</span>
+                <span class="font-medium">${expLabel}</span>
+            </div>`;
+        }
+        if (scoreData.locationMatch) {
+            detailsHtml += `<div class="flex justify-between items-center">
+                <span class="text-slate-600">Localisation:</span>
+                <span class="font-medium">${scoreData.locationMatch}</span>
+            </div>`;
+        }
+        if (scoreData.summary) {
+            detailsHtml += `<div class="border-t border-slate-100 pt-2 mt-2">
+                <span class="text-slate-600 block mb-1">Résumé IA:</span>
+                <p class="text-sm text-slate-700 italic">"${scoreData.summary}"</p>
+            </div>`;
+        }
+        if (scoreData.recommendations && scoreData.recommendations.length > 0) {
+            detailsHtml += `<div class="border-t border-slate-100 pt-2 mt-2">
+                <span class="text-slate-600 block mb-1">Recommandations:</span>
+                <ul class="text-sm text-slate-700 list-disc pl-4">
+                    ${scoreData.recommendations.map(r => `<li>${r}</li>`).join('')}
+                </ul>
+            </div>`;
+        }
+    } else {
+        // Local Score display
+        const details = scoreData.details || {};
     
     // Compétences matchées (max 40pts) + title bonus (max 15pts)
     if (details.skillsMatched !== undefined) {
@@ -479,6 +523,7 @@ function openScoreModal(scoreData, jobData) {
     if (details.noData) {
         detailsHtml += `<div class="text-amber-600 italic mt-2">⚠️ Données insuffisantes dans l'offre</div>`;
     }
+    } // End of local score details
     
     detailsHtml += '</div>';
     
