@@ -588,17 +588,8 @@ function generateScoringPrompt(profile, job) {
 - Contrat: ${jobSummary.contract}
 - Langue de travail: ${jobSummary.language}
 
-## Instructions
-Réponds UNIQUEMENT avec un objet JSON valide (sans markdown, sans backticks):
-{
-  "score": <number 0-100>,
-  "matchingSkills": ["skill1", "skill2"],
-  "missingSkills": ["skill1", "skill2"],
-  "experienceMatch": "excellent|good|partial|insufficient",
-  "locationMatch": "exact|nearby|remote_possible|far",
-  "summary": "<résumé de 2-3 phrases en français>",
-  "recommendations": ["conseil1", "conseil2"]
-}`;
+IMPORTANT: Réponds UNIQUEMENT avec un objet JSON valide. Pas de texte avant ou après. Pas de backticks. Juste le JSON:
+{"score": 75, "matchingSkills": ["skill1"], "missingSkills": ["skill2"], "experienceMatch": "good", "locationMatch": "nearby", "summary": "Résumé en français", "recommendations": ["conseil1"]}`;
 }
 
 /**

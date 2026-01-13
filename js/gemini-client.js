@@ -77,6 +77,17 @@ function getCached(key) {
 }
 
 /**
+ * Vide le cache des réponses Gemini
+ */
+export function clearGeminiCache() {
+    localStorage.removeItem(CACHE_STORAGE);
+    console.log('Gemini cache cleared');
+}
+
+// Exposer pour debug dans la console
+window.clearGeminiCache = clearGeminiCache;
+
+/**
  * Génère une clé de cache à partir du prompt
  * @param {string} prompt - Le prompt
  * @returns {string} Hash du prompt
@@ -244,6 +255,9 @@ export function parseJsonResponse(text) {
     // Nettoyer la réponse (enlever les backticks markdown si présents)
     let cleaned = text.trim();
     
+    // Log pour debug
+    console.log('Gemini raw response:', cleaned.substring(0, 200) + '...');
+    
     // Enlever ```json et ``` si présents
     if (cleaned.startsWith('```json')) {
         cleaned = cleaned.slice(7);
@@ -257,14 +271,29 @@ export function parseJsonResponse(text) {
     
     cleaned = cleaned.trim();
     
+    // Essayer de trouver un objet JSON dans la réponse
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+        cleaned = jsonMatch[0];
+    }
+    
     try {
         return JSON.parse(cleaned);
     } catch (e) {
-        throw new GeminiError(
-            'La réponse n\'est pas un JSON valide',
-            'INVALID_JSON',
-            { text: cleaned, error: e.message }
-        );
+        // Essayer de réparer les problèmes courants
+        try {
+            // Remplacer les single quotes par des double quotes
+            let fixed = cleaned.replace(/'/g, '"');
+            // Enlever les virgules trailing
+            fixed = fixed.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+            return JSON.parse(fixed);
+        } catch (e2) {
+            throw new GeminiError(
+                'La réponse n\'est pas un JSON valide',
+                'INVALID_JSON',
+                { text: cleaned.substring(0, 500), error: e.message }
+            );
+        }
     }
 }
 
