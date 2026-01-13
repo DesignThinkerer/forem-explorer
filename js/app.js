@@ -533,8 +533,9 @@ async function recalculateScore() {
         return;
     }
     
-    // Find the full job data from the current results
-    const jobs = window.currentJobs || [];
+    // Find the full job data from the last search results
+    const lastResults = window.lastSearchResults;
+    const jobs = lastResults?.results || [];
     const fullJob = jobs.find(j => j.numerooffreforem === jobId);
     
     if (!fullJob) {
