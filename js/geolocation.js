@@ -1,6 +1,6 @@
 /**
  * Geolocation Module
- * Handles user location detection via GPS and manual city search.
+ * Handles user location detection with priority: CV > GPS > Manual.
  * Manages UI visibility for distance-based filtering.
  */
 import { showToast } from './utils.js';
@@ -22,16 +22,70 @@ export function updateDistanceUI() {
 }
 
 /**
- * Geocodes the profile location from CV if available and no user location is set.
+ * Main location initialization function.
+ * Priority order: 1) CV profile location, 2) GPS, 3) Manual input
+ * @returns {Promise<void>}
+ */
+export async function initializeLocation() {
+    // 1. Try CV profile location first (most stable - represents home)
+    const cvSuccess = await geocodeProfileLocation();
+    if (cvSuccess) {
+        console.log('[Geolocation] Using CV profile location');
+        return;
+    }
+    
+    // 2. Try GPS as fallback
+    console.log('[Geolocation] No CV location, trying GPS...');
+    const gpsSuccess = await tryGPS();
+    if (gpsSuccess) {
+        console.log('[Geolocation] Using GPS location');
+        return;
+    }
+    
+    // 3. Show manual input as last resort
+    console.log('[Geolocation] GPS failed, showing manual input');
+    fallbackManual();
+}
+
+/**
+ * Attempts to get GPS location (promise-based).
+ * @returns {Promise<boolean>} True if GPS location was obtained
+ */
+function tryGPS() {
+    return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+            resolve(false);
+            return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setUserLocation({ 
+                    lat: position.coords.latitude, 
+                    lon: position.coords.longitude, 
+                    name: "GPS",
+                    source: 'gps'
+                });
+                document.getElementById('gpsInfo')?.classList.remove('hidden');
+                document.getElementById('gpsCoords').textContent = "📍 GPS";
+                updateDistanceUI();
+                resolve(true);
+            },
+            (error) => {
+                console.warn('[Geolocation] GPS error:', error.message);
+                resolve(false);
+            },
+            { timeout: 5000, maximumAge: 300000 } // 5s timeout, cache 5min
+        );
+    });
+}
+
+/**
+ * Geocodes the profile location from CV if available.
  * Uses OpenStreetMap Nominatim API to convert city name to coordinates.
  * @returns {Promise<boolean>} True if location was successfully geocoded
  */
 export async function geocodeProfileLocation() {
-    // Don't override existing location
-    if (getUserLocation()) {
-        return true;
-    }
-    
     const profile = getProfile();
     if (!profile || !profile.location) {
         return false;
@@ -80,13 +134,14 @@ export async function geocodeProfileLocation() {
 
 /**
  * Triggers geolocation detection using the browser's GPS API.
- * Falls back to manual location entry if GPS is unavailable or location is already set.
+ * Used when user explicitly requests GPS (e.g., sorting by proximity).
  * @param {Function} [onSuccess] - Optional callback function to execute after successful location detection
  */
 export function triggerGeo(onSuccess) {
     const userLocation = getUserLocation();
     if (userLocation) {
         updateDistanceUI();
+        if (onSuccess) onSuccess();
         return;
     }
     if (!navigator.geolocation) { 
@@ -96,7 +151,7 @@ export function triggerGeo(onSuccess) {
     showToast("GPS...", false);
     navigator.geolocation.getCurrentPosition(
         p => {
-            setUserLocation({ lat: p.coords.latitude, lon: p.coords.longitude, name: "GPS" });
+            setUserLocation({ lat: p.coords.latitude, lon: p.coords.longitude, name: "GPS", source: 'gps' });
             document.getElementById('gpsInfo').classList.remove('hidden');
             document.getElementById('gpsCoords').textContent = "📍 GPS";
             updateDistanceUI();

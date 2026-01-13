@@ -6,7 +6,7 @@
 import { initIcons } from './utils.js';
 import { loadFacets } from './facets.js';
 import { handleSearch, handleCustomSearch, copyUrl, exportDebugJson, importBookmarksFromFile } from './search.js';
-import { triggerGeo, manualCitySearch, geocodeProfileLocation } from './geolocation.js';
+import { triggerGeo, manualCitySearch, initializeLocation } from './geolocation.js';
 import { restoreStateFromUrl } from './url-state.js';
 import { closeJobModal, handleBookmarkToggle, handleAppliedToggle, handleIgnoredToggle, saveNote, deleteNote, addJobTagFromDropdown, removeJobTag, openTagManagement, closeTagManagement, createNewTag, deleteCustomTag, openCoverLetterModal, closeCoverLetterModal, selectLetterStyle, generateLetter, toggleLetterEdit, regenerateLetter, copyLetter, saveLetter, showLetterOptions, exportLetterPDF } from './job-modal.js';
 import { renderResults } from './renderer.js';
@@ -23,8 +23,8 @@ async function init() {
     initIcons();
     await loadFacets();
     
-    // Try to geocode location from CV profile (for distance-based scoring)
-    await geocodeProfileLocation();
+    // Initialize location: CV > GPS > Manual
+    await initializeLocation();
     
     restoreStateFromUrl(handleSearch);
     checkAndDisplayAlerts();
