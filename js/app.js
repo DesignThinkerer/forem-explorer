@@ -370,44 +370,117 @@ function openScoreModal(scoreData, jobData) {
     // Details
     const detailsEl = document.getElementById('scoreModalDetails');
     const details = scoreData.details || {};
-    let detailsHtml = '';
+    let detailsHtml = '<div class="space-y-1.5">';
     
+    // Compétences matchées (max 40pts) + title bonus (max 15pts)
     if (details.skillsMatched !== undefined) {
-        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Compétences matchées:</span><span class="font-medium">${details.skillsMatched}</span></div>`;
+        // Calculer les points approximatifs
+        let skillPts = 0;
+        const m = details.skillsMatched;
+        if (m >= 1) skillPts += 10;
+        if (m >= 2) skillPts += 8;
+        if (m >= 3) skillPts += 6;
+        if (m >= 4) skillPts += 5;
+        if (m >= 5) skillPts += Math.min(11, (m - 4) * 3);
+        skillPts = Math.min(40, skillPts);
+        
+        const titlePts = Math.min(15, (details.titleMatches || 0) * 8);
+        
+        detailsHtml += `<div class="flex justify-between items-center">
+            <span class="text-slate-600">Compétences:</span>
+            <span class="font-medium">${details.skillsMatched} matchées <span class="text-emerald-600">+${skillPts}pts</span></span>
+        </div>`;
+        
+        if (details.titleMatches) {
+            detailsHtml += `<div class="flex justify-between items-center text-sm">
+                <span class="text-slate-500 pl-4">↳ dont dans le titre:</span>
+                <span class="font-medium">${details.titleMatches} <span class="text-emerald-600">+${titlePts}pts</span></span>
+            </div>`;
+        }
     }
-    if (details.titleMatches !== undefined) {
-        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Match dans le titre:</span><span class="font-medium">${details.titleMatches}</span></div>`;
-    }
+    
+    // Headline (max 15pts)
     if (details.headlineMatch !== undefined) {
-        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Match headline:</span><span class="font-medium">${details.headlineMatch ? 'Oui' : 'Non'}</span></div>`;
+        const headlinePts = details.headlineMatchCount ? Math.min(15, Math.round(details.headlineMatchCount) * 5) : 0;
+        detailsHtml += `<div class="flex justify-between items-center">
+            <span class="text-slate-600">Headline/Métier:</span>
+            <span class="font-medium">${details.headlineMatch ? 'Match' : 'Non'} ${headlinePts > 0 ? `<span class="text-emerald-600">+${headlinePts}pts</span>` : ''}</span>
+        </div>`;
     }
-    if (details.locationMatch) {
-        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Localisation:</span><span class="font-medium">${details.locationMatch}</span></div>`;
-    }
-    if (details.distanceKm !== undefined) {
-        const distColor = details.distanceKm <= 25 ? 'text-emerald-600' : details.distanceKm <= 50 ? 'text-blue-600' : 'text-amber-600';
-        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Distance:</span><span class="font-medium ${distColor}">${details.distanceKm} km (${details.locationMatch})</span></div>`;
-    } else if (details.locationMatch) {
-        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Localisation:</span><span class="font-medium">${details.locationMatch}</span></div>`;
-    }
-    if (details.languageMatch !== undefined) {
-        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Langues:</span><span class="font-medium">${details.languageMatch ? 'Oui' : 'Non'}</span></div>`;
-    }
-    if (details.experienceMatch) {
-        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Expérience:</span><span class="font-medium">${details.experienceMatch}</span></div>`;
-    }
+    
+    // Keywords (max 12pts + 16pts bonus titre)
     if (details.keywordsMatched !== undefined) {
-        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Mots-clés CV matchés:</span><span class="font-medium">${details.keywordsMatched}</span></div>`;
+        const kwPts = Math.min(12, details.keywordsMatched * 3);
+        const kwTitlePts = Math.min(16, (details.keywordTitleMatches || 0) * 8);
+        
+        detailsHtml += `<div class="flex justify-between items-center">
+            <span class="text-slate-600">Mots-clés CV:</span>
+            <span class="font-medium">${details.keywordsMatched} matchés <span class="text-emerald-600">+${kwPts}pts</span></span>
+        </div>`;
+        
+        if (details.keywordTitleMatches > 0) {
+            detailsHtml += `<div class="flex justify-between items-center text-sm">
+                <span class="text-slate-500 pl-4">↳ dont dans le titre:</span>
+                <span class="font-medium text-emerald-600">${details.keywordTitleMatches} ⭐ +${kwTitlePts}pts</span>
+            </div>`;
+        }
     }
-    if (details.keywordTitleMatches !== undefined && details.keywordTitleMatches > 0) {
-        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Keywords dans le titre:</span><span class="font-medium text-emerald-600">+${details.keywordTitleMatches} ⭐</span></div>`;
+    
+    // Distance/Localisation (max 15pts)
+    if (details.distanceKm !== undefined) {
+        let locPts = 0;
+        const d = details.distanceKm;
+        if (d <= 10) locPts = 15;
+        else if (d <= 25) locPts = 12;
+        else if (d <= 50) locPts = 8;
+        else if (d <= 75) locPts = 5;
+        else if (d <= 100) locPts = 2;
+        
+        const distColor = d <= 25 ? 'text-emerald-600' : d <= 50 ? 'text-blue-600' : 'text-amber-600';
+        detailsHtml += `<div class="flex justify-between items-center">
+            <span class="text-slate-600">Distance:</span>
+            <span class="font-medium ${distColor}">${details.distanceKm} km (${details.locationMatch || ''}) <span class="text-emerald-600">+${locPts}pts</span></span>
+        </div>`;
+    } else if (details.locationMatch) {
+        const locPts = details.locationMatch === 'même ville' ? 10 : details.locationMatch === 'même région' ? 5 : 0;
+        detailsHtml += `<div class="flex justify-between items-center">
+            <span class="text-slate-600">Localisation:</span>
+            <span class="font-medium">${details.locationMatch} ${locPts > 0 ? `<span class="text-emerald-600">+${locPts}pts</span>` : ''}</span>
+        </div>`;
     }
+    
+    // Langues (max 10pts)
+    if (details.languageMatch !== undefined) {
+        const langPts = details.languageMatch ? 5 : 0; // Au moins 5pts si match
+        detailsHtml += `<div class="flex justify-between items-center">
+            <span class="text-slate-600">Langues:</span>
+            <span class="font-medium">${details.languageMatch ? 'Match' : 'Non'} ${langPts > 0 ? `<span class="text-emerald-600">+${langPts}pts</span>` : ''}</span>
+        </div>`;
+    }
+    
+    // Expérience (max 10pts)
+    if (details.experienceMatch) {
+        const expPts = details.experienceMatch === 'sufficient' ? 10 : details.experienceMatch === 'partial' ? 5 : 3;
+        const expLabel = details.experienceMatch === 'sufficient' ? 'Suffisante' : details.experienceMatch === 'partial' ? 'Partielle' : details.experienceMatch;
+        detailsHtml += `<div class="flex justify-between items-center">
+            <span class="text-slate-600">Expérience:</span>
+            <span class="font-medium">${expLabel} <span class="text-emerald-600">+${expPts}pts</span></span>
+        </div>`;
+    }
+    
+    // Matches fuzzy
     if (details.fuzzyMatches && details.fuzzyMatches.length > 0) {
-        detailsHtml += `<div class="flex justify-between"><span class="text-slate-600">Matches approximatifs:</span><span class="font-medium">${details.fuzzyMatches.length}</span></div>`;
+        detailsHtml += `<div class="flex justify-between items-center text-sm border-t border-slate-100 pt-1 mt-1">
+            <span class="text-slate-500">Matches approximatifs:</span>
+            <span class="font-medium text-amber-600">${details.fuzzyMatches.length} (Levenshtein)</span>
+        </div>`;
     }
+    
     if (details.noData) {
-        detailsHtml += `<div class="text-amber-600 italic">Données insuffisantes dans l'offre</div>`;
+        detailsHtml += `<div class="text-amber-600 italic mt-2">⚠️ Données insuffisantes dans l'offre</div>`;
     }
+    
+    detailsHtml += '</div>';
     
     detailsEl.innerHTML = detailsHtml || '<span class="text-slate-400 italic">Pas de détails disponibles</span>';
     
