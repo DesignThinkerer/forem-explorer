@@ -546,50 +546,38 @@ export function calculateLocalScore(profile, job) {
  * @returns {string} Le prompt
  */
 function generateScoringPrompt(profile, job) {
-    // Extraire les infos pertinentes du profil (ne pas envoyer tout le CV)
+    // Extraire les infos pertinentes du profil
     const profileSummary = {
         headline: profile.headline || '',
-        skills: profile.skills?.slice(0, 15).map(s => s.name) || [],
+        skills: profile.skills?.slice(0, 10).map(s => typeof s === 'string' ? s : s.name).filter(Boolean) || [],
+        keywords: profile.keywords?.slice(0, 10) || [],
         experienceYears: profile.totalExperienceYears || 0,
-        educationLevel: profile.educationLevel || 'unknown',
-        languages: profile.languages?.map(l => `${l.name} (${l.level})`) || [],
+        languages: profile.languages?.map(l => l.name) || [],
         location: profile.location || ''
     };
     
-    // Extraire les infos pertinentes de l'offre
+    // Extraire les infos pertinentes de l'offre (utiliser les bons noms de champs API)
     const jobSummary = {
-        title: job.libelleoffre || job.title || 'Non spécifié',
-        company: job.employeur?.denomination || job.company || 'Non spécifié',
-        description: (job.descriptionoffre || job.description || '').substring(0, 1000),
-        skills: job.competencesrequises || '',
-        experience: job.experienceexige || job.experience || '',
-        location: job.localiteaffichage || job.location || '',
-        contract: job.regimetravail || '',
+        title: job.titreoffre || job.libelleoffre || 'Non spécifié',
+        company: job.nomemployeur || 'Non spécifié',
+        description: (job.descriptionoffre || '').substring(0, 800),
+        location: job.localiteaffichage || job.lieuxtravaillocalite?.[0] || '',
+        contract: job.typecontrat || '',
         language: job.languetravail || ''
     };
     
-    return `Tu es un expert en recrutement. Analyse la correspondance entre ce profil candidat et cette offre d'emploi.
+    // Log pour debug
+    console.log('Job data for AI scoring:', jobSummary.title, jobSummary.company);
+    
+    return `Score ce match candidat/offre. Réponds en JSON UNIQUEMENT, très concis.
 
-## Profil candidat
-- Titre: ${profileSummary.headline}
-- Compétences: ${profileSummary.skills.join(', ')}
-- Expérience: ${profileSummary.experienceYears} ans
-- Formation: ${profileSummary.educationLevel}
-- Langues: ${profileSummary.languages.join(', ')}
-- Localisation: ${profileSummary.location}
+CANDIDAT: ${profileSummary.headline}, Skills: ${profileSummary.skills.join(', ')}, Keywords: ${profileSummary.keywords.join(', ')}, ${profileSummary.experienceYears} ans exp, Lieu: ${profileSummary.location}
 
-## Offre d'emploi
-- Titre: ${jobSummary.title}
-- Entreprise: ${jobSummary.company}
-- Description: ${jobSummary.description}
-- Compétences requises: ${jobSummary.skills}
-- Expérience requise: ${jobSummary.experience}
-- Localisation: ${jobSummary.location}
-- Contrat: ${jobSummary.contract}
-- Langue de travail: ${jobSummary.language}
+OFFRE: ${jobSummary.title} chez ${jobSummary.company}, Lieu: ${jobSummary.location}, ${jobSummary.contract}
+Description: ${jobSummary.description}
 
-IMPORTANT: Réponds UNIQUEMENT avec un objet JSON valide. Pas de texte avant ou après. Pas de backticks. Juste le JSON:
-{"score": 75, "matchingSkills": ["skill1"], "missingSkills": ["skill2"], "experienceMatch": "good", "locationMatch": "nearby", "summary": "Résumé en français", "recommendations": ["conseil1"]}`;
+JSON (score 0-100, listes courtes max 3 items, summary max 20 mots):
+{"score":75,"matchingSkills":["a","b"],"missingSkills":["c"],"experienceMatch":"good","locationMatch":"nearby","summary":"Court résumé","recommendations":["conseil"]}`;
 }
 
 /**
@@ -620,9 +608,10 @@ export async function scoreJobWithAi(job) {
         // Appeler Gemini
         const response = await generateContent(prompt, {
             generationConfig: {
-                temperature: 0.3, // Plus déterministe pour le scoring
-                maxOutputTokens: 2048 // Assez pour une réponse JSON complète
-            }
+                temperature: 0.1, // Très déterministe pour le scoring
+                maxOutputTokens: 512 // JSON compact devrait tenir en moins
+            },
+            skipCache: true // Toujours requête fraîche pour scoring
         });
         
         // Parser la réponse JSON
