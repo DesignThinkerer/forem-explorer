@@ -547,37 +547,24 @@ export function calculateLocalScore(profile, job) {
  */
 function generateScoringPrompt(profile, job) {
     // Extraire les infos pertinentes du profil
-    const profileSummary = {
-        headline: profile.headline || '',
-        skills: profile.skills?.slice(0, 10).map(s => typeof s === 'string' ? s : s.name).filter(Boolean) || [],
-        keywords: profile.keywords?.slice(0, 10) || [],
-        experienceYears: profile.totalExperienceYears || 0,
-        languages: profile.languages?.map(l => l.name) || [],
-        location: profile.location || ''
-    };
+    const skills = profile.skills?.slice(0, 8).map(s => typeof s === 'string' ? s : s.name).filter(Boolean) || [];
+    const keywords = profile.keywords?.slice(0, 5) || [];
     
-    // Extraire les infos pertinentes de l'offre (utiliser les bons noms de champs API)
-    const jobSummary = {
-        title: job.titreoffre || job.libelleoffre || 'Non spécifié',
-        company: job.nomemployeur || 'Non spécifié',
-        description: (job.descriptionoffre || '').substring(0, 800),
-        location: job.localiteaffichage || job.lieuxtravaillocalite?.[0] || '',
-        contract: job.typecontrat || '',
-        language: job.languetravail || ''
-    };
+    // Extraire les infos pertinentes de l'offre
+    const title = job.titreoffre || job.libelleoffre || '';
+    const desc = (job.descriptionoffre || '').substring(0, 600);
     
     // Log pour debug
-    console.log('Job data for AI scoring:', jobSummary.title, jobSummary.company);
+    console.log('Job data for AI scoring:', title, job.nomemployeur);
     
-    return `Score ce match candidat/offre. Réponds en JSON UNIQUEMENT, très concis.
+    return `Analyse ce match CV/offre. Retourne UNIQUEMENT un JSON valide sans markdown.
 
-CANDIDAT: ${profileSummary.headline}, Skills: ${profileSummary.skills.join(', ')}, Keywords: ${profileSummary.keywords.join(', ')}, ${profileSummary.experienceYears} ans exp, Lieu: ${profileSummary.location}
+CV: ${profile.headline || ''}, Skills: ${skills.join(', ')}, ${profile.totalExperienceYears || 0} ans exp
+Offre: ${title}, ${job.localiteaffichage || ''}
+${desc}
 
-OFFRE: ${jobSummary.title} chez ${jobSummary.company}, Lieu: ${jobSummary.location}, ${jobSummary.contract}
-Description: ${jobSummary.description}
-
-JSON (score 0-100, listes courtes max 3 items, summary max 20 mots):
-{"score":75,"matchingSkills":["a","b"],"missingSkills":["c"],"experienceMatch":"good","locationMatch":"nearby","summary":"Court résumé","recommendations":["conseil"]}`;
+Retourne ce JSON exact avec tes valeurs:
+{"score":50,"skills":["match1"],"missing":["manque1"],"exp":"ok","loc":"ok","txt":"resume 10 mots"}`;
 }
 
 /**
@@ -617,14 +604,14 @@ export async function scoreJobWithAi(job) {
         // Parser la réponse JSON
         const result = parseJsonResponse(response);
         
-        // Valider et normaliser le score
+        // Valider et normaliser le score (noms courts du prompt)
         const scoreData = {
             score: Math.min(100, Math.max(0, parseInt(result.score) || 50)),
-            matchingSkills: result.matchingSkills || [],
-            missingSkills: result.missingSkills || [],
-            experienceMatch: result.experienceMatch || 'unknown',
-            locationMatch: result.locationMatch || 'unknown',
-            summary: result.summary || '',
+            matchingSkills: result.skills || result.matchingSkills || [],
+            missingSkills: result.missing || result.missingSkills || [],
+            experienceMatch: result.exp || result.experienceMatch || 'unknown',
+            locationMatch: result.loc || result.locationMatch || 'unknown',
+            summary: result.txt || result.summary || '',
             recommendations: result.recommendations || [],
             isAiScore: true,
             jobId: jobId

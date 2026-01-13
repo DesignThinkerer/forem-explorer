@@ -257,7 +257,7 @@ export function parseJsonResponse(text) {
     
     // Log pour debug
     console.log('Gemini raw response (start):', cleaned.substring(0, 200));
-    console.log('Gemini raw response (end):', cleaned.substring(cleaned.length - 100));
+    console.log('Gemini raw response (end):', cleaned.substring(Math.max(0, cleaned.length - 100)));
     
     // Enlever les blocs de code markdown (```json ... ``` ou ``` ... ```)
     // Regex plus robuste pour gérer les variantes
@@ -272,7 +272,7 @@ export function parseJsonResponse(text) {
     }
     
     console.log('Cleaned JSON (first 300 chars):', cleaned.substring(0, 300));
-    console.log('Cleaned JSON (last 100 chars):', cleaned.substring(cleaned.length - 100));
+    console.log('Cleaned JSON (last 100 chars):', cleaned.substring(Math.max(0, cleaned.length - 100)));
     
     try {
         return JSON.parse(cleaned);
@@ -285,12 +285,37 @@ export function parseJsonResponse(text) {
             fixed = fixed.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
             return JSON.parse(fixed);
         } catch (e2) {
-            console.error('JSON parse failed. Full cleaned text:', cleaned);
-            throw new GeminiError(
-                'La réponse n\'est pas un JSON valide',
-                'INVALID_JSON',
-                { text: cleaned.substring(0, 500), error: e.message }
-            );
+            // Essayer de compléter un JSON tronqué
+            try {
+                let truncated = cleaned;
+                // Si ça se termine par un tableau ouvert, le fermer
+                if (truncated.match(/\[\s*$/)) {
+                    truncated += ']}';
+                }
+                // Si ça se termine par une virgule ou une valeur incomplète
+                if (truncated.match(/,\s*$/)) {
+                    truncated = truncated.replace(/,\s*$/, '');
+                }
+                // Compter les accolades/crochets ouverts
+                const openBraces = (truncated.match(/\{/g) || []).length;
+                const closeBraces = (truncated.match(/\}/g) || []).length;
+                const openBrackets = (truncated.match(/\[/g) || []).length;
+                const closeBrackets = (truncated.match(/\]/g) || []).length;
+                
+                // Fermer les structures ouvertes
+                truncated += ']'.repeat(Math.max(0, openBrackets - closeBrackets));
+                truncated += '}'.repeat(Math.max(0, openBraces - closeBraces));
+                
+                console.log('Attempting to fix truncated JSON:', truncated);
+                return JSON.parse(truncated);
+            } catch (e3) {
+                console.error('JSON parse failed. Full cleaned text:', cleaned);
+                throw new GeminiError(
+                    'La réponse n\'est pas un JSON valide',
+                    'INVALID_JSON',
+                    { text: cleaned.substring(0, 500), error: e.message }
+                );
+            }
         }
     }
 }
