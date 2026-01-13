@@ -82,91 +82,189 @@ export function isAiScoringAvailable() {
 export function calculateLocalScore(profile, job) {
     if (!profile || !job) return null;
     
-    let score = 50; // Score de base
+    let score = 0; // Commence à 0, pas 50
     const matchingKeywords = [];
     const details = {};
     
-    // Texte de l'offre à analyser
-    const jobText = [
-        job.libelleoffre || job.title || '',
-        job.descriptionoffre || job.description || '',
-        job.competencesrequises || '',
-        job.languetravail || ''
-    ].join(' ').toLowerCase();
+    // Collecter TOUT le texte disponible de l'offre (utiliser tous les champs)
+    const textParts = [];
+    Object.keys(job).forEach(key => {
+        const value = job[key];
+        if (typeof value === 'string' && value.length > 0) {
+            textParts.push(value);
+        } else if (Array.isArray(value)) {
+            value.forEach(v => {
+                if (typeof v === 'string') textParts.push(v);
+            });
+        }
+    });
+    const jobText = textParts.join(' ').toLowerCase();
     
-    // Match des compétences
+    // Titre de l'offre pour bonus
+    const jobTitle = (job.titreoffre || job.libelleoffre || job.title || '').toLowerCase();
+    
+    // Si pas de texte, retourner un score neutre
+    if (jobText.length < 50) {
+        return {
+            score: 30,
+            matchingKeywords: [],
+            isLocalScore: true,
+            details: { noData: true }
+        };
+    }
+    
+    // 1. Match des compétences (max 45 points)
     if (profile.skills && profile.skills.length > 0) {
         let matched = 0;
+        let titleMatched = 0;
+        
         profile.skills.forEach(skill => {
             const skillLower = skill.name.toLowerCase();
-            if (jobText.includes(skillLower)) {
+            const skillWords = skillLower.split(/[\s\-\/]+/);
+            
+            // Match exact ou partiel
+            const isMatch = jobText.includes(skillLower) || 
+                           skillWords.some(w => w.length > 3 && jobText.includes(w));
+            
+            if (isMatch) {
                 matched++;
                 matchingKeywords.push(skill.name);
+                
+                // Bonus si dans le titre
+                if (jobTitle.includes(skillLower) || skillWords.some(w => w.length > 3 && jobTitle.includes(w))) {
+                    titleMatched++;
+                }
             }
+            
             // Vérifier aussi les keywords de la compétence
             if (skill.keywords) {
                 skill.keywords.forEach(kw => {
-                    if (jobText.includes(kw.toLowerCase()) && !matchingKeywords.includes(kw)) {
-                        matched++;
+                    const kwLower = kw.toLowerCase();
+                    if (kwLower.length > 2 && jobText.includes(kwLower) && !matchingKeywords.includes(kw)) {
+                        matched += 0.5;
                         matchingKeywords.push(kw);
                     }
                 });
             }
         });
         
-        const skillScore = Math.min(40, (matched / Math.max(5, profile.skills.length)) * 40);
+        // Score proportionnel au nombre de compétences matchées
+        const matchRatio = matched / Math.max(3, profile.skills.length);
+        const skillScore = Math.min(35, Math.round(matchRatio * 50));
         score += skillScore;
-        details.skillsMatched = matched;
+        
+        // Bonus pour match dans le titre (+10 max)
+        score += Math.min(10, titleMatched * 5);
+        
+        details.skillsMatched = Math.round(matched);
+        details.titleMatches = titleMatched;
     }
     
-    // Match des mots-clés généraux
+    // 2. Match du headline/métier (max 15 points)
+    if (profile.headline) {
+        const headlineWords = profile.headline.toLowerCase().split(/[\s\-\/,]+/).filter(w => w.length > 3);
+        let headlineMatches = 0;
+        
+        headlineWords.forEach(word => {
+            if (jobTitle.includes(word) || jobText.includes(word)) {
+                headlineMatches++;
+            }
+        });
+        
+        const headlineScore = Math.min(15, Math.round((headlineMatches / Math.max(1, headlineWords.length)) * 20));
+        score += headlineScore;
+        details.headlineMatch = headlineMatches > 0;
+    }
+    
+    // 3. Match des mots-clés extraits du CV (max 10 points)
     if (profile.keywords && profile.keywords.length > 0) {
         let keywordMatches = 0;
         profile.keywords.forEach(kw => {
-            if (jobText.includes(kw.toLowerCase())) {
+            if (kw.length > 3 && jobText.includes(kw.toLowerCase())) {
                 keywordMatches++;
                 if (!matchingKeywords.includes(kw)) {
                     matchingKeywords.push(kw);
                 }
             }
         });
+        score += Math.min(10, keywordMatches * 2);
         details.keywordsMatched = keywordMatches;
     }
     
-    // Localisation
-    if (profile.location && job.localiteaffichage) {
+    // 4. Localisation (max 10 points)
+    const jobLocation = (job.localiteaffichage || job.lieuxtravaillocalite?.[0] || '').toLowerCase();
+    if (profile.location && jobLocation) {
         const profileLoc = profile.location.toLowerCase();
-        const jobLoc = job.localiteaffichage.toLowerCase();
         
-        // Extraction des villes principales de Belgique
-        const cities = ['bruxelles', 'liège', 'namur', 'charleroi', 'mons', 'tournai', 'arlon', 'bruges', 'gand', 'anvers'];
+        // Villes belges
+        const cities = ['bruxelles', 'brussels', 'liège', 'liege', 'namur', 'charleroi', 'mons', 
+                        'tournai', 'arlon', 'bruges', 'gand', 'ghent', 'anvers', 'antwerpen', 
+                        'leuven', 'louvain', 'hasselt', 'wavre', 'nivelles', 'ottignies'];
         
         for (const city of cities) {
-            if (profileLoc.includes(city) && jobLoc.includes(city)) {
-                score += 5;
-                details.locationMatch = true;
+            if (profileLoc.includes(city) && jobLocation.includes(city)) {
+                score += 10;
+                details.locationMatch = 'exact';
                 break;
+            }
+        }
+        
+        // Match de province/région
+        if (!details.locationMatch) {
+            const regions = ['wallonie', 'flandre', 'bruxelles', 'hainaut', 'liège', 'namur', 
+                            'luxembourg', 'brabant', 'limbourg', 'anvers'];
+            for (const region of regions) {
+                if (profileLoc.includes(region) && jobLocation.includes(region)) {
+                    score += 5;
+                    details.locationMatch = 'region';
+                    break;
+                }
             }
         }
     }
     
-    // Langues
-    if (profile.languages && job.languetravail) {
-        const jobLang = job.languetravail.toLowerCase();
+    // 5. Langues (max 10 points)
+    if (profile.languages && profile.languages.length > 0) {
+        const jobLangField = (job.languetravail || job.langue || '').toLowerCase();
+        let langMatched = 0;
+        
         profile.languages.forEach(lang => {
-            if (jobLang.includes(lang.name.toLowerCase())) {
-                score += 3;
+            const langName = lang.name.toLowerCase();
+            if (jobText.includes(langName) || jobLangField.includes(langName)) {
+                langMatched++;
                 details.languageMatch = true;
             }
         });
+        score += Math.min(10, langMatched * 5);
     }
     
-    // Normaliser le score entre 0 et 100
-    score = Math.min(100, Math.max(0, Math.round(score)));
+    // 6. Expérience (max 10 points) - bonus si l'expérience correspond
+    if (profile.totalExperienceYears !== undefined) {
+        // Chercher des patterns d'expérience dans l'offre
+        const expPatterns = jobText.match(/(\d+)\s*(ans?|années?|jaar)/gi);
+        if (expPatterns) {
+            const requiredYears = parseInt(expPatterns[0]);
+            if (!isNaN(requiredYears)) {
+                if (profile.totalExperienceYears >= requiredYears) {
+                    score += 10;
+                    details.experienceMatch = 'sufficient';
+                } else if (profile.totalExperienceYears >= requiredYears * 0.7) {
+                    score += 5;
+                    details.experienceMatch = 'partial';
+                }
+            }
+        } else {
+            // Pas d'exigence d'expérience mentionnée = bonus léger
+            score += 3;
+        }
+    }
+    
+    // Normaliser entre 10 et 95 (jamais 0% ni 100% pour le score local)
+    score = Math.min(95, Math.max(10, Math.round(score)));
     
     return {
         score,
-        matchingKeywords: matchingKeywords.slice(0, 10),
+        matchingKeywords: matchingKeywords.slice(0, 15),
         isLocalScore: true,
         details
     };
