@@ -289,24 +289,42 @@ export function parseJsonResponse(text) {
             try {
                 let truncated = cleaned;
                 
-                // Compter les guillemets - si impair, on est au milieu d'une string
-                const quotes = (truncated.match(/"/g) || []).length;
-                if (quotes % 2 !== 0) {
-                    // Fermer la string incomplète
-                    truncated += '"';
-                }
-                
-                // Si ça se termine par un tableau ouvert ou une virgule dans un tableau
-                if (truncated.match(/\[\s*$/) || truncated.match(/\["[^"]*"\s*$/)) {
-                    // Ne rien ajouter, on va fermer après
-                }
-                // Si ça se termine par une virgule
-                if (truncated.match(/,\s*$/)) {
+                // 1. Stratégie basée sur la fin de chaîne
+                // Si ça se termine par ", (non échappé) -> C'est un séparateur, on l'enlève
+                if (truncated.match(/(^|[^\\])"\s*,\s*$/)) {
                     truncated = truncated.replace(/,\s*$/, '');
                 }
-                // Si ça se termine par une string qui était dans un tableau
-                if (truncated.match(/"\s*$/)) {
-                    // C'est OK, on va fermer les structures
+                // Si ça se termine par }, ou ], -> C'est un séparateur, on l'enlève
+                else if (truncated.match(/[\}\]]\s*,\s*$/)) {
+                    truncated = truncated.replace(/,\s*$/, '');
+                }
+                // Sinon analyse des quotes
+                else {
+                    // Compter uniquement les guillemets NON échappés
+                    let validQuotes = 0;
+                    for (let i = 0; i < truncated.length; i++) {
+                        if (truncated[i] === '"') {
+                            // Vérifier si échappé (précédé par un nombre impair de backslashes)
+                            let backslashes = 0;
+                            let j = i - 1;
+                            while (j >= 0 && truncated[j] === '\\') {
+                                backslashes++;
+                                j--;
+                            }
+                            if (backslashes % 2 === 0) {
+                                validQuotes++;
+                            }
+                        }
+                    }
+                    
+                    if (validQuotes % 2 !== 0) {
+                        truncated += '"';
+                    }
+                    
+                    // Si ça se termine par une virgule après fermeture éventuelle
+                    if (truncated.match(/,\s*$/)) {
+                        truncated = truncated.replace(/,\s*$/, '');
+                    }
                 }
                 
                 // Compter les accolades/crochets ouverts
