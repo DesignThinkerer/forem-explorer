@@ -2,7 +2,7 @@
 
 🔍 **Application web de recherche d'emploi** pour explorer les offres du Forem (Service public de l'emploi en Belgique) via leur API Open Data.
 
-> ⚠️ **Disclaimer** : Ce projet a été réalisé en *vibe coding* avec l'assistance de divers LLM. Le code peut contenir des imperfections, des bugs ou des choix d'architecture discutables. L'objectif est de concevoir un prototype fonctionnel rapidement pour m'aider dans ma recherche d'emploi. Utilisez-le à vos risques et périls.
+> ⚠️ **Important** : Ce projet a été réalisé en *vibe coding* avec l'assistance de divers LLM. Le code peut contenir des imperfections, des bugs ou des choix d'architecture discutables. L'objectif est de concevoir un prototype fonctionnel rapidement pour m'aider dans ma recherche d'emploi. Utilisez-le à vos risques et périls.
 
 ## ✨ Fonctionnalités
 
