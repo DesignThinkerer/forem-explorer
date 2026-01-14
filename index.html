@@ -9,55 +9,12 @@
     <!-- Export PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="css/styles.css">
+    <script src="js/components/nav-bar.js"></script>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen pb-12">
 
     <!-- Header -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-            <a href="index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <div class="bg-blue-600 p-2 rounded-lg text-white">
-                    <i data-lucide="database" class="h-6 w-6"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold text-slate-800 leading-tight">
-                        Forem Explorer
-                    </h1>
-                    <p class="text-xs text-slate-500 font-medium">Open Data v2.1</p>
-                </div>
-            </a>
-            <div class="flex gap-2">
-                <a href="profile.html" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-all">
-                    <i data-lucide="user-circle" class="h-4 w-4"></i>
-                    Profil
-                </a>
-                <a href="letters.html" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 rounded-lg shadow-sm transition-all">
-                    <i data-lucide="file-pen" class="h-4 w-4"></i>
-                    Lettres
-                </a>
-                <a href="dashboard.html" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm transition-all">
-                    <i data-lucide="bar-chart-3" class="h-4 w-4"></i>
-                    Dashboard
-                </a>
-                <a href="aide.html" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 shadow-sm transition-all">
-                    <i data-lucide="help-circle" class="h-4 w-4"></i>
-                    Aide
-                </a>
-                <a href="settings.html" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-all">
-                    <i data-lucide="sparkles" class="h-4 w-4"></i>
-                    IA
-                </a>
-                <button id="btnExport" onclick="window.exportDebugJson()" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 shadow-sm transition-all">
-                    <i data-lucide="download" class="h-4 w-4"></i>
-                    Exporter
-                </button>
-                <button id="btnImport" onclick="window.importBookmarksFromFile()" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 shadow-sm transition-all">
-                    <i data-lucide="upload" class="h-4 w-4"></i>
-                    Importer
-                </button>
-            </div>
-        </div>
-    </header>
+    <nav-bar current="index"></nav-bar>
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 py-6">
@@ -74,7 +31,20 @@
                 <form id="searchForm" class="flex flex-col gap-6" onsubmit="window.handleSearch(event)">
                     
                     <!-- Saved Searches Bar -->
-                    <div class="flex items-center gap-2 pb-4 border-b border-slate-200">
+                    <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 pb-4 border-b border-slate-200">
+                        <!-- Profile Selector -->
+                        <div id="profileSelectorContainer" class="hidden flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
+                            <i data-lucide="user" class="h-4 w-4 text-emerald-600"></i>
+                            <select id="profileSelector" onchange="window.handleProfileSwitch(this.value)" 
+                                    title="Sélectionner un profil CV"
+                                    class="bg-transparent border-none text-emerald-700 text-sm font-medium focus:outline-none focus:ring-0 cursor-pointer pr-6">
+                            </select>
+                            <a href="profile.html" class="text-emerald-600 hover:text-emerald-700" title="Gérer les profils">
+                                <i data-lucide="settings" class="h-3.5 w-3.5"></i>
+                            </a>
+                        </div>
+                        
+                        <!-- Saved Searches -->
                         <div class="flex-1 flex items-center gap-2">
                             <i data-lucide="star" class="h-4 w-4 text-amber-500"></i>
                             <select id="savedSearchesDropdown" onchange="window.handleLoadSavedSearch(this)" class="flex-1 px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
@@ -284,7 +254,12 @@
                             <div class="md:col-span-1">
                                 <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Limite</label>
                                 <select id="limitFilter" class="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-sm text-slate-600 focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="5">5</option>
+                                    <option value="10">10</option>
+                                    <option value="15">15</option>
                                     <option value="20">20</option>
+                                    <option value="25">25</option>
+                                    <option value="30">30</option>
                                     <option value="50" selected>50</option>
                                     <option value="100">100</option>
                                 </select>
@@ -345,8 +320,8 @@
     </div>
 
     <!-- Score Detail Modal -->
-    <div id="scoreModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col">
+    <div id="scoreModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4" onclick="if(event.target === this) window.closeScoreModal()">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col" onclick="event.stopPropagation()">
             <!-- Modal Header -->
             <div class="flex items-center justify-between p-4 border-b border-slate-200 bg-gradient-to-r from-violet-50 to-slate-50">
                 <div class="flex items-center gap-3">
@@ -400,6 +375,60 @@
                     </h4>
                     <div id="scoreModalDetails" class="bg-slate-50 rounded-lg p-3 text-sm space-y-1">
                     </div>
+                </div>
+                
+                <!-- Infos supplémentaires pour recalcul IA -->
+                <div class="border-t border-slate-200 pt-4">
+                    <h4 class="font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                        <i data-lucide="plus-circle" class="h-4 w-4 text-violet-600"></i>
+                        Informations supplémentaires (pour recalcul IA)
+                    </h4>
+                    <p class="text-xs text-slate-500 mb-2">Collez ici le descriptif complet de l'offre ou toute info utile que l'API FOREM ne fournit pas.</p>
+                    <textarea id="scoreExtraInfo" rows="4" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 resize-y" placeholder="Ex: Description complète du poste, compétences requises, technologies utilisées..."></textarea>
+                </div>
+                
+                <!-- Paramètres IA avancés -->
+                <div class="border-t border-slate-200 pt-4">
+                    <details class="group">
+                        <summary class="font-semibold text-slate-700 mb-2 flex items-center gap-2 cursor-pointer list-none">
+                            <i data-lucide="settings-2" class="h-4 w-4 text-slate-500"></i>
+                            Paramètres IA avancés
+                            <i data-lucide="chevron-right" class="h-4 w-4 text-slate-400 transition-transform group-open:rotate-90"></i>
+                        </summary>
+                        <div class="mt-3 space-y-3 pl-6">
+                            <!-- Prompt template -->
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="block text-xs font-medium text-slate-600">Prompt (éditable)</label>
+                                    <div class="flex gap-1">
+                                        <button type="button" onclick="window.loadPromptTemplate('minimal')" class="px-2 py-0.5 text-xs bg-slate-100 hover:bg-slate-200 rounded transition-colors" title="Charger le prompt minimal">Mini</button>
+                                        <button type="button" onclick="window.loadPromptTemplate('standard')" class="px-2 py-0.5 text-xs bg-violet-100 hover:bg-violet-200 text-violet-700 rounded transition-colors" title="Charger le prompt standard">Standard</button>
+                                        <button type="button" onclick="window.loadPromptTemplate('detailed')" class="px-2 py-0.5 text-xs bg-slate-100 hover:bg-slate-200 rounded transition-colors" title="Charger le prompt détaillé">Détaillé</button>
+                                    </div>
+                                </div>
+                                <textarea id="scoreCustomPrompt" rows="8" class="w-full px-3 py-2 text-xs font-mono border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 resize-y bg-slate-50" placeholder="Le prompt sera généré automatiquement..."></textarea>
+                                <p class="text-xs text-slate-400 mt-1">Variables: <code class="bg-slate-100 px-1 rounded">{skills}</code>, <code class="bg-slate-100 px-1 rounded">{title}</code>, <code class="bg-slate-100 px-1 rounded">{description}</code>, <code class="bg-slate-100 px-1 rounded">{location}</code>, <code class="bg-slate-100 px-1 rounded">{experience}</code>, <code class="bg-slate-100 px-1 rounded">{headline}</code>, <code class="bg-slate-100 px-1 rounded">{extraInfo}</code></p>
+                            </div>
+                            <!-- Max tokens -->
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Max tokens de sortie</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="range" id="scoreMaxTokens" min="500" max="16000" value="8000" step="500" class="flex-1" oninput="document.getElementById('scoreMaxTokensValue').textContent = this.value">
+                                    <span id="scoreMaxTokensValue" class="text-sm font-mono text-slate-600 w-16 text-right">8000</span>
+                                </div>
+                                <p class="text-xs text-slate-400 mt-1">Plus = réponses plus longues mais plus coûteux</p>
+                            </div>
+                            <!-- Température -->
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Température</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="range" id="scoreTemperature" min="0" max="1" value="0.1" step="0.1" class="flex-1" oninput="document.getElementById('scoreTempValue').textContent = this.value">
+                                    <span id="scoreTempValue" class="text-sm font-mono text-slate-600 w-10 text-right">0.1</span>
+                                </div>
+                                <p class="text-xs text-slate-400 mt-1">0 = déterministe, 1 = créatif</p>
+                            </div>
+                        </div>
+                    </details>
                 </div>
                 
                 <!-- JSON Debug -->

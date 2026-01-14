@@ -24,10 +24,11 @@ export const GEMINI_CONFIG = {
         topK: 40
     },
     
-    // Rate limiting côté client
+    // Rate limiting côté client (Tier 1 - Paid account)
     limits: {
-        maxRequestsPerMinute: 15,
-        maxRequestsPerDay: 1500 // 1500 RPD pour le tier gratuit
+        maxRequestsPerMinute: 1000,  // RPM: ~1000 pour Tier 1
+        maxRequestsPerDay: 1500,     // RPD: ~1500 pour Tier 1
+        tokensPerMinute: 4000000     // TPM: ~4M pour Tier 1
     },
     
     // Cache

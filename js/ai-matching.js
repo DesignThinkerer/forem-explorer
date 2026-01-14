@@ -6,7 +6,7 @@
 import { generateContent, parseJsonResponse, GeminiError, hasApiKey, canMakeRequest } from './gemini-client.js';
 import { getProfile } from './cv-profile.js';
 import { getUserLocation } from './state.js';
-import { getDistance } from './utils.js';
+import { getDistance, showToast } from './utils.js';
 
 // Storage pour les scores calculés
 const SCORES_STORAGE = 'forem_matching_scores';
@@ -99,6 +99,14 @@ export function getStoredScore(jobId, maxAge = 24 * 60 * 60 * 1000) {
     
     if (!stored) return null;
     if (Date.now() - stored.timestamp > maxAge) return null;
+    
+    // Validate score data is complete (not truncated)
+    if (typeof stored.score !== 'number' || stored.score < 0 || stored.score > 100) {
+        console.warn('Score corrompu détecté pour', jobId, '- suppression');
+        delete scores[jobId];
+        localStorage.setItem(SCORES_STORAGE, JSON.stringify(scores));
+        return null;
+    }
     
     return stored;
 }
@@ -543,47 +551,74 @@ export function calculateLocalScore(profile, job) {
  * Génère le prompt de scoring pour Gemini
  * @param {Object} profile - Le profil candidat
  * @param {Object} job - L'offre d'emploi
+ * @param {string} extraInfo - Informations supplémentaires fournies par l'utilisateur
+ * @param {string} customPrompt - Prompt personnalisé avec variables (optionnel)
  * @returns {string} Le prompt
  */
-function generateScoringPrompt(profile, job) {
-    // Extraire les infos pertinentes du profil
-    const skills = profile.skills?.slice(0, 8).map(s => typeof s === 'string' ? s : s.name).filter(Boolean) || [];
-    const keywords = profile.keywords?.slice(0, 5) || [];
+function generateScoringPrompt(profile, job, extraInfo = '', customPrompt = '') {
+    // Extraire les infos pertinentes du profil - max 20 skills
+    const skills = profile.skills?.slice(0, 20).map(s => typeof s === 'string' ? s : s.name).filter(Boolean) || [];
+    const keywords = profile.keywords?.slice(0, 10) || [];
     
     // Extraire les infos pertinentes de l'offre
     const title = job.titreoffre || job.libelleoffre || '';
     const desc = (job.descriptionoffre || '').substring(0, 600);
     
-    // Log pour debug
-    console.log('Job data for AI scoring:', title, job.nomemployeur);
+    // Construire la section infos supplémentaires si fournie
+    const extraSection = extraInfo?.trim() 
+        ? `\nINFOS SUPPLÉMENTAIRES FOURNIES PAR L'UTILISATEUR:\n${extraInfo.trim().substring(0, 2000)}\n`
+        : '';
     
+    // Log pour debug
+    console.log('Job data for AI scoring:', title, job.nomemployeur, extraInfo ? '(avec infos supplémentaires)' : '', customPrompt ? '[custom prompt]' : '[default]');
+    
+    // Si un prompt personnalisé est fourni, remplacer les variables
+    if (customPrompt) {
+        return customPrompt
+            .replace(/\{skills\}/g, skills.join(', '))
+            .replace(/\{title\}/g, title)
+            .replace(/\{description\}/g, desc)
+            .replace(/\{location\}/g, job.localiteaffichage || '')
+            .replace(/\{experience\}/g, String(profile.totalExperienceYears || 0))
+            .replace(/\{headline\}/g, profile.headline || '')
+            .replace(/\{extraInfo\}/g, extraSection)
+            .replace(/\{employer\}/g, job.nomemployeur || '')
+            .replace(/\{keywords\}/g, keywords.join(', '));
+    }
+    
+    // Prompt standard par défaut
     return `Analyse ce match CV/offre. Retourne UNIQUEMENT un JSON valide sans markdown.
 
 CV: ${profile.headline || ''}, Skills: ${skills.join(', ')}, ${profile.totalExperienceYears || 0} ans exp
 Offre: ${title}, ${job.localiteaffichage || ''}
-${desc}
-
+${desc}${extraSection}
 Retourne ce JSON exact avec tes valeurs:
-{"score":50,"skills":["match1"],"missing":["manque1"],"exp":"ok","loc":"ok","txt":"resume 10 mots"}`;
+{"score":50,"skills":["match1","match2"],"missing":["manque1","manque2"],"exp":"ok","loc":"ok","txt":"Résumé de 30-50 mots expliquant la correspondance entre le profil et l'offre."}`;
 }
 
 /**
  * Score une offre avec Gemini
  * @param {Object} job - L'offre d'emploi
  * @param {boolean} force - Forcer le recalcul (ignorer le cache)
+ * @param {string} extraInfo - Informations supplémentaires fournies par l'utilisateur
+ * @param {Object} options - Options avancées {customPrompt, maxTokens, temperature}
  * @returns {Promise<Object>} Le score et les détails
  */
-export async function scoreJobWithAi(job, force = false) {
+export async function scoreJobWithAi(job, force = false, extraInfo = '', options = {}) {
     const availability = isAiScoringAvailable();
     if (!availability.available) {
         throw new GeminiError(availability.reason, 'NOT_AVAILABLE');
     }
     
+    // Options par défaut
+    const { customPrompt = '', maxTokens = 8000, temperature = 0.1 } = options;
+    
     const profile = getProfile();
     const jobId = job.numerooffreforem || job.id;
     
     // Vérifier si on a déjà un score récent (sauf si force=true)
-    if (!force) {
+    // Note: si extraInfo ou customPrompt est fourni, on force toujours le recalcul
+    if (!force && !extraInfo && !customPrompt) {
         const cached = getStoredScore(jobId);
         if (cached) {
             console.log('Score depuis le cache local');
@@ -592,14 +627,17 @@ export async function scoreJobWithAi(job, force = false) {
     }
     
     // Générer le prompt
-    const prompt = generateScoringPrompt(profile, job);
+    const prompt = generateScoringPrompt(profile, job, extraInfo, customPrompt);
+    
+    // Log des paramètres utilisés
+    console.log(`AI Scoring params: customPrompt=${customPrompt ? 'yes' : 'no'}, maxTokens=${maxTokens}, temperature=${temperature}`);
     
     try {
         // Appeler Gemini
         const response = await generateContent(prompt, {
             generationConfig: {
-                temperature: 0.1, // Très déterministe pour le scoring
-                maxOutputTokens: 1024 // Assez pour le JSON
+                temperature: temperature,
+                maxOutputTokens: maxTokens
             },
             skipCache: true // Toujours requête fraîche pour scoring
         });
@@ -675,33 +713,168 @@ export async function scoreJobsBatch(jobs, maxBatch = 5) {
             results.set(jobId, localScore);
         }
     });
-    
-    // Si l'IA est disponible, enrichir les scores les plus prometteurs
-    const availability = isAiScoringAvailable();
-    if (availability.available) {
-        // Trier par score local décroissant et prendre les top
-        const jobsToScore = jobs
-            .filter(job => {
-                const jobId = job.numerooffreforem || job.id;
-                const existing = results.get(jobId);
-                return existing && existing.isLocalScore && existing.score >= 60;
-            })
-            .slice(0, maxBatch);
-        
-        // Scorer avec l'IA (en séquentiel pour respecter les rate limits)
-        for (const job of jobsToScore) {
-            try {
-                const aiScore = await scoreJobWithAi(job);
-                const jobId = job.numerooffreforem || job.id;
-                results.set(jobId, aiScore);
-            } catch (error) {
-                console.warn('Erreur scoring IA pour', job.numerooffreforem, error.message);
-            }
-        }
-    }
-    
+
     return results;
 }
+
+/**
+ * Score un lot d'offres avec Gemini en une seule requête (Batch processing)
+ * Optimise l'utilisation de l'API et évite les rate limits.
+ * @param {Array} jobs - Tableau d'offres (max 5-10 recommandés)
+ * @param {Function} onWaiting - Callback appelé pendant l'attente avec les secondes restantes
+ * @returns {Promise<Map>} Map jobId -> scoreData
+ */
+export async function scoreBatchWithAi(jobs, onWaiting = null) {
+    const availability = isAiScoringAvailable();
+    if (!availability.available) {
+        throw new GeminiError(availability.reason, 'NOT_AVAILABLE');
+    }
+    
+    const profile = getProfile();
+    if (!profile) throw new Error("Profil non trouvé");
+
+    const batchSize = jobs.length;
+    console.log(`Préparation du batch de ${batchSize} offres pour l'IA`);
+
+    // Préparer la liste des offres pour le prompt
+    const jobsContent = jobs.map(job => {
+        const id = job.numerooffreforem || job.id;
+        const title = job.titreoffre || job.libelleoffre || 'Sans titre';
+        const employer = job.nomemployeur || '';
+        const location = job.localiteaffichage || '';
+        // Description plus courte pour le batch afin de ne pas exploser les tokens
+        const desc = (job.descriptionoffre || '').substring(0, 400).replace(/(\r\n|\n|\r)/gm, " ");
+        
+        return `JOB_ID: ${id}
+Titre: ${title} (${employer}) - ${location}
+Description: ${desc}
+---`;
+    }).join('\n');
+
+    const skills = profile.skills?.slice(0, 15).map(s => typeof s === 'string' ? s : s.name).filter(Boolean) || [];
+    
+    const prompt = `Tu es un expert en recrutement. Analyse ces ${batchSize} offres d'emploi par rapport au profil suivant.
+    
+PROFIL CANDIDAT:
+Titre: ${profile.headline || 'Non spécifié'}
+Compétences: ${skills.join(', ')}
+Expérience: ${profile.totalExperienceYears || 0} ans
+Localisation: ${profile.location || 'Non spécifiée'}
+
+OFFRES A ANALYSER:
+${jobsContent}
+
+INSTRUCTIONS:
+Pour chaque offre, évalue la correspondance (0-100).
+Retourne Un OBJET JSON unique où les clés sont les JOB_ID.
+Format JSON attendu:
+{
+  "JOB_ID_1": {
+    "score": 75,
+    "skills": ["match1", "match2"],
+    "missing": ["manque1"],
+    "exp": "ok",
+    "loc": "ok",
+    "txt": "Résumé de 30-50 mots expliquant pourquoi le profil correspond ou non à l'offre."
+  },
+  "JOB_ID_2": { ... }
+}
+
+Règles:
+1. Score sévère mais juste.
+2. "skills" = compétences du profil présentes dans l'offre.
+3. "missing" = compétences importantes de l'offre absentes du profil.
+4. "txt" = résumé détaillé en français (30-50 mots).
+5. Retourne UNIQUEMENT du JSON valide.
+`;
+
+    try {
+        // Retry logic with exponential backoff for rate limits
+        let retries = 0;
+        const maxRetries = 3;
+        let lastError = null;
+        
+        while (retries <= maxRetries) {
+            try {
+                const response = await generateContent(prompt, {
+                    generationConfig: {
+                        temperature: 0.1,
+                        maxOutputTokens: 4000
+                    },
+                    skipCache: true
+                });
+
+                const result = parseJsonResponse(response);
+                const resultsMap = new Map();
+
+                // Traiter chaque résultat
+                jobs.forEach(job => {
+                    const jobId = job.numerooffreforem || job.id;
+                    const jobResult = result[jobId];
+
+                    if (jobResult) {
+                        const scoreData = {
+                            score: Math.min(100, Math.max(0, parseInt(jobResult.score) || 50)),
+                            matchingSkills: jobResult.skills || [],
+                            missingSkills: jobResult.missing || [],
+                            experienceMatch: jobResult.exp || 'unknown',
+                            locationMatch: jobResult.loc || 'unknown',
+                            summary: jobResult.txt || '',
+                            isAiScore: true,
+                            jobId: jobId,
+                            timestamp: Date.now()
+                        };
+                        
+                        saveScore(jobId, scoreData);
+                        resultsMap.set(jobId, scoreData);
+                    }
+                });
+
+                return resultsMap;
+                
+            } catch (error) {
+                lastError = error;
+                
+                // Only retry on rate limit errors
+                if (error.code === 'RATE_LIMITED' || error.message?.includes('429')) {
+                    retries++;
+                    if (retries <= maxRetries) {
+                        // Longer backoff: 1min, 5min, 10min
+                        const waitTimes = [60000, 300000, 600000]; // 1min, 5min, 10min
+                        const waitTime = waitTimes[retries - 1];
+                        const waitMinutes = Math.round(waitTime / 60000);
+                        console.log(`Rate limited. Retry ${retries}/${maxRetries} in ${waitMinutes} min...`);
+                        showToast(`Limite API atteinte. Nouvelle tentative dans ${waitMinutes} min...`, 'warning', Math.min(waitTime, 10000));
+                        
+                        // Countdown with callback
+                        let remainingSeconds = Math.floor(waitTime / 1000);
+                        await new Promise(resolve => {
+                            const countdownInterval = setInterval(() => {
+                                remainingSeconds--;
+                                if (onWaiting) onWaiting(remainingSeconds);
+                                if (remainingSeconds <= 0) {
+                                    clearInterval(countdownInterval);
+                                    resolve();
+                                }
+                            }, 1000);
+                        });
+                    }
+                } else {
+                    // For other errors, don't retry
+                    throw error;
+                }
+            }
+        }
+        
+        // All retries exhausted
+        throw lastError;
+
+    } catch (error) {
+        console.error('Erreur batch IA:', error);
+        throw error;
+    }
+}
+
 
 /**
  * Obtient la couleur du badge selon le score

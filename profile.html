@@ -7,59 +7,47 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="css/styles.css">
+    <script src="js/components/nav-bar.js"></script>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen pb-12">
 
     <!-- Header -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-            <a href="index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <div class="bg-blue-600 p-2 rounded-lg text-white">
-                    <i data-lucide="database" class="h-6 w-6"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold text-slate-800 leading-tight">
-                        Forem Explorer
-                    </h1>
-                    <p class="text-xs text-slate-500 font-medium">Open Data v2.1</p>
-                </div>
-            </a>
-            <div class="flex gap-2">
-                <a href="index.html" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 shadow-sm transition-all">
-                    <i data-lucide="search" class="h-4 w-4"></i>
-                    Rechercher
-                </a>
-                <a href="letters.html" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 rounded-lg shadow-sm transition-all">
-                    <i data-lucide="file-pen" class="h-4 w-4"></i>
-                    Lettres
-                </a>
-                <a href="dashboard.html" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 shadow-sm transition-all">
-                    <i data-lucide="bar-chart-3" class="h-4 w-4"></i>
-                    Dashboard
-                </a>
-                <a href="aide.html" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 shadow-sm transition-all">
-                    <i data-lucide="help-circle" class="h-4 w-4"></i>
-                    Aide
-                </a>
-                <a href="settings.html" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-all">
-                    <i data-lucide="sparkles" class="h-4 w-4"></i>
-                    IA
-                </a>
-            </div>
-        </div>
-    </header>
+    <nav-bar current="profile"></nav-bar>
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 py-6">
         
-        <!-- Page Title -->
-        <div class="flex items-center gap-3 mb-6">
-            <div class="bg-emerald-600 p-3 rounded-xl text-white">
-                <i data-lucide="user-circle" class="h-8 w-8"></i>
+        <!-- Page Title & Profile Selector -->
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <div class="flex items-center gap-3">
+                <div class="bg-emerald-600 p-3 rounded-xl text-white">
+                    <i data-lucide="user-circle" class="h-8 w-8"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800">Mon Profil</h2>
+                    <p class="text-slate-500">Importez votre CV pour un matching intelligent avec les offres</p>
+                </div>
             </div>
-            <div>
-                <h2 class="text-2xl font-bold text-slate-800">Mon Profil</h2>
-                <p class="text-slate-500">Importez votre CV pour un matching intelligent avec les offres</p>
+            
+            <!-- Profile Selector -->
+            <div id="profileSelector" class="hidden flex items-center gap-3 bg-white rounded-xl shadow-sm border border-slate-200 p-3">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="users" class="h-5 w-5 text-slate-400"></i>
+                    <select id="profileSelect" onchange="window.switchProfile(this.value)" 
+                            title="Sélectionner un profil"
+                            class="bg-transparent border-none text-slate-800 font-medium focus:outline-none focus:ring-0 cursor-pointer pr-8">
+                    </select>
+                </div>
+                <div class="border-l border-slate-200 pl-3 flex gap-1">
+                    <button onclick="window.showNewProfileModal()" title="Nouveau profil" 
+                            class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all">
+                        <i data-lucide="plus" class="h-4 w-4"></i>
+                    </button>
+                    <button onclick="window.showProfileManagerModal()" title="Gérer les profils" 
+                            class="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-all">
+                        <i data-lucide="settings" class="h-4 w-4"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -71,10 +59,32 @@
                 </div>
                 <div>
                     <h3 class="text-xl font-semibold text-slate-800 mb-2">Importez votre CV</h3>
-                    <p class="text-slate-500 mb-4">Glissez votre fichier <span class="font-mono bg-slate-100 px-2 py-1 rounded">rx-resume.json</span> ici</p>
+                    <p class="text-slate-500 mb-4">Glissez votre fichier <span class="font-mono bg-slate-100 px-2 py-1 rounded">.json</span> ici</p>
                     <p class="text-sm text-slate-400">ou cliquez pour sélectionner un fichier</p>
                 </div>
                 <input type="file" id="cvFileInput" accept=".json" class="hidden" aria-label="Sélectionner un fichier CV">
+            </div>
+        </div>
+        
+        <!-- Reactive Resume Link -->
+        <div id="rxResumeLink" class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-6 mb-6">
+            <div class="flex flex-col md:flex-row items-center gap-4">
+                <div class="bg-white p-3 rounded-xl shadow-sm">
+                    <i data-lucide="file-text" class="h-8 w-8 text-blue-600"></i>
+                </div>
+                <div class="flex-1 text-center md:text-left">
+                    <h4 class="font-semibold text-slate-800 mb-1">Pas encore de CV au format JSON ?</h4>
+                    <p class="text-sm text-slate-600">
+                        Créez gratuitement votre CV sur <strong>Reactive Resume</strong>, 
+                        exportez-le en JSON puis importez-le ici.
+                    </p>
+                </div>
+                <a href="https://rxresu.me/" target="_blank" rel="noopener noreferrer" 
+                   onclick="event.stopPropagation()"
+                   class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all shadow-sm">
+                    <i data-lucide="external-link" class="h-4 w-4"></i>
+                    Créer mon CV
+                </a>
             </div>
         </div>
 
@@ -94,6 +104,10 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
+                        <button onclick="window.showEditProfileModal()" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200 shadow-sm transition-all">
+                            <i data-lucide="pencil" class="h-4 w-4"></i>
+                            Modifier
+                        </button>
                         <button onclick="window.reloadCV()" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 shadow-sm transition-all">
                             <i data-lucide="refresh-cw" class="h-4 w-4"></i>
                             Recharger
@@ -211,10 +225,16 @@
 
             <!-- Languages Section -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
-                <h4 class="text-lg font-semibold text-slate-800 flex items-center gap-2 mb-4">
-                    <i data-lucide="globe" class="h-5 w-5 text-amber-600"></i>
-                    Langues
-                </h4>
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="globe" class="h-5 w-5 text-amber-600"></i>
+                        Langues
+                    </h4>
+                    <button onclick="window.showAddLanguageModal()" class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-lg transition-all">
+                        <i data-lucide="plus" class="h-4 w-4"></i>
+                        Ajouter
+                    </button>
+                </div>
                 <div id="languagesList" class="flex flex-wrap gap-3">
                     <!-- Languages will be rendered here -->
                 </div>
@@ -245,9 +265,10 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Niveau (1-5)</label>
-                    <input type="range" id="newSkillLevel" min="1" max="5" value="3" class="w-full" aria-label="Niveau de compétence">
+                    <input type="range" id="newSkillLevel" min="1" max="5" value="3" class="w-full" aria-label="Niveau de compétence" oninput="document.getElementById('newSkillLevelDisplay').textContent = '●'.repeat(this.value) + '○'.repeat(5 - this.value)">
                     <div class="flex justify-between text-xs text-slate-500">
                         <span>Débutant</span>
+                        <span id="newSkillLevelDisplay" class="font-mono">●●●○○</span>
                         <span>Expert</span>
                     </div>
                 </div>
@@ -275,9 +296,223 @@
         </div>
     </div>
 
+    <!-- Edit Skill Modal -->
+    <div id="editSkillModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-slate-800">Modifier la compétence</h3>
+                <button onclick="window.closeEditSkillModal()" class="text-slate-400 hover:text-slate-600" title="Fermer">
+                    <i data-lucide="x" class="h-5 w-5"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Nom de la compétence</label>
+                    <input type="text" id="editSkillName" class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50" readonly>
+                    <input type="hidden" id="editSkillOriginalName">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Niveau (1-5)</label>
+                    <input type="range" id="editSkillLevel" min="1" max="5" value="3" class="w-full" aria-label="Niveau de compétence" oninput="document.getElementById('editSkillLevelDisplay').textContent = '●'.repeat(this.value) + '○'.repeat(5 - this.value)">
+                    <div class="flex justify-between text-xs text-slate-500">
+                        <span>Débutant</span>
+                        <span id="editSkillLevelDisplay" class="font-mono">●●●○○</span>
+                        <span>Expert</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Catégorie</label>
+                    <select id="editSkillCategory" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" title="Catégorie de compétence">
+                        <option value="programming">Programmation</option>
+                        <option value="framework">Framework</option>
+                        <option value="database">Base de données</option>
+                        <option value="devops">DevOps</option>
+                        <option value="design">Design</option>
+                        <option value="soft">Soft skills</option>
+                        <option value="other">Autre</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="window.closeEditSkillModal()" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 transition-all">
+                    Annuler
+                </button>
+                <button onclick="window.saveSkillChanges()" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all">
+                    Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-slate-800">Modifier le profil</h3>
+                <button onclick="window.closeEditProfileModal()" class="text-slate-400 hover:text-slate-600" title="Fermer">
+                    <i data-lucide="x" class="h-5 w-5"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Nom complet</label>
+                        <input type="text" id="editName" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Jean Dupont">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Titre / Poste recherché</label>
+                        <input type="text" id="editHeadline" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Développeur Full Stack">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                        <input type="email" id="editEmail" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="email@example.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Téléphone</label>
+                        <input type="tel" id="editPhone" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="+32 xxx xx xx xx">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Localisation</label>
+                        <input type="text" id="editLocation" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Bruxelles, Belgique">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Années d'expérience</label>
+                        <input type="number" id="editExperience" min="0" max="50" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="5">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Niveau d'études</label>
+                        <select id="editEducationLevel" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                            <option value="unknown">Non spécifié</option>
+                            <option value="cess">CESS (Secondaire)</option>
+                            <option value="bac">Baccalauréat</option>
+                            <option value="bts">BTS / DUT</option>
+                            <option value="bachelor">Bachelor / Licence</option>
+                            <option value="master">Master</option>
+                            <option value="mba">MBA</option>
+                            <option value="doctorat">Doctorat / PhD</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Résumé / Bio</label>
+                        <textarea id="editSummary" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-y" placeholder="Courte description de votre profil..."></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="window.closeEditProfileModal()" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 transition-all">
+                    Annuler
+                </button>
+                <button onclick="window.saveProfileChanges()" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all">
+                    Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Language Modal -->
+    <div id="addLanguageModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-slate-800">Ajouter une langue</h3>
+                <button onclick="window.closeAddLanguageModal()" class="text-slate-400 hover:text-slate-600" title="Fermer">
+                    <i data-lucide="x" class="h-5 w-5"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Langue</label>
+                    <input type="text" id="newLanguageName" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500" placeholder="Ex: Anglais">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Niveau</label>
+                    <select id="newLanguageLevel" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+                        <option value="native">Langue maternelle</option>
+                        <option value="fluent">Courant</option>
+                        <option value="advanced">Avancé</option>
+                        <option value="intermediate" selected>Intermédiaire</option>
+                        <option value="basic">Notions</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="window.closeAddLanguageModal()" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 transition-all">
+                    Annuler
+                </button>
+                <button onclick="window.saveNewLanguage()" class="px-4 py-2 text-sm font-medium text-white bg-amber-500 hover:bg-amber-600 rounded-lg transition-all">
+                    Ajouter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Profile Modal -->
+    <div id="newProfileModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="bg-emerald-100 p-2 rounded-lg">
+                        <i data-lucide="user-plus" class="h-5 w-5 text-emerald-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-slate-800">Nouveau profil</h3>
+                </div>
+                <button onclick="window.closeNewProfileModal()" class="text-slate-400 hover:text-slate-600" title="Fermer">
+                    <i data-lucide="x" class="h-5 w-5"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Nom du profil</label>
+                    <input type="text" id="newProfileName" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Ex: CV Développeur, CV Manager...">
+                    <p class="text-xs text-slate-500 mt-1">Un nom pour identifier facilement ce profil</p>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="window.closeNewProfileModal()" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 transition-all">
+                    Annuler
+                </button>
+                <button onclick="window.createEmptyProfile()" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all">
+                    Créer le profil
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Manager Modal -->
+    <div id="profileManagerModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 p-6 max-h-[80vh] overflow-hidden flex flex-col">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="bg-slate-100 p-2 rounded-lg">
+                        <i data-lucide="users" class="h-5 w-5 text-slate-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-slate-800">Gérer les profils</h3>
+                </div>
+                <button onclick="window.closeProfileManagerModal()" class="text-slate-400 hover:text-slate-600" title="Fermer">
+                    <i data-lucide="x" class="h-5 w-5"></i>
+                </button>
+            </div>
+            <div class="overflow-y-auto flex-1">
+                <div id="profileManagerList" class="space-y-2">
+                    <!-- Profiles will be rendered here -->
+                </div>
+            </div>
+            <div class="flex justify-between gap-2 mt-6 pt-4 border-t border-slate-100">
+                <button onclick="window.showNewProfileModal(); window.closeProfileManagerModal();" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200 transition-all">
+                    <i data-lucide="plus" class="h-4 w-4"></i>
+                    Ajouter un profil
+                </button>
+                <button onclick="window.closeProfileManagerModal()" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-300 transition-all">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
-        import { processCV, getProfile, addSkill, removeSkill } from './js/cv-profile.js';
-        import { clearCV, hasProfile } from './js/cv-storage.js';
+        import { processCV, getProfile, addSkill, removeSkill, updateSkill, updateProfile, addLanguage, removeLanguage,
+                 getAllProfiles, getActiveProfileId, setActiveProfile, createNewProfile, duplicateProfile, renameProfile, deleteProfile as deleteProfileStorage } from './js/cv-profile.js';
+        import { clearCV, hasProfile, saveProfile as saveProfileData } from './js/cv-storage.js';
+        import { showToast } from './js/utils.js';
 
         // Initialize Lucide icons
         lucide.createIcons();
@@ -323,8 +558,183 @@
             basic: 'Notions'
         };
 
+        // Profile Selector elements
+        const profileSelector = document.getElementById('profileSelector');
+        const profileSelect = document.getElementById('profileSelect');
+
+        // Update profile selector dropdown
+        function updateProfileSelector() {
+            const profiles = getAllProfiles();
+            const activeId = getActiveProfileId();
+            
+            // Show/hide selector based on number of profiles
+            if (profiles.length > 0) {
+                profileSelector.classList.remove('hidden');
+                profileSelector.classList.add('flex');
+                
+                // Populate dropdown
+                profileSelect.innerHTML = profiles.map(p => `
+                    <option value="${p.id}" ${p.id === activeId ? 'selected' : ''}>
+                        ${p.name || 'Profil sans nom'}
+                    </option>
+                `).join('');
+            } else {
+                profileSelector.classList.add('hidden');
+                profileSelector.classList.remove('flex');
+            }
+        }
+
+        // Switch to a different profile
+        window.switchProfile = (profileId) => {
+            setActiveProfile(profileId);
+            const profile = getProfile();
+            if (profile) {
+                showProfile(profile);
+                showToast('Profil changé', 'success');
+            }
+            lucide.createIcons();
+        };
+
+        // Show new profile modal
+        window.showNewProfileModal = () => {
+            document.getElementById('newProfileModal').classList.remove('hidden');
+            document.getElementById('newProfileModal').classList.add('flex');
+            document.getElementById('newProfileName').value = '';
+            lucide.createIcons();
+        };
+
+        window.closeNewProfileModal = () => {
+            document.getElementById('newProfileModal').classList.add('hidden');
+            document.getElementById('newProfileModal').classList.remove('flex');
+        };
+
+        window.createEmptyProfile = () => {
+            const name = document.getElementById('newProfileName').value.trim() || 'Nouveau profil';
+            const newId = createNewProfile(name);
+            setActiveProfile(newId);
+            updateProfileSelector();
+            window.closeNewProfileModal();
+            showImportZone();
+            showToast('Nouveau profil créé', 'success');
+            lucide.createIcons();
+        };
+
+        // Show profile manager modal
+        window.showProfileManagerModal = () => {
+            renderProfileManagerList();
+            document.getElementById('profileManagerModal').classList.remove('hidden');
+            document.getElementById('profileManagerModal').classList.add('flex');
+            lucide.createIcons();
+        };
+
+        window.closeProfileManagerModal = () => {
+            document.getElementById('profileManagerModal').classList.add('hidden');
+            document.getElementById('profileManagerModal').classList.remove('flex');
+        };
+
+        function renderProfileManagerList() {
+            const profiles = getAllProfiles();
+            const activeId = getActiveProfileId();
+            const container = document.getElementById('profileManagerList');
+            
+            container.innerHTML = profiles.map(p => `
+                <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg ${p.id === activeId ? 'ring-2 ring-emerald-500' : ''}">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-emerald-100 p-2 rounded-full">
+                            <i data-lucide="user" class="h-4 w-4 text-emerald-600"></i>
+                        </div>
+                        <div>
+                            <div class="font-medium text-slate-800">${p.name || 'Profil sans nom'}</div>
+                            <div class="text-xs text-slate-500">
+                                ${p.id === activeId ? '✓ Actif' : ''} 
+                                ${p.createdAt ? new Date(p.createdAt).toLocaleDateString('fr-FR') : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-1">
+                        ${p.id !== activeId ? `
+                            <button onclick="window.activateProfile('${p.id}')" title="Activer"
+                                    class="p-2 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all">
+                                <i data-lucide="check" class="h-4 w-4"></i>
+                            </button>
+                        ` : ''}
+                        <button onclick="window.promptRenameProfile('${p.id}', '${(p.name || '').replace(/'/g, "\\'")}')" title="Renommer"
+                                class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-all">
+                            <i data-lucide="pencil" class="h-4 w-4"></i>
+                        </button>
+                        <button onclick="window.duplicateProfileAction('${p.id}')" title="Dupliquer"
+                                class="p-2 text-slate-600 hover:bg-slate-200 rounded-lg transition-all">
+                            <i data-lucide="copy" class="h-4 w-4"></i>
+                        </button>
+                        ${profiles.length > 1 ? `
+                            <button onclick="window.deleteProfileAction('${p.id}')" title="Supprimer"
+                                    class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-all">
+                                <i data-lucide="trash-2" class="h-4 w-4"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+            
+            lucide.createIcons();
+        }
+
+        window.activateProfile = (profileId) => {
+            setActiveProfile(profileId);
+            updateProfileSelector();
+            renderProfileManagerList();
+            const profile = getProfile();
+            if (profile) {
+                showProfile(profile);
+            } else {
+                showImportZone();
+            }
+            showToast('Profil activé', 'success');
+            lucide.createIcons();
+        };
+
+        window.promptRenameProfile = (profileId, currentName) => {
+            const newName = prompt('Nouveau nom du profil:', currentName);
+            if (newName && newName.trim()) {
+                renameProfile(profileId, newName.trim());
+                updateProfileSelector();
+                renderProfileManagerList();
+                showToast('Profil renommé', 'success');
+            }
+        };
+
+        window.duplicateProfileAction = (profileId) => {
+            const newId = duplicateProfile(profileId);
+            if (newId) {
+                updateProfileSelector();
+                renderProfileManagerList();
+                showToast('Profil dupliqué', 'success');
+            }
+        };
+
+        window.deleteProfileAction = (profileId) => {
+            const profiles = getAllProfiles();
+            const profile = profiles.find(p => p.id === profileId);
+            if (confirm(`Supprimer le profil "${profile?.name || 'Sans nom'}" ?`)) {
+                deleteProfileStorage(profileId);
+                updateProfileSelector();
+                renderProfileManagerList();
+                
+                // Refresh the main view
+                const currentProfile = getProfile();
+                if (currentProfile) {
+                    showProfile(currentProfile);
+                } else {
+                    showImportZone();
+                }
+                showToast('Profil supprimé', 'success');
+                lucide.createIcons();
+            }
+        };
+
         // Check if profile exists on load
         function init() {
+            updateProfileSelector();
             const profile = getProfile();
             if (profile) {
                 showProfile(profile);
@@ -336,13 +746,17 @@
         // Show import zone
         function showImportZone() {
             importZone.classList.remove('hidden');
+            document.getElementById('rxResumeLink').classList.remove('hidden');
             profileDisplay.classList.add('hidden');
+            updateProfileSelector();
         }
 
         // Show profile display
         function showProfile(profile) {
             importZone.classList.add('hidden');
+            document.getElementById('rxResumeLink').classList.add('hidden');
             profileDisplay.classList.remove('hidden');
+            updateProfileSelector();
             renderProfile(profile);
         }
 
@@ -388,11 +802,12 @@
             container.innerHTML = skills.map(skill => {
                 const colors = categoryColors[skill.category] || categoryColors.other;
                 const levelBars = '●'.repeat(skill.level || 3) + '○'.repeat(5 - (skill.level || 3));
+                const skillData = encodeURIComponent(JSON.stringify(skill));
                 return `
-                    <div class="group flex items-center gap-2 px-3 py-1.5 rounded-lg border ${colors} text-sm">
+                    <div class="group flex items-center gap-2 px-3 py-1.5 rounded-lg border ${colors} text-sm cursor-pointer hover:shadow-md transition-all" onclick="window.showEditSkillModal('${skillData}')">
                         <span class="font-medium">${skill.name}</span>
                         <span class="text-xs opacity-60">${levelBars}</span>
-                        <button onclick="window.deleteSkill('${skill.name}')" class="hidden group-hover:block text-red-500 hover:text-red-700 ml-1">
+                        <button onclick="event.stopPropagation(); window.deleteSkill('${skill.name.replace(/'/g, "\\'")}')" class="hidden group-hover:block text-red-500 hover:text-red-700 ml-1" title="Supprimer">
                             <i data-lucide="x" class="h-3 w-3"></i>
                         </button>
                     </div>
@@ -441,9 +856,12 @@
                 return;
             }
             container.innerHTML = languages.map(lang => `
-                <div class="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-200">
+                <div class="group flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-200">
                     <span class="font-medium text-amber-800">${lang.name}</span>
                     <span class="text-xs text-amber-600">${languageLevelLabels[lang.level] || lang.level}</span>
+                    <button onclick="window.deleteLanguage('${lang.name}')" class="ml-1 opacity-0 group-hover:opacity-100 text-amber-400 hover:text-red-500 transition-all" title="Supprimer">
+                        <i data-lucide="x" class="h-3 w-3"></i>
+                    </button>
                 </div>
             `).join('');
         }
@@ -475,7 +893,7 @@
         // Handle file upload
         async function handleFile(file) {
             if (!file.name.endsWith('.json')) {
-                alert('Veuillez sélectionner un fichier JSON');
+                showToast('Veuillez sélectionner un fichier JSON', 'warning');
                 return;
             }
 
@@ -485,12 +903,12 @@
 
                 if (result.success) {
                     showProfile(result.profile);
-                    alert('CV importé avec succès!');
+                    showToast('CV importé avec succès!', 'success');
                 } else {
-                    alert('Erreur: ' + result.error);
+                    showToast('Erreur: ' + result.error, 'error');
                 }
             } catch (error) {
-                alert('Erreur lors de la lecture du fichier: ' + error.message);
+                showToast('Erreur lors de la lecture du fichier: ' + error.message, 'error');
             }
         }
 
@@ -500,9 +918,32 @@
         };
 
         window.deleteProfile = () => {
-            if (confirm('Voulez-vous vraiment supprimer votre profil?')) {
-                clearCV();
-                showImportZone();
+            const profiles = getAllProfiles();
+            const activeId = getActiveProfileId();
+            const activeProfile = profiles.find(p => p.id === activeId);
+            
+            if (profiles.length <= 1) {
+                // Last profile - just clear it
+                if (confirm('Voulez-vous vraiment supprimer votre profil? Toutes les données seront effacées.')) {
+                    clearCV();
+                    showImportZone();
+                    updateProfileSelector();
+                    showToast('Profil supprimé', 'success');
+                }
+            } else {
+                // Multiple profiles - delete current and switch
+                if (confirm(`Supprimer le profil "${activeProfile?.name || 'Sans nom'}" ?`)) {
+                    deleteProfileStorage(activeId);
+                    updateProfileSelector();
+                    const profile = getProfile();
+                    if (profile) {
+                        showProfile(profile);
+                    } else {
+                        showImportZone();
+                    }
+                    showToast('Profil supprimé', 'success');
+                    lucide.createIcons();
+                }
             }
         };
 
@@ -518,6 +959,8 @@
         window.showAddSkillModal = () => {
             document.getElementById('addSkillModal').classList.remove('hidden');
             document.getElementById('addSkillModal').classList.add('flex');
+            document.getElementById('newSkillLevel').value = 3;
+            document.getElementById('newSkillLevelDisplay').textContent = '●●●○○';
             lucide.createIcons();
         };
 
@@ -532,7 +975,7 @@
             const category = document.getElementById('newSkillCategory').value;
 
             if (!name) {
-                alert('Veuillez entrer un nom de compétence');
+                showToast('Veuillez entrer un nom de compétence', 'warning');
                 return;
             }
 
@@ -544,7 +987,144 @@
                 document.getElementById('newSkillName').value = '';
                 lucide.createIcons();
             } else {
-                alert('Cette compétence existe déjà');
+                showToast('Cette compétence existe déjà', 'warning');
+            }
+        };
+
+        // Edit Skill Modal
+        window.showEditSkillModal = (encodedSkill) => {
+            try {
+                const skill = JSON.parse(decodeURIComponent(encodedSkill));
+                
+                document.getElementById('editSkillName').value = skill.name;
+                document.getElementById('editSkillOriginalName').value = skill.name;
+                document.getElementById('editSkillLevel').value = skill.level || 3;
+                document.getElementById('editSkillCategory').value = skill.category || 'other';
+                
+                // Update level display
+                const level = skill.level || 3;
+                document.getElementById('editSkillLevelDisplay').textContent = '●'.repeat(level) + '○'.repeat(5 - level);
+                
+                document.getElementById('editSkillModal').classList.remove('hidden');
+                document.getElementById('editSkillModal').classList.add('flex');
+                lucide.createIcons();
+            } catch (e) {
+                console.error('Erreur parsing skill:', e);
+            }
+        };
+
+        window.closeEditSkillModal = () => {
+            document.getElementById('editSkillModal').classList.add('hidden');
+            document.getElementById('editSkillModal').classList.remove('flex');
+        };
+
+        window.saveSkillChanges = () => {
+            const originalName = document.getElementById('editSkillOriginalName').value;
+            const level = parseInt(document.getElementById('editSkillLevel').value);
+            const category = document.getElementById('editSkillCategory').value;
+
+            if (updateSkill(originalName, { level, category })) {
+                const profile = getProfile();
+                renderSkills(profile.skills || []);
+                window.closeEditSkillModal();
+                lucide.createIcons();
+                showToast('Compétence mise à jour', 'success');
+            } else {
+                showToast('Erreur lors de la mise à jour', 'error');
+            }
+        };
+
+        // Edit Profile Modal
+        window.showEditProfileModal = () => {
+            const profile = getProfile();
+            if (!profile) return;
+            
+            // Pré-remplir les champs
+            document.getElementById('editName').value = profile.name || '';
+            document.getElementById('editHeadline').value = profile.headline || '';
+            document.getElementById('editEmail').value = profile.email || '';
+            document.getElementById('editPhone').value = profile.phone || '';
+            document.getElementById('editLocation').value = profile.location || '';
+            document.getElementById('editExperience').value = profile.totalExperienceYears || 0;
+            document.getElementById('editEducationLevel').value = profile.educationLevel || 'unknown';
+            document.getElementById('editSummary').value = profile.summary || '';
+            
+            document.getElementById('editProfileModal').classList.remove('hidden');
+            document.getElementById('editProfileModal').classList.add('flex');
+            lucide.createIcons();
+        };
+
+        window.closeEditProfileModal = () => {
+            document.getElementById('editProfileModal').classList.add('hidden');
+            document.getElementById('editProfileModal').classList.remove('flex');
+        };
+
+        window.saveProfileChanges = () => {
+            const updates = {
+                name: document.getElementById('editName').value.trim(),
+                headline: document.getElementById('editHeadline').value.trim(),
+                email: document.getElementById('editEmail').value.trim(),
+                phone: document.getElementById('editPhone').value.trim(),
+                location: document.getElementById('editLocation').value.trim(),
+                totalExperienceYears: parseInt(document.getElementById('editExperience').value) || 0,
+                educationLevel: document.getElementById('editEducationLevel').value,
+                summary: document.getElementById('editSummary').value.trim()
+            };
+
+            if (updateProfile(updates)) {
+                const profile = getProfile();
+                renderProfile(profile);
+                window.closeEditProfileModal();
+                lucide.createIcons();
+                showToast('Profil mis à jour!', 'success');
+            } else {
+                showToast('Erreur lors de la mise à jour', 'error');
+            }
+        };
+
+        // Add Language Modal
+        window.showAddLanguageModal = () => {
+            document.getElementById('addLanguageModal').classList.remove('hidden');
+            document.getElementById('addLanguageModal').classList.add('flex');
+            document.getElementById('newLanguageName').value = '';
+            document.getElementById('newLanguageLevel').value = 'intermediate';
+            lucide.createIcons();
+        };
+
+        window.closeAddLanguageModal = () => {
+            document.getElementById('addLanguageModal').classList.add('hidden');
+            document.getElementById('addLanguageModal').classList.remove('flex');
+        };
+
+        window.saveNewLanguage = () => {
+            const name = document.getElementById('newLanguageName').value.trim();
+            const level = document.getElementById('newLanguageLevel').value;
+
+            if (!name) {
+                showToast('Veuillez entrer le nom de la langue', 'warning');
+                return;
+            }
+
+            if (addLanguage({ name, level })) {
+                const profile = getProfile();
+                renderLanguages(profile.languages || []);
+                document.getElementById('statLanguages').textContent = profile.languages?.length || '0';
+                window.closeAddLanguageModal();
+                lucide.createIcons();
+                showToast('Langue ajoutée', 'success');
+            } else {
+                showToast('Cette langue existe déjà', 'warning');
+            }
+        };
+
+        window.deleteLanguage = (languageName) => {
+            if (confirm(`Supprimer la langue "${languageName}" ?`)) {
+                if (removeLanguage(languageName)) {
+                    const profile = getProfile();
+                    renderLanguages(profile.languages || []);
+                    document.getElementById('statLanguages').textContent = profile.languages?.length || '0';
+                    lucide.createIcons();
+                }
             }
         };
 

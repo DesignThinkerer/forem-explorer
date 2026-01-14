@@ -18,16 +18,34 @@ export function initIcons() {
  * Displays a temporary toast notification at the bottom-right of the screen.
  * Toast automatically slides away after 4 seconds.
  * @param {string} msg - The message to display in the toast
- * @param {boolean} [isError=false] - If true, shows red error styling; otherwise shows green success styling
+ * @param {string|boolean} [type='success'] - Type of toast: 'success', 'warning', 'error', or boolean (true=error)
  */
-export function showToast(msg, isError = false) {
-    const t = document.getElementById('toast');
-    if (!t) return;
+export function showToast(msg, type = 'success') {
+    // Créer le toast s'il n'existe pas
+    let t = document.getElementById('toast');
+    if (!t) {
+        t = document.createElement('div');
+        t.id = 'toast';
+        t.innerHTML = '<span id="toastMsg"></span>';
+        t.style.transform = 'translateY(150%)';
+        document.body.appendChild(t);
+    }
+    
+    // Support de l'ancien format booléen
+    if (typeof type === 'boolean') {
+        type = type ? 'error' : 'success';
+    }
+    
+    const colors = {
+        success: 'bg-emerald-600',
+        warning: 'bg-amber-500',
+        error: 'bg-red-600'
+    };
+    
+    const color = colors[type] || colors.success;
     
     document.getElementById('toastMsg').textContent = msg;
-    t.className = isError 
-        ? "fixed bottom-6 right-6 bg-red-600 text-white px-6 py-4 rounded-xl shadow-2xl transform transition-transform duration-300 z-50 flex items-center gap-4 max-w-sm" 
-        : "fixed bottom-6 right-6 bg-emerald-600 text-white px-6 py-4 rounded-xl shadow-2xl transform transition-transform duration-300 z-50 flex items-center gap-4 max-w-sm";
+    t.className = `fixed bottom-6 right-6 ${color} text-white px-6 py-4 rounded-xl shadow-2xl transform transition-transform duration-300 z-50 flex items-center gap-4 max-w-sm`;
     t.style.transform = "translateY(0)";
     setTimeout(() => t.style.transform = "translateY(150%)", 4000);
 }

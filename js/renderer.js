@@ -221,19 +221,11 @@ export function renderResults(data) {
             if (scoreData && scoreData.score !== undefined) {
                 const colors = getScoreColor(scoreData.score);
                 const isAi = scoreData.isAiScore;
-                // Store score data for the modal
-                const scoreDataEncoded = encodeURIComponent(JSON.stringify(scoreData));
-                const jobDataEncoded = encodeURIComponent(JSON.stringify({
-                    titreoffre: job.titreoffre,
-                    numerooffreforem: job.numerooffreforem,
-                    nomemployeur: job.nomemployeur,
-                    localiteaffichage: job.localiteaffichage || job.lieuxtravaillocalite?.[0]
-                }));
+                // Just store the job ID - data will be fetched from localStorage on click
                 scoreBadge = `
                     <button class="score-badge flex items-center gap-1 px-2 py-0.5 rounded ${colors.bg} border ${colors.border} hover:opacity-80 transition-opacity cursor-pointer" 
                             title="Cliquez pour voir le détail du score"
-                            data-score='${scoreDataEncoded}'
-                            data-job='${jobDataEncoded}'>
+                            data-job-id="${jobId}">
                         <span class="text-xs font-bold ${colors.text}">${scoreData.score}%</span>
                         ${isAi ? '<i data-lucide="sparkles" class="h-3 w-3 text-violet-500"></i>' : ''}
                     </button>
@@ -331,14 +323,18 @@ export function renderResults(data) {
             scoreBadgeBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation(); // Prevent card click
-                try {
-                    const scoreData = JSON.parse(decodeURIComponent(scoreBadgeBtn.dataset.score));
-                    const jobData = JSON.parse(decodeURIComponent(scoreBadgeBtn.dataset.job));
-                    if (window.openScoreModal) {
-                        window.openScoreModal(scoreData, jobData);
-                    }
-                } catch (err) {
-                    console.error('Erreur parsing score data:', err);
+                const jobId = scoreBadgeBtn.dataset.jobId;
+                // Get score from localStorage
+                const scoreData = getStoredScore(jobId) || calculateLocalScore(getProfile(), job);
+                // Build job data from the job object we already have
+                const jobData = {
+                    titreoffre: job.titreoffre,
+                    numerooffreforem: job.numerooffreforem,
+                    nomemployeur: job.nomemployeur,
+                    localiteaffichage: job.localiteaffichage || job.lieuxtravaillocalite?.[0]
+                };
+                if (window.openScoreModal && scoreData) {
+                    window.openScoreModal(scoreData, jobData);
                 }
             });
         }

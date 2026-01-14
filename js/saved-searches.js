@@ -3,6 +3,8 @@
  * Manages saved search configurations in localStorage.
  */
 
+import { getActiveProfileId, setActiveProfile } from './cv-storage.js';
+
 const STORAGE_KEY = 'forem_saved_searches';
 
 /**
@@ -42,9 +44,10 @@ function generateSearchId() {
 /**
  * Saves the current search configuration.
  * @param {string} name - Name for the search
+ * @param {string} profileId - Profile ID to associate (optional, defaults to active)
  * @returns {Object} The saved search object
  */
-export function saveCurrentSearch(name) {
+export function saveCurrentSearch(name, profileId = null) {
     const searches = getSavedSearches();
     const searchId = generateSearchId();
     
@@ -52,6 +55,7 @@ export function saveCurrentSearch(name) {
         id: searchId,
         name: name,
         params: window.location.search,
+        profileId: profileId || getActiveProfileId(),
         createdAt: new Date().toISOString(),
         lastUsed: new Date().toISOString()
     };
@@ -65,8 +69,9 @@ export function saveCurrentSearch(name) {
 /**
  * Loads a saved search by ID.
  * @param {string} searchId - The search ID
+ * @param {boolean} switchProfile - Whether to switch to the associated profile
  */
-export function loadSavedSearch(searchId) {
+export function loadSavedSearch(searchId, switchProfile = true) {
     const searches = getSavedSearches();
     const search = searches[searchId];
     
@@ -79,6 +84,11 @@ export function loadSavedSearch(searchId) {
     search.lastUsed = new Date().toISOString();
     searches[searchId] = search;
     saveSavedSearches(searches);
+    
+    // Switch to the associated profile if it exists
+    if (switchProfile && search.profileId) {
+        setActiveProfile(search.profileId);
+    }
     
     // Navigate to the saved search URL
     window.location.href = window.location.pathname + search.params;
@@ -116,4 +126,21 @@ export function renameSavedSearch(searchId, newName) {
         searches[searchId].name = newName;
         saveSavedSearches(searches);
     }
+}
+
+/**
+ * Updates a saved search with current URL parameters and profile.
+ * @param {string} searchId - The search ID
+ * @returns {boolean} Success
+ */
+export function updateSavedSearchParams(searchId) {
+    const searches = getSavedSearches();
+    if (searches[searchId]) {
+        searches[searchId].params = window.location.search;
+        searches[searchId].profileId = getActiveProfileId();
+        searches[searchId].lastUsed = new Date().toISOString();
+        saveSavedSearches(searches);
+        return true;
+    }
+    return false;
 }

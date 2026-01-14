@@ -24,7 +24,6 @@ export async function handleSearch(e, isRestore) {
     loader.classList.remove('hidden');
     document.getElementById('resultsCount').textContent = "...";
     document.getElementById('resultsGrid').innerHTML = "";
-    document.getElementById('btnExport').classList.add('hidden');
 
     if (!isRestore) updateUrlParams();
 
@@ -46,7 +45,6 @@ export async function handleSearch(e, isRestore) {
             // Store results globally for status filter
             window.lastSearchResults = data;
             renderResults(data);
-            document.getElementById('btnExport').classList.remove('hidden');
             if (!isRestore) showToast(`${data.total_count} offres`, false);
         } else {
             document.getElementById('resultsGrid').innerHTML = `<div class="text-center py-12 text-slate-400">Aucun résultat</div>`;
@@ -112,7 +110,6 @@ export function copyUrl() {
  */
 export function exportDebugJson() {
     const rawData = getRawData();
-    if (!rawData) return;
     
     // Get all user data from localStorage
     const jobStates = localStorage.getItem('forem_job_states');
@@ -121,6 +118,8 @@ export function exportDebugJson() {
     const jobTags = localStorage.getItem('forem_job_tags');
     const savedSearches = localStorage.getItem('forem_saved_searches');
     const alertsDismissed = localStorage.getItem('forem_alerts_dismissed');
+    const cvProfile = localStorage.getItem('forem_cv_profile');
+    const matchingScores = localStorage.getItem('forem_matching_scores');
     
     // Get current search parameters from URL
     const searchParams = window.location.search;
@@ -128,16 +127,18 @@ export function exportDebugJson() {
     // Create export object with all user data
     const exportData = {
         exportDate: new Date().toISOString(),
-        version: 2, // Version for future compatibility
+        version: 3, // Version for future compatibility
         searchParams: searchParams,
-        searchResults: rawData,
+        searchResults: rawData || null,
         // User data
         bookmarks: jobStates ? JSON.parse(jobStates) : {},
         notes: jobNotes ? JSON.parse(jobNotes) : {},
         customTags: customTags ? JSON.parse(customTags) : [],
         jobTags: jobTags ? JSON.parse(jobTags) : {},
         savedSearches: savedSearches ? JSON.parse(savedSearches) : [],
-        alertsDismissed: alertsDismissed ? JSON.parse(alertsDismissed) : []
+        alertsDismissed: alertsDismissed ? JSON.parse(alertsDismissed) : [],
+        cvProfile: cvProfile ? JSON.parse(cvProfile) : null,
+        matchingScores: matchingScores ? JSON.parse(matchingScores) : {}
     };
     
     const a = document.createElement('a');

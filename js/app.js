@@ -10,12 +10,13 @@ import { triggerGeo, manualCitySearch, initializeLocation } from './geolocation.
 import { restoreStateFromUrl } from './url-state.js';
 import { closeJobModal, handleBookmarkToggle, handleAppliedToggle, handleIgnoredToggle, saveNote, deleteNote, addJobTagFromDropdown, removeJobTag, openTagManagement, closeTagManagement, createNewTag, deleteCustomTag, openCoverLetterModal, closeCoverLetterModal, selectLetterStyle, generateLetter, toggleLetterEdit, regenerateLetter, copyLetter, saveLetter, showLetterOptions, exportLetterPDF } from './job-modal.js';
 import { renderResults } from './renderer.js';
-import { saveCurrentSearch, loadSavedSearch, deleteSavedSearch, listSavedSearches } from './saved-searches.js';
+import { saveCurrentSearch, loadSavedSearch, deleteSavedSearch, listSavedSearches, renameSavedSearch, updateSavedSearchParams } from './saved-searches.js';
 import { getActiveAlerts, dismissAlert, showToast } from './alerts.js';
-import { getProfile } from './cv-profile.js';
+import { getProfile, getAllProfiles, getActiveProfileId, setActiveProfile } from './cv-profile.js';
 import { saveProfile } from './cv-storage.js';
-import { scoreJobWithAi, isAiScoringAvailable, getStoredScore } from './ai-matching.js';
+import { scoreJobWithAi, scoreBatchWithAi, isAiScoringAvailable, getStoredScore } from './ai-matching.js';
 import { getRawData } from './state.js';
+import { getRemainingRequests, getUsageStats } from './gemini-config.js';
 
 /**
  * Initializes the application.
@@ -28,6 +29,9 @@ async function init() {
     
     // Initialize location: CV > GPS > Manual
     await initializeLocation();
+    
+    // Initialize profile selector
+    initProfileSelector();
     
     restoreStateFromUrl(handleSearch);
     checkAndDisplayAlerts();
@@ -235,6 +239,8 @@ function handleManageSavedSearches() {
     const noSearches = document.getElementById('noSavedSearches');
     
     const searches = listSavedSearches();
+    const profiles = getAllProfiles();
+    const showProfile = profiles.length > 1;
     
     if (searches.length === 0) {
         list.classList.add('hidden');
@@ -243,23 +249,34 @@ function handleManageSavedSearches() {
         list.classList.remove('hidden');
         noSearches.classList.add('hidden');
         
-        list.innerHTML = searches.map(search => `
+        list.innerHTML = searches.map(search => {
+            const profileName = showProfile && search.profileId ? 
+                profiles.find(p => p.id === search.profileId)?.name || 'Profil inconnu' : '';
+            
+            return `
             <div class="flex items-center gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200 hover:border-amber-300 transition-all">
                 <i data-lucide="star" class="h-5 w-5 text-amber-500 flex-shrink-0"></i>
                 <div class="flex-1 min-w-0">
-                    <div class="font-semibold text-slate-800 truncate">${search.name}</div>
-                    <div class="text-xs text-slate-500">
-                        Utilisée: ${new Date(search.lastUsed).toLocaleDateString('fr-BE')}
+                    <div class="font-semibold text-slate-800 truncate" id="search-name-${search.id}">${search.name}</div>
+                    <div class="text-xs text-slate-500 flex items-center gap-2">
+                        <span>Utilisée: ${new Date(search.lastUsed).toLocaleDateString('fr-BE')}</span>
+                        ${profileName ? `<span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[10px]">${profileName}</span>` : ''}
                     </div>
                 </div>
-                <button onclick="window.loadSavedSearch('${search.id}')" class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm font-medium transition-all">
+                <button onclick="window.loadSavedSearch('${search.id}')" class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm font-medium transition-all" title="Charger cette recherche">
                     Charger
                 </button>
-                <button onclick="window.deleteSavedSearchFromModal('${search.id}')" class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded text-sm font-medium transition-all">
+                <button onclick="window.updateSavedSearchFromModal('${search.id}')" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-sm font-medium transition-all" title="Mettre à jour avec la recherche actuelle">
+                    <i data-lucide="refresh-cw" class="h-4 w-4"></i>
+                </button>
+                <button onclick="window.renameSavedSearchFromModal('${search.id}')" class="px-3 py-1.5 bg-slate-500 hover:bg-slate-600 text-white rounded text-sm font-medium transition-all" title="Renommer">
+                    <i data-lucide="pencil" class="h-4 w-4"></i>
+                </button>
+                <button onclick="window.deleteSavedSearchFromModal('${search.id}')" class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded text-sm font-medium transition-all" title="Supprimer">
                     <i data-lucide="trash-2" class="h-4 w-4"></i>
                 </button>
             </div>
-        `).join('');
+        `}).join('');
         
         initIcons();
     }
@@ -286,6 +303,97 @@ function deleteSavedSearchFromModal(searchId) {
 }
 
 /**
+ * Renames a saved search from the modal.
+ */
+function renameSavedSearchFromModal(searchId) {
+    const nameEl = document.getElementById(`search-name-${searchId}`);
+    const currentName = nameEl?.textContent || '';
+    const newName = prompt('Nouveau nom pour cette recherche:', currentName);
+    
+    if (newName && newName.trim() && newName !== currentName) {
+        renameSavedSearch(searchId, newName.trim());
+        refreshSavedSearchesDropdown();
+        handleManageSavedSearches(); // Refresh modal
+        showToast('Recherche renommée', 'success', 2000);
+    }
+}
+
+/**
+ * Updates a saved search with current URL parameters.
+ */
+function updateSavedSearchFromModal(searchId) {
+    if (!window.location.search) {
+        showToast('Aucune recherche active à sauvegarder', 'warning', 2000);
+        return;
+    }
+    
+    if (!confirm('Mettre à jour cette recherche avec les paramètres actuels?')) return;
+    
+    if (updateSavedSearchParams(searchId)) {
+        refreshSavedSearchesDropdown();
+        handleManageSavedSearches(); // Refresh modal
+        showToast('Recherche mise à jour', 'success', 2000);
+    }
+}
+
+/**
+ * Initializes the profile selector in the search page.
+ */
+function initProfileSelector() {
+    const profiles = getAllProfiles();
+    const activeId = getActiveProfileId();
+    const container = document.getElementById('profileSelectorContainer');
+    const select = document.getElementById('profileSelector');
+    
+    if (!container || !select) return;
+    
+    if (profiles.length === 0) {
+        container.classList.add('hidden');
+        return;
+    }
+    
+    container.classList.remove('hidden');
+    
+    // Populate dropdown
+    select.innerHTML = profiles.map(p => `
+        <option value="${p.id}" ${p.id === activeId ? 'selected' : ''}>
+            ${p.name || 'Profil sans nom'}
+        </option>
+    `).join('');
+    
+    // Update display
+    updateProfileDisplay();
+}
+
+/**
+ * Updates the profile display badge.
+ */
+function updateProfileDisplay() {
+    const profiles = getAllProfiles();
+    const activeId = getActiveProfileId();
+    const profile = profiles.find(p => p.id === activeId);
+    const badge = document.getElementById('profileBadge');
+    
+    if (badge && profile) {
+        badge.textContent = profile.name || 'Sans nom';
+    }
+}
+
+/**
+ * Handles switching to a different profile.
+ */
+function handleProfileSwitch(profileId) {
+    if (!profileId) return;
+    
+    setActiveProfile(profileId);
+    updateProfileDisplay();
+    
+    // Trigger a new search with the new profile
+    showToast('Profil changé - Relancez la recherche pour mettre à jour les scores', 'info', 3000);
+    initIcons();
+}
+
+/**
  * Refreshes the saved searches dropdown.
  */
 function refreshSavedSearchesDropdown() {
@@ -293,9 +401,18 @@ function refreshSavedSearchesDropdown() {
     if (!dropdown) return;
     
     const searches = listSavedSearches();
+    const profiles = getAllProfiles();
+    
+    // Show profile name in search list if multiple profiles exist
+    const showProfile = profiles.length > 1;
     
     dropdown.innerHTML = '<option value="">Recherches sauvegardées...</option>' +
-        searches.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        searches.map(s => {
+            const profileName = showProfile && s.profileId ? 
+                profiles.find(p => p.id === s.profileId)?.name || '' : '';
+            const label = profileName ? `${s.name} [${profileName}]` : s.name;
+            return `<option value="${s.id}">${label}</option>`;
+        }).join('');
 }
 
 // Expose functions to window for HTML event handlers
@@ -404,10 +521,15 @@ function openScoreModal(scoreData, jobData) {
                 <span class="font-medium">${scoreData.locationMatch}</span>
             </div>`;
         }
-        if (scoreData.summary) {
+        if (scoreData.summary && scoreData.summary.trim()) {
             detailsHtml += `<div class="border-t border-slate-100 pt-2 mt-2">
                 <span class="text-slate-600 block mb-1">Résumé IA:</span>
                 <p class="text-sm text-slate-700 italic">"${scoreData.summary}"</p>
+            </div>`;
+        } else if (scoreData.isAiScore) {
+            detailsHtml += `<div class="border-t border-slate-100 pt-2 mt-2">
+                <span class="text-slate-600 block mb-1">Résumé IA:</span>
+                <p class="text-sm text-slate-400 italic">Non disponible - recalculez avec "Score IA"</p>
             </div>`;
         }
         if (scoreData.recommendations && scoreData.recommendations.length > 0) {
@@ -630,6 +752,17 @@ async function recalculateScore(mode = 'local') {
         return;
     }
     
+    // Récupérer les infos supplémentaires si fournies
+    const extraInfoTextarea = document.getElementById('scoreExtraInfo');
+    const extraInfo = extraInfoTextarea?.value?.trim() || '';
+    
+    // Récupérer les paramètres IA avancés
+    const customPrompt = document.getElementById('scoreCustomPrompt')?.value?.trim() || '';
+    const maxTokens = parseInt(document.getElementById('scoreMaxTokens')?.value) || 8000;
+    const temperature = parseFloat(document.getElementById('scoreTemperature')?.value) || 0.1;
+    
+    const aiOptions = { customPrompt, maxTokens, temperature };
+    
     // Find the full job data from the last search results
     const lastResults = window.lastSearchResults;
     const jobs = lastResults?.results || [];
@@ -673,9 +806,10 @@ async function recalculateScore(mode = 'local') {
                 return;
             }
             
-            // Force recalculation by passing true as second argument
-            newScore = await scoreJobWithAi(fullJob, true);
-            showToast('Score IA recalculé (forcé)!', 'success', 2000);
+            // Force recalculation by passing true as second argument, and pass extra info and options
+            newScore = await scoreJobWithAi(fullJob, true, extraInfo, aiOptions);
+            const msg = extraInfo ? 'Score IA recalculé avec infos supplémentaires!' : 'Score IA recalculé (forcé)!';
+            showToast(msg, 'success', 2000);
         } else {
             // Use local scoring
             const { calculateLocalScore } = await import('./ai-matching.js');
@@ -780,12 +914,36 @@ async function scoreVisibleJobsWithAI() {
         return;
     }
     
+    // Check daily quota (20 RPD free tier)
+    const remainingRequests = getRemainingRequests();
+    const batchesNeeded = Math.ceil(jobsToScore.length / 5);
+    
+    if (remainingRequests === 0) {
+        showToast('Quota journalier atteint (20 requêtes/jour). Réessayez demain.', 'error', 5000);
+        return;
+    }
+    
+    if (batchesNeeded > remainingRequests) {
+        const maxJobs = remainingRequests * 5;
+        showToast(`Quota limité: ${remainingRequests} requêtes restantes. Max ${maxJobs} offres scorables.`, 'warning', 4000);
+        // Truncate to what we can do
+        jobsToScore.length = maxJobs;
+    }
+    
     // Update button state
     const btn = document.getElementById('btnAiScore');
     const btnText = document.getElementById('btnAiScoreText');
     const btnCount = document.getElementById('btnAiScoreCount');
     
     btn.disabled = true;
+    
+    // Batches processing
+    const BATCH_SIZE = 5;
+    const batches = [];
+    for (let i = 0; i < jobsToScore.length; i += BATCH_SIZE) {
+        batches.push(jobsToScore.slice(i, i + BATCH_SIZE));
+    }
+
     const totalToScore = jobsToScore.length;
     let scored = 0;
     let errors = 0;
@@ -793,18 +951,35 @@ async function scoreVisibleJobsWithAI() {
     btnText.textContent = 'Scoring...';
     btnCount.textContent = `0/${totalToScore}`;
     
-    // Score each job sequentially (to respect rate limits)
-    for (const job of jobsToScore) {
+    // Process batches
+    for (const batch of batches) {
         try {
-            btnCount.textContent = `${scored + 1}/${totalToScore}`;
-            await scoreJobWithAi(job);
-            scored++;
+            // Update UI before processing
+            btnCount.textContent = `${scored}/${totalToScore}`;
             
-            // Small delay between requests to avoid rate limiting
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // Countdown callback for rate limit waits
+            const onWaiting = (secondsLeft) => {
+                const mins = Math.floor(secondsLeft / 60);
+                const secs = secondsLeft % 60;
+                btnText.textContent = 'Attente...';
+                btnCount.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            };
+            
+            // Call batch API
+            await scoreBatchWithAi(batch, onWaiting);
+            
+            // Reset button text after successful batch
+            btnText.textContent = 'Scoring...';
+            
+            scored += batch.length;
+            
+            // Wait 2s between batches (Tier 1 has high RPM, no need to wait long)
+            if (scored < totalToScore) {
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
         } catch (error) {
-            console.error('Error scoring job:', job.numerooffreforem, error);
-            errors++;
+            console.error('Error scoring batch:', error);
+            errors += batch.length;
             
             // If we hit rate limit, stop
             if (error.code === 'RATE_LIMITED' || error.message?.includes('429')) {
@@ -814,7 +989,8 @@ async function scoreVisibleJobsWithAI() {
         }
     }
     
-    // Re-render results to show new scores
+    // Re-render results to show new scores (from cache/storage updated by scoreBatchWithAi)
+    // We force a refresh of the grid UI
     renderResults(rawData);
     initIcons();
     
@@ -829,6 +1005,7 @@ async function scoreVisibleJobsWithAI() {
     } else {
         showToast(`${scored} offres scorées avec succès!`, 'success', 3000);
     }
+
 }
 
 /**
@@ -852,6 +1029,7 @@ function updateAiScoreButton() {
     // Count visible jobs without AI score
     const visibleCards = document.querySelectorAll('#resultsGrid > div[data-job-id]');
     const visibleJobIds = new Set(Array.from(visibleCards).map(card => card.dataset.jobId));
+    const totalVisible = visibleJobIds.size;
     
     const jobsWithoutAiScore = rawData.results.filter(job => {
         const jobId = job.numerooffreforem;
@@ -863,7 +1041,7 @@ function updateAiScoreButton() {
     if (jobsWithoutAiScore > 0) {
         btn.classList.remove('hidden');
         btn.classList.add('flex');
-        btnCount.textContent = jobsWithoutAiScore;
+        btnCount.textContent = `${jobsWithoutAiScore}/${totalVisible}`;
     } else {
         btn.classList.add('hidden');
         btn.classList.remove('flex');
@@ -891,10 +1069,13 @@ window.handleIgnoredToggle = handleIgnoredToggle;
 window.handleSaveCurrentSearch = handleSaveCurrentSearch;
 window.handleLoadSavedSearch = handleLoadSavedSearch;
 window.handleManageSavedSearches = handleManageSavedSearches;
+window.handleProfileSwitch = handleProfileSwitch;
 window.closeSavedSearchesModal = closeSavedSearchesModal;
 window.closeSaveSearchModal = closeSaveSearchModal;
 window.confirmSaveSearch = confirmSaveSearch;
 window.deleteSavedSearchFromModal = deleteSavedSearchFromModal;
+window.renameSavedSearchFromModal = renameSavedSearchFromModal;
+window.updateSavedSearchFromModal = updateSavedSearchFromModal;
 window.loadSavedSearch = loadSavedSearch;
 window.saveNote = saveNote;
 window.deleteNote = deleteNote;
@@ -922,6 +1103,64 @@ window.closeScoreModal = closeScoreModal;
 window.copyScoreDebugJson = copyScoreDebugJson;
 window.recalculateScore = recalculateScore;
 window.addMissingSkill = addMissingSkill;
+window.loadPromptTemplate = loadPromptTemplate;
+
+// Prompt templates for AI scoring
+const PROMPT_TEMPLATES = {
+    minimal: `Match CV/offre. JSON seulement.
+CV: {skills}
+Offre: {title}
+{extraInfo}
+{"score":50,"skills":[],"missing":[],"txt":"Court."}`,
+    
+    standard: `Analyse ce match CV/offre. Retourne UNIQUEMENT un JSON valide sans markdown.
+
+CV: {headline}, Skills: {skills}, {experience} ans exp
+Offre: {title}, {location}
+{description}
+{extraInfo}
+Retourne ce JSON exact avec tes valeurs:
+{"score":50,"skills":["match1","match2"],"missing":["manque1","manque2"],"exp":"ok","loc":"ok","txt":"Résumé de 30-50 mots expliquant la correspondance entre le profil et l'offre."}`,
+    
+    detailed: `Analyse approfondie de la correspondance CV/offre d'emploi.
+
+PROFIL CANDIDAT:
+- Titre: {headline}
+- Compétences techniques: {skills}
+- Expérience: {experience} ans
+
+OFFRE D'EMPLOI:
+- Titre: {title}
+- Localisation: {location}
+- Description: {description}
+{extraInfo}
+
+Analyse demandée:
+1. Évalue le score de correspondance (0-100)
+2. Liste toutes les compétences qui matchent
+3. Identifie les compétences manquantes importantes
+4. Évalue l'adéquation de l'expérience
+5. Vérifie la compatibilité géographique
+6. Rédige un résumé détaillé (80-120 mots)
+
+Retourne UNIQUEMENT un JSON valide (pas de markdown):
+{"score":50,"skills":["match1","match2","match3"],"missing":["manque1","manque2"],"exp":"analyse de l'expérience","loc":"analyse localisation","txt":"Résumé détaillé de 80-120 mots expliquant la correspondance, les points forts, les lacunes et les recommandations."}`
+};
+
+/**
+ * Load a prompt template into the custom prompt textarea
+ * @param {string} templateName - 'minimal', 'standard', or 'detailed'
+ */
+function loadPromptTemplate(templateName) {
+    const textarea = document.getElementById('scoreCustomPrompt');
+    if (!textarea) return;
+    
+    const template = PROMPT_TEMPLATES[templateName];
+    if (template) {
+        textarea.value = template;
+        showToast(`Template "${templateName}" chargé`, 'success', 1500);
+    }
+}
 
 // Initialize when DOM is ready
 init();

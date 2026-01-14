@@ -10,7 +10,7 @@ import {
     extractLanguages,
     extractEducation
 } from './cv-parser.js';
-import { saveRawCV, saveProfile, getProfile, getRawCV } from './cv-storage.js';
+import { saveRawCV, saveProfile, getProfile, getRawCV, getAllProfiles, getActiveProfileId, setActiveProfile, createNewProfile, duplicateProfile, renameProfile, deleteProfile } from './cv-storage.js';
 
 /**
  * Traite un fichier CV et crée le profil candidat
@@ -241,5 +241,68 @@ export function getProfileSummary() {
     };
 }
 
+/**
+ * Met à jour les informations de base du profil
+ * @param {Object} updates - Les champs à mettre à jour
+ * @returns {boolean} Succès de la mise à jour
+ */
+export function updateProfile(updates) {
+    const profile = getProfile();
+    if (!profile) return false;
+    
+    // Mettre à jour les champs autorisés
+    const allowedFields = ['name', 'headline', 'email', 'phone', 'location', 'summary', 'totalExperienceYears', 'educationLevel'];
+    
+    for (const field of allowedFields) {
+        if (updates[field] !== undefined) {
+            profile[field] = updates[field];
+        }
+    }
+    
+    saveProfile(profile);
+    return true;
+}
+
+/**
+ * Ajoute une langue au profil
+ * @param {Object} language - La langue { name, level }
+ * @returns {boolean} Succès de l'ajout
+ */
+export function addLanguage(language) {
+    const profile = getProfile();
+    if (!profile) return false;
+    
+    // Vérifier si la langue existe déjà
+    if (profile.languages.find(l => l.name.toLowerCase() === language.name.toLowerCase())) {
+        return false;
+    }
+    
+    profile.languages.push({
+        name: language.name,
+        level: language.level || 'intermediate',
+        manual: true
+    });
+    
+    saveProfile(profile);
+    return true;
+}
+
+/**
+ * Supprime une langue du profil
+ * @param {string} languageName - Nom de la langue à supprimer
+ * @returns {boolean} Succès de la suppression
+ */
+export function removeLanguage(languageName) {
+    const profile = getProfile();
+    if (!profile) return false;
+    
+    const index = profile.languages.findIndex(l => l.name.toLowerCase() === languageName.toLowerCase());
+    if (index === -1) return false;
+    
+    profile.languages.splice(index, 1);
+    saveProfile(profile);
+    return true;
+}
+
 // Exposer pour utilisation globale
-export { getProfile, getRawCV };
+export { getProfile, getRawCV, getAllProfiles, getActiveProfileId, setActiveProfile, createNewProfile, duplicateProfile, renameProfile, deleteProfile };

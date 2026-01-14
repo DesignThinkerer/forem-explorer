@@ -6,20 +6,19 @@
     <title>Guide d'utilisation - FOREM Explorer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="js/components/nav-bar.js"></script>
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+    
+    <!-- Navigation -->
+    <nav-bar current="aide"></nav-bar>
+
     <div class="container mx-auto px-4 py-8 max-w-5xl">
         <!-- Header -->
         <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
-            <div class="flex items-center justify-between mb-4">
-                <a href="index.html" class="text-4xl font-bold text-slate-800 flex items-center gap-3 hover:opacity-80 transition-opacity">
-                    <i data-lucide="book-open" class="h-10 w-10 text-blue-600"></i>
-                    Guide d'utilisation
-                </a>
-                <a href="index.html" class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all">
-                    <i data-lucide="arrow-left" class="h-4 w-4"></i>
-                    Retour à la recherche
-                </a>
+            <div class="flex items-center gap-3 mb-4">
+                <i data-lucide="book-open" class="h-10 w-10 text-amber-500"></i>
+                <h2 class="text-4xl font-bold text-slate-800">Guide d'utilisation</h2>
             </div>
             <p class="text-slate-600 text-lg">
                 Bienvenue sur FOREM Explorer, votre assistant pour la recherche d'emploi en Belgique.
@@ -217,6 +216,200 @@
                 <p><strong>📅 Plus récentes:</strong> Affiche les offres les plus récemment publiées en premier</p>
                 <p><strong>📍 Plus proches:</strong> Trie par distance (nécessite la géolocalisation)</p>
                 <p><strong>⏰ Expire bientôt:</strong> Montre les offres qui vont bientôt expirer en premier</p>
+                <p><strong>🤖 Score IA:</strong> Trie par pertinence calculée par l'IA (nécessite un profil CV)</p>
+            </div>
+        </div>
+
+        <!-- Profil CV -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <i data-lucide="user-circle" class="h-6 w-6 text-emerald-600"></i>
+                Profil CV
+            </h2>
+            <div class="space-y-4">
+                <p class="text-slate-600">
+                    Importez votre CV au format JSON pour activer le matching IA et les lettres de motivation personnalisées.
+                </p>
+                <div>
+                    <h3 class="font-bold text-slate-700 mb-2">📄 Importer un CV</h3>
+                    <p class="text-slate-600 mb-2">
+                        Rendez-vous sur la page <strong>Profil</strong> et importez un fichier JSON contenant vos informations.
+                        Le format attendu inclut : nom, titre, compétences, expériences, formations, langues.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-700 mb-2">✏️ Modifier le profil</h3>
+                    <p class="text-slate-600 mb-2">
+                        Après l'import, vous pouvez modifier vos informations :
+                    </p>
+                    <ul class="list-disc list-inside text-slate-600 space-y-1 ml-4">
+                        <li>Cliquez sur <strong>Modifier</strong> pour éditer nom, titre, email, téléphone, localisation, années d'expérience, niveau d'études et résumé</li>
+                        <li>Cliquez sur une <strong>compétence</strong> pour modifier son niveau (1-5) et sa catégorie</li>
+                        <li>Ajoutez ou supprimez des <strong>langues</strong> avec leur niveau de maîtrise</li>
+                    </ul>
+                </div>
+                <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                    <p class="text-sm text-emerald-800">
+                        <strong>💡 Astuce:</strong> Un profil complet améliore la précision du scoring IA et la qualité des lettres de motivation générées.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scoring IA -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <i data-lucide="sparkles" class="h-6 w-6 text-indigo-600"></i>
+                Scoring IA (Matching)
+            </h2>
+            <div class="space-y-4">
+                <p class="text-slate-600">
+                    L'IA analyse vos compétences et les compare aux exigences de chaque offre pour calculer un score de compatibilité.
+                </p>
+                <div>
+                    <h3 class="font-bold text-slate-700 mb-2">🎯 Comment fonctionne le score</h3>
+                    <ul class="list-disc list-inside text-slate-600 space-y-1 ml-4">
+                        <li><strong>Score global (0-100):</strong> Évaluation globale de votre adéquation avec l'offre</li>
+                        <li><strong>Compétences:</strong> Correspondance entre vos compétences et celles demandées</li>
+                        <li><strong>Expérience:</strong> Adéquation de votre expérience avec les attentes</li>
+                        <li><strong>Formation:</strong> Correspondance du niveau d'études</li>
+                        <li><strong>Localisation:</strong> Compatibilité géographique</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-700 mb-2">🔄 Recalculer un score</h3>
+                    <p class="text-slate-600 mb-2">
+                        Cliquez sur le badge du score pour ouvrir la modale de recalcul. Vous pouvez :
+                    </p>
+                    <ul class="list-disc list-inside text-slate-600 space-y-1 ml-4">
+                        <li>Ajouter des <strong>informations supplémentaires</strong> (description complète de l'offre, contexte)</li>
+                        <li>Personnaliser le <strong>prompt IA</strong> avec les templates Mini, Standard ou Détaillé</li>
+                        <li>Ajuster les <strong>tokens</strong> (longueur de réponse) et la <strong>température</strong> (créativité)</li>
+                    </ul>
+                </div>
+                <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                    <p class="text-sm text-indigo-800">
+                        <strong>⚙️ Configuration:</strong> Configurez votre clé API Gemini dans la page <strong>IA</strong> pour activer le scoring automatique.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lettres de motivation -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <i data-lucide="file-pen" class="h-6 w-6 text-violet-600"></i>
+                Lettres de motivation
+            </h2>
+            <div class="space-y-4">
+                <p class="text-slate-600">
+                    Générez des lettres de motivation personnalisées grâce à l'IA, adaptées à chaque offre d'emploi.
+                </p>
+                <div>
+                    <h3 class="font-bold text-slate-700 mb-2">✨ Générer une lettre</h3>
+                    <p class="text-slate-600 mb-2">
+                        Depuis une offre d'emploi, cliquez sur <strong>Générer lettre</strong>. L'IA créera une lettre personnalisée basée sur :
+                    </p>
+                    <ul class="list-disc list-inside text-slate-600 space-y-1 ml-4">
+                        <li>Votre profil CV (compétences, expériences, formations)</li>
+                        <li>Les exigences et la description de l'offre</li>
+                        <li>L'employeur et le secteur d'activité</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-700 mb-2">📝 Gérer vos lettres</h3>
+                    <p class="text-slate-600 mb-2">
+                        Sur la page <strong>Lettres</strong>, retrouvez toutes vos lettres générées. Vous pouvez :
+                    </p>
+                    <ul class="list-disc list-inside text-slate-600 space-y-1 ml-4">
+                        <li><strong>Consulter</strong> et copier le contenu</li>
+                        <li><strong>Exporter en PDF</strong> pour envoi</li>
+                        <li><strong>Supprimer</strong> les lettres obsolètes</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <i data-lucide="bar-chart-3" class="h-6 w-6 text-purple-600"></i>
+                Dashboard
+            </h2>
+            <div class="space-y-4">
+                <p class="text-slate-600">
+                    Le tableau de bord vous donne une vue d'ensemble de votre recherche d'emploi avec des statistiques clés.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="border border-slate-200 rounded-lg p-4">
+                        <h3 class="font-bold text-slate-700 mb-2">📊 Statistiques</h3>
+                        <ul class="text-sm text-slate-600 space-y-1">
+                            <li>Nombre d'offres suivies</li>
+                            <li>Offres en favoris</li>
+                            <li>Candidatures envoyées</li>
+                            <li>Notes ajoutées</li>
+                        </ul>
+                    </div>
+                    <div class="border border-slate-200 rounded-lg p-4">
+                        <h3 class="font-bold text-slate-700 mb-2">🔗 Accès rapides</h3>
+                        <ul class="text-sm text-slate-600 space-y-1">
+                            <li>Cliquez sur une carte pour filtrer les offres correspondantes</li>
+                            <li>Accédez directement aux favoris, postulées, etc.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Paramètres IA -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <i data-lucide="settings" class="h-6 w-6 text-indigo-600"></i>
+                Paramètres IA
+            </h2>
+            <div class="space-y-4">
+                <p class="text-slate-600">
+                    Configurez l'intégration avec Google Gemini pour activer les fonctionnalités d'IA.
+                </p>
+                <div>
+                    <h3 class="font-bold text-slate-700 mb-2">🔑 Clé API Gemini</h3>
+                    <p class="text-slate-600 mb-2">
+                        Obtenez une clé API gratuite sur <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-600 hover:underline">Google AI Studio</a> 
+                        et configurez-la dans la page <strong>IA</strong>.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-700 mb-2">⚙️ Options disponibles</h3>
+                    <ul class="list-disc list-inside text-slate-600 space-y-1 ml-4">
+                        <li><strong>Scoring automatique:</strong> Active le calcul automatique des scores lors des recherches</li>
+                        <li><strong>Modèle:</strong> Gemini 2.5 Flash (rapide et économique)</li>
+                        <li><strong>Température:</strong> 0.1 recommandé pour des scores cohérents</li>
+                    </ul>
+                </div>
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p class="text-sm text-yellow-800">
+                        <strong>💰 Coût:</strong> Le tier gratuit de Gemini est très limité (5 requêtes/minute, 20/jour). 
+                        Pour un usage régulier, un compte payant Tier 1 est recommandé (2000 requêtes/minute).
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <i data-lucide="sticky-note" class="h-6 w-6 text-yellow-600"></i>
+                Notes personnelles
+            </h2>
+            <div class="space-y-4">
+                <p class="text-slate-600">
+                    Ajoutez des notes à vos offres pour garder trace de vos réflexions et actions.
+                </p>
+                <ul class="list-disc list-inside text-slate-600 space-y-1 ml-4">
+                    <li>Cliquez sur l'icône <strong>note</strong> sur une carte d'offre</li>
+                    <li>Ajoutez vos commentaires, rappels ou observations</li>
+                    <li>Les notes sont sauvegardées localement et incluses dans l'export</li>
+                </ul>
             </div>
         </div>
 
